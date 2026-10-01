@@ -58,8 +58,9 @@ public final class DbProbe {
                 }
             }
             String agent;
+            // servicename 은 OS 언어마다 다르다(한국어: "SQL Server 에이전트 (…)"). 실행 파일 이름으로 찾는다
             try (ResultSet rs = st.executeQuery(
-                    "SELECT status_desc FROM sys.dm_server_services WHERE servicename LIKE N'SQL Server Agent%'")) {
+                    "SELECT status_desc FROM sys.dm_server_services WHERE filename LIKE N'%SQLAGENT%'")) {
                 agent = rs.next() ? rs.getString(1) : "없음";
                 if (!"Running".equals(agent)) {
                     warnings.add("SQL Server Agent 가 실행 중이 아니다. CDC 캡처가 멈춘다(관리자 PowerShell: Start-Service SQLSERVERAGENT)");
