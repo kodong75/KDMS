@@ -120,4 +120,5 @@ java -jar target/kdms.jar web
 | 원천 `The TCP/IP connection … has failed` | 1433 방화벽·SQL Server TCP 설정. Mac `nc -vz 192.168.0.12 1433` 부터 |
 | 원천 `PKIX path building failed` | 노트북 자체 서명 인증서. `.env` `KDMS_SRC_TRUST_CERT=true`(시험 환경만) |
 | 대상 `password authentication failed for user "kdms_app"` | §3 에서 정한 암호와 `.env` `KDMS_TGT_PASSWORD` 가 다르다. §3 을 다시 실행하면 암호를 다시 맞춘다 |
+| `SQL Server Agent 가 실행 중이 아니다` 인데 `Get-Service SQLSERVERAGENT` 는 Running | 한국어 Windows 는 서비스 이름이 'SQL Server 에이전트'라 옛 검사가 못 찾았다. 2026-10-01 에 실행 파일 이름(SQLAGENT)으로 찾도록 고쳤다. 저장소를 `git pull` 한 뒤 다시 실행 |
 | `nc` 는 되는데 Java 만 안 됨 | macOS 로컬 네트워크 권한: 시스템 설정 → 개인정보 보호 및 보안 → 로컬 네트워크 → 터미널 켜기 |
