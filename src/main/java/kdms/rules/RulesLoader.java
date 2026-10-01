@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,8 +29,11 @@ public final class RulesLoader {
     public static final String DEFAULT_RESOURCE = "kdms-rules.yml";
 
     private static final Set<String> TOP_KEYS = Set.of("version", "types", "identity", "sequence", "text", "collation",
-            "sentinel_dates", "identifiers", "computed_columns", "tables");
+            "sentinel_dates", "identifiers", "computed_columns", "defaults", "tables");
     private static final Set<String> TYPE_KEYS = Set.of("to", "max", "max_precision", "round", "check", "warn");
+    private static final Set<String> TABLE_KEYS = Set.of("exclude", "columns");
+    private static final Set<String> COLUMN_KEYS = Set.of("name", "type", "trailing_space", "case", "nul_char", "default",
+            "generated", "computed");
 
     private RulesLoader() {
     }
@@ -102,14 +106,35 @@ public final class RulesLoader {
         Map<String, Object> sentinel = section(m, "sentinel_dates");
         keys(sentinel, Set.of("values", "action"), "sentinel_dates");
         Map<String, Object> ident = section(m, "identifiers");
-        keys(ident, Set.of("case", "map"), "identifiers");
+        keys(ident, Set.of("case", "map", "schemas"), "identifiers");
         Map<String, Object> computed = section(m, "computed_columns");
         keys(computed, Set.of("action"), "computed_columns");
+        Map<String, Object> defaults = section(m, "defaults");
+        keys(defaults, Set.of("functions"), "defaults");
 
         Map<String, String> identMap = new LinkedHashMap<>();
         Object mapNode = ident.get("map");
         if (mapNode != null) {
-            asMap(mapNode, "identifiers.map").forEach((k, v) -> identMap.put(k, str(v, "identifiers.map." + k)));
+            asMap(mapNode, "identifiers.map").forEach((k, v) -> identMap.put(k.toLowerCase(Locale.ROOT), str(v, "identifiers.map." + k)));
+        }
+        Map<String, String> schemaMap = new LinkedHashMap<>();
+        Object schemasNode = ident.get("schemas");
+        if (schemasNode != null) {
+            asMap(schemasNode, "identifiers.schemas").forEach((k, v) -> schemaMap.put(k.toLowerCase(Locale.ROOT), str(v, "identifiers.schemas." + k)));
+        }
+        Map<String, Rules.FunctionRule> functions = new LinkedHashMap<>();
+        Object fnNode = defaults.get("functions");
+        if (fnNode != null) {
+            for (Map.Entry<String, Object> e : asMap(fnNode, "defaults.functions").entrySet()) {
+                String where = "defaults.functions." + e.getKey();
+                Map<String, Object> f = asMap(e.getValue(), where);
+                keys(f, Set.of("to", "warn"), where);
+                String to = str(f.get("to"), where + ".to");
+                if (to == null || to.isBlank()) {
+                    throw new ConfigException(where + ".to: 대상 식이 비어 있다");
+                }
+                functions.put(e.getKey().toLowerCase(Locale.ROOT), new Rules.FunctionRule(to, str(f.get("warn"), where + ".warn")));
+            }
         }
         List<String> sentinelValues = new ArrayList<>();
         Object sv = sentinel.get("values");
@@ -137,8 +162,49 @@ public final class RulesLoader {
                 oneOf(sentinel.get("action"), "sentinel_dates.action", "keep", "keep", "null", "infinity"),
                 oneOf(ident.get("case"), "identifiers.case", "lower", "lower", "keep"),
                 Map.copyOf(identMap),
+                Map.copyOf(schemaMap),
                 oneOf(computed.get("action"), "computed_columns.action", "generated_stored", "generated_stored", "value_with_warning"),
-                m.get("tables") == null ? Map.of() : Map.copyOf(asMap(m.get("tables"), "tables")));
+                Map.copyOf(functions),
+                tables(m.get("tables")));
+    }
+
+    private static Map<String, Rules.TableRule> tables(Object node) {
+        Map<String, Rules.TableRule> out = new LinkedHashMap<>();
+        if (node == null) {
+            return Map.of();
+        }
+        for (Map.Entry<String, Object> e : asMap(node, "tables").entrySet()) {
+            String where = "tables." + e.getKey();
+            if (e.getKey().indexOf('.') < 1) {
+                throw new ConfigException(where + ": 키는 schema.table 형식이어야 한다");
+            }
+            Map<String, Object> t = e.getValue() == null ? Map.of() : asMap(e.getValue(), where);
+            keys(t, TABLE_KEYS, where);
+            Object ex = t.get("exclude");
+            if (ex != null && !(ex instanceof Boolean)) {
+                throw new ConfigException(where + ".exclude: true | false");
+            }
+            Map<String, Rules.ColumnRule> cols = new LinkedHashMap<>();
+            Object cn = t.get("columns");
+            if (cn != null) {
+                for (Map.Entry<String, Object> c : asMap(cn, where + ".columns").entrySet()) {
+                    String w = where + ".columns." + c.getKey();
+                    Map<String, Object> cm = c.getValue() == null ? Map.of() : asMap(c.getValue(), w);
+                    keys(cm, COLUMN_KEYS, w);
+                    cols.put(c.getKey().toLowerCase(Locale.ROOT), new Rules.ColumnRule(
+                            str(cm.get("name"), w + ".name"),
+                            str(cm.get("type"), w + ".type"),
+                            oneOf(cm.get("trailing_space"), w + ".trailing_space", null, "keep", "rtrim"),
+                            oneOf(cm.get("case"), w + ".case", null, "keep", "upper", "lower"),
+                            oneOf(cm.get("nul_char"), w + ".nul_char", null, "fail", "strip", "replace"),
+                            str(cm.get("default"), w + ".default"),
+                            str(cm.get("generated"), w + ".generated"),
+                            oneOf(cm.get("computed"), w + ".computed", null, "generated_stored", "value_with_warning")));
+                }
+            }
+            out.put(e.getKey().toLowerCase(Locale.ROOT), new Rules.TableRule(Boolean.TRUE.equals(ex), Map.copyOf(cols)));
+        }
+        return Map.copyOf(out);
     }
 
     /** 맵은 키별로 재귀 병합, 그 밖(값·목록)은 덮어쓴다. */

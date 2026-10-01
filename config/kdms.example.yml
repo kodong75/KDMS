@@ -30,8 +30,8 @@ tables:                                   # schema.table, * 사용 가능(2단�
   include: ["dbo.*"]
   exclude: []
 
-# 작업별 변환 규칙 파일. 비우면 jar 안의 기본 규칙만. 예: config/kdms-rules.yml
-rules: ""
+# 작업별 변환 규칙 파일(jar 안 기본 규칙 위에 덮어쓴다). 비우면 기본 규칙만. 이 저장소의 것은 KDMS_MOCK 용
+rules: config/kdms-rules.yml
 
 web:                                      # 내장 웹. 127.0.0.1 이 아니면 LAN 에 열린다(인증 없음)
   address: 127.0.0.1

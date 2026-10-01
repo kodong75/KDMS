@@ -64,14 +64,37 @@ sentinel_dates:                     # A08
   action: keep                      # keep | null | infinity
 
 identifiers:
-  case: lower                       # lower | keep  (대상 이름은 소문자 스네이크, 63바이트 초과는 map 필수)
-  map: {}                           # "dbo.원천이름": 대상이름
+  case: lower                       # lower | keep  (lower = 원천 이름을 소문자로만 바꾼다. 63바이트 초과는 map 필수)
+  map: {}                           # "dbo.원천테이블": 대상테이블  (컬럼 이름은 tables.<t>.columns.<c>.name)
+  schemas: {}                       # 원천스키마: 대상스키마  (예: dbo: mock). 없으면 원천 스키마 이름을 case 규칙대로
 
 computed_columns:
   action: generated_stored          # generated_stored | value_with_warning  (CDC 는 계산 컬럼을 캡처하지 않는다, plan.md §4.4)
+                                    # generated_stored: T-SQL 식을 자동으로 옮기지 않는다. 컬럼마다 tables.<t>.columns.<c>.generated 에
+                                    #   PG 식을 적어야 kdms plan 이 통과한다(B12). value_with_warning: 일반 컬럼 + 원문 식 COMMENT
 
-tables: {}                          # 테이블·컬럼 단위 덮어쓰기
+defaults:                           # 원천 기본값(DEFAULT 제약) 변환. 상수·NEXT VALUE FOR 는 자동, 함수는 아래 표로
+  functions:                        # 인자 없는 함수(소문자) → 대상 식. 표에 없는 식은 kdms plan 이 오류로 멈춘다(tables 에서 default 로 직접 지정)
+    getdate:           { to: "LOCALTIMESTAMP", warn: "대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값" }
+    sysdatetime:       { to: "LOCALTIMESTAMP", warn: "대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값" }
+    current_timestamp: { to: "LOCALTIMESTAMP", warn: "대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값" }
+    getutcdate:        { to: "(now() AT TIME ZONE 'UTC')" }
+    sysutcdatetime:    { to: "(now() AT TIME ZONE 'UTC')" }
+    sysdatetimeoffset: { to: "now()" }
+    newid:             { to: "gen_random_uuid()" }
+    newsequentialid:   { to: "gen_random_uuid()", warn: "순차 GUID 가 아니라 임의 UUID(정렬·인덱스 지역성이 달라진다)" }
+    suser_sname:       { to: "session_user", warn: "원천 로그인 이름 대신 PG 접속 역할 이름이 들어간다" }
+    suser_name:        { to: "session_user", warn: "원천 로그인 이름 대신 PG 접속 역할 이름이 들어간다" }
+    user_name:         { to: "current_user", warn: "원천 DB 사용자 이름 대신 PG 역할 이름이 들어간다" }
+    host_name:         { to: "inet_client_addr()::text", warn: "원천 클라이언트 PC 이름 대신 클라이언트 IP" }
+    app_name:          { to: "current_setting('application_name')" }
+    db_name:           { to: "current_database()" }
+
+tables: {}                          # 테이블·컬럼 단위 덮어쓰기. 키는 "schema.table"(원천 이름)
   # dbo.some_table:
-  #   exclude: false
-  #   columns:
+  #   exclude: false                # true 면 이관에서 뺀다
+  #   columns:                      # 키는 원천 컬럼 이름
   #     code_col: { trailing_space: rtrim, case: upper }
+  #     some_col: { name: new_name, type: "varchar(30)", default: "none" }   # default: 대상 식 | none
+  #     calc_col: { generated: "upper(code_col)" }                           # 계산 컬럼의 PG 식(GENERATED ALWAYS AS … STORED)
+  #     calc2:    { computed: value_with_warning }                           # 식 없이 값만 옮긴다

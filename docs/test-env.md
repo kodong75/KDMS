@@ -112,6 +112,41 @@ java -jar target/kdms.jar web
 
 `status` 종료 코드: 0 둘 다 접속, 1 설정 오류, 2 접속 실패. 접속은 됐지만 고칠 것(CDC 꺼짐, Agent 멈춤, superuser 접속 등)은 `주의` 줄로 나온다.
 
+## 8. Mac: 2단계(스키마 변환) 확인
+
+§1~§6 을 아직 안 했으면 먼저 한다(원천 `KDMS_MOCK`·대상 `kdms` 준비, `.env`, `config/kdms.yml`).
+1단계 때 `config/kdms.yml` 을 복사했다면 `rules:` 줄이 `""` 이다. 2단계부터는 저장소의 KDMS_MOCK 규칙(계산 컬럼 PG 식)을 쓰므로 고친다.
+
+```bash
+cd ~/KDMS
+git fetch origin && git checkout claude/project-thread-9nq4o2   # PR 브랜치(머지 뒤에는 git checkout main && git pull)
+grep '^rules' config/kdms.yml        # rules: config/kdms-rules.yml 이어야 한다. 아니면 그 줄을 이렇게 고친다
+S=$(date +%Y%m%d_%H%M)
+
+# ① 빌드 + 단위 시험
+./mvnw -B package 2>&1 | tee runs/${S}_p2_build.txt
+
+# ② 계획(원천 읽기만, 대상은 안 건드림). 마지막 줄 근처 "결과: 통과" 를 본다
+java -jar target/kdms.jar plan 2>&1 | tee runs/${S}_p2_plan.txt
+
+# ③ 데이터 검사까지. KIS 가 심은 NUL 때문에 "결과: 막힘", 오류 1건(dbo.issuer.issuer_nm)이 정상(T-L09)
+java -jar target/kdms.jar plan --scan -o out/kdms_mock_scan 2>&1 | tee runs/${S}_p2_plan_scan.txt
+
+# ④ 통합 시험: 원천 카탈로그 = 시험 고정값(SourceCatalogIT), 대상 DDL 적용(TargetDdlIT, 시험 스키마 kdms_it_ddl 만 쓰고 지움)
+./mvnw -B -o test -Pintegration -Dtest='SourceCatalogIT,TargetDdlIT' 2>&1 | tee runs/${S}_p2_integration.txt
+
+# ⑤ 대상 kdms DB 에 테이블 만들기(dbo 스키마). 다시 하려면 --replace
+java -jar target/kdms.jar schema 2>&1 | tee runs/${S}_p2_schema.txt
+```
+
+| 기준(plan.md §6 2단계) | 어디서 보나 |
+|---|---|
+| `KDMS_MOCK` 대상 DDL 이 KIS mock.sql 과 같은 타입 | ④ `SourceCatalogIT`·`TargetDdlIT` 통과(`Tests run: 5, Failures: 0`). 차이의 이유는 [schema-conversion.md](schema-conversion.md) §4 |
+| 보고서 | ② `runs/…_p2_plan.txt`: 오류 0 · 경고 9 · 주의 3 |
+| 대상 적용 | ⑤ `적용: 문장 …개, 테이블 8개`, `상태 SCHEMA_DONE` |
+
+`SourceCatalogIT` 가 실패하면 실패 메시지(어느 테이블·컬럼 값이 다른지)를 그대로 보내 준다. 클라우드에서 원천 MS-SQL 을 확인하지 못했기 때문에 카탈로그 조회 SQL 이나 시험 고정값을 고친다.
+
 ## 7. 자주 막히는 곳
 
 | 증상 | 원인 → 해결 |
@@ -120,4 +155,6 @@ java -jar target/kdms.jar web
 | 원천 `The TCP/IP connection … has failed` | 1433 방화벽·SQL Server TCP 설정. Mac `nc -vz 192.168.0.12 1433` 부터 |
 | 원천 `PKIX path building failed` | 노트북 자체 서명 인증서. `.env` `KDMS_SRC_TRUST_CERT=true`(시험 환경만) |
 | 대상 `password authentication failed for user "kdms_app"` | §3 에서 정한 암호와 `.env` `KDMS_TGT_PASSWORD` 가 다르다. §3 을 다시 실행하면 암호를 다시 맞춘다 |
+| `plan` 이 `결과: 막힘` · `계산 컬럼 식을 PG 로 옮겨야 한다` | `config/kdms.yml` 의 `rules:` 가 비어 있다. `rules: config/kdms-rules.yml` |
+| `schema` 가 `적용하지 않음: 대상에 이미 있다` | 이미 만든 테이블이다. 다시 만들려면 `--replace`(안의 데이터도 지워진다) |
 | `nc` 는 되는데 Java 만 안 됨 | macOS 로컬 네트워크 권한: 시스템 설정 → 개인정보 보호 및 보안 → 로컬 네트워크 → 터미널 켜기 |

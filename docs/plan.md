@@ -276,7 +276,7 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 |---|---|---|
 | **0. 환경 준비** | §2.1. 노트북에서 사람이 실행할 SQL·명령을 1단계 PR 에 함께 넣는다 | Mac 에서 1433·5432 접속, `KDMS_MOCK` CDC 켜짐, `kdms_app` 로 로그인 |
 | **1. 골격** | Maven 프로젝트, Spring Boot 4.1, 패키지 구조, 설정 파일·`.env.example`·`.gitignore`, 관리 테이블 DDL, CLI 뼈대(`kdms status`), 웹 첫 화면, 라이선스 보고서 자동 생성(`license-maven-plugin`, SBOM(Software Bill of Materials, 구성 요소 명세) `cyclonedx-maven-plugin`), 의존성 버전 고정(Kafka 버전 정렬), 시험 준비 SQL | `mvn -o package`(오프라인) 성공, 네트워크를 끊고 `java -jar kdms.jar status` 가 두 DB 버전을 출력, 라이선스 보고서에 미확인 라이선스 0 |
-| **2. 스키마 변환** | 원천 카탈로그 읽기, 규칙 엔진, DDL 생성·적용, `kdms plan` 보고서 | `KDMS_MOCK` 의 대상 DDL 이 KIS `sql/20_pg/gen/mock.sql` 의 테이블 정의와 같은 타입(차이는 규칙 파일 결정으로 설명) |
+| **2. 스키마 변환** | 원천 카탈로그 읽기, 규칙 엔진, DDL 생성·적용, `kdms plan` 보고서 (구현: [schema-conversion.md](schema-conversion.md)) | `KDMS_MOCK` 의 대상 DDL 이 KIS `sql/20_pg/gen/mock.sql` 의 테이블 정의와 같은 타입(차이는 규칙 파일 결정으로 설명) |
 | **3. 전체 적재 + 검증** | 구간 분할, COPY 적재, 재시작, 건수·합계·해시 검증, 행 단위 차이 | 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치(KIS 76/76 처럼 항목 수로 보고). 적재 도중 프로세스를 죽였다 다시 실행해 이어서 끝나고 검증 일치 |
 | **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 |
 | **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | §8 시나리오 S1~S4 통과, 전환 소요 시간 보고 |

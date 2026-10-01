@@ -1,6 +1,11 @@
 package kdms.cli;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 import kdms.config.ConfigLoader;
 import kdms.config.EnvResolver;
@@ -26,5 +31,19 @@ public class ConfigOptions {
 
     public Rules loadRules(KdmsConfig cfg) {
         return RulesLoader.load(cfg.rules().isBlank() ? null : Path.of(cfg.rules()));
+    }
+
+    /** 설정 파일 + 작업별 규칙 파일 내용의 SHA-256(kdms.job.config_sha256). 바뀌면 재시작 때 알아챈다 */
+    public String configSha256(KdmsConfig cfg) {
+        try {
+            MessageDigest d = MessageDigest.getInstance("SHA-256");
+            d.update(Files.readAllBytes(config));
+            if (!cfg.rules().isBlank()) {
+                d.update(Files.readAllBytes(Path.of(cfg.rules())));
+            }
+            return HexFormat.of().formatHex(d.digest());
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw new IllegalStateException("설정 파일 해시를 만들지 못했다", e);
+        }
     }
 }
