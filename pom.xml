@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 버전 관리는 Spring Boot 가 한다. 예외는 아래 properties 의 kafka.version(Debezium 기준) 하나. docs/plan.md §1.2, §7 R3 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>kdms</groupId>
+    <artifactId>kdms</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <name>KDMS</name>
+    <description>MS-SQL 2019 → PostgreSQL 16 미니 DMS(Database Migration Service, 데이터 이관 서비스)</description>
+
+    <properties>
+        <!-- Java 21 로 빌드·실행, 바이트코드는 17 (Debezium 3.7 커넥터가 17 바이트코드) -->
+        <java.version>17</java.version>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <debezium.version>3.7.0.Final</debezium.version>
+        <!-- Boot 4.1.1 은 kafka 4.2.1 을 관리한다. Debezium 3.7.0.Final 이 빌드·시험한 4.3.1 로 맞춘다(R3) -->
+        <kafka.version>4.3.1</kafka.version>
+        <picocli.version>4.7.7</picocli.version>
+
+        <license-maven-plugin.version>2.7.1</license-maven-plugin.version>
+    </properties>
+
+    <dependencies>
+        <!-- 내장 웹 화면(localhost) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- CLI(Command Line Interface, 명령줄) -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>${picocli.version}</version>
+        </dependency>
+
+        <!-- 설정·규칙 파일(YAML) -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+
+        <!-- JDBC 드라이버 -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+        </dependency>
+
+        <!-- CDC(Change Data Capture, 변경 데이터 캡처): Debezium Embedded, Kafka 브로커 없이. 포크하지 않고 의존성으로만 -->
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-embedded</artifactId>
+            <version>${debezium.version}</version>
+            <exclusions>
+                <!-- Embedded 엔진은 Kafka Connect REST 서버를 띄우지 않는다(licenses.md §1.1). DebeziumClasspathTest 가 엔진 기동을 확인한다 -->
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jetty.ee10</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish.jersey.containers</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish.jersey.inject</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- 위와 같은 REST 서버 전용(JAX-RS, JAXB, 요청 서명, API 문서 주석) -->
+                <exclusion>
+                    <groupId>jakarta.ws.rs</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.jakarta.rs</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.module</groupId>
+                    <artifactId>jackson-module-jakarta-xmlbind-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.activation</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bitbucket.b_c</groupId>
+                    <artifactId>jose4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- Kafka 브로커로 보내지 않으므로 메시지 압축(네이티브 라이브러리 포함)을 쓰지 않는다 -->
+                <exclusion>
+                    <groupId>com.github.luben</groupId>
+                    <artifactId>zstd-jni</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.xerial.snappy</groupId>
+                    <artifactId>snappy-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>at.yawk.lz4</groupId>
+                    <artifactId>lz4-java</artifactId>
+                </exclusion>
+                <!-- 원천 드라이버는 위에서 Boot 관리 버전으로 직접 넣는다 -->
+                <exclusion>
+                    <groupId>com.microsoft.sqlserver</groupId>
+                    <artifactId>mssql-jdbc</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-connector-sqlserver</artifactId>
+            <version>${debezium.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.microsoft.sqlserver</groupId>
+                    <artifactId>mssql-jdbc</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- Debezium 오프셋·스키마 이력을 대상 PG 에(JdbcOffsetBackingStore, JdbcSchemaHistory) -->
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-storage-jdbc</artifactId>
+            <version>${debezium.version}</version>
+        </dependency>
+
+        <!-- 시험 전용 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>kdms</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- picocli 가 입구. web 명령일 때만 Spring 을 띄운다 -->
+                    <mainClass>kdms.Kdms</mainClass>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- DB 가 필요한 시험(@Tag("integration"))은 기본 빌드에서 빼고 -Pintegration 으로 Mac 에서 돌린다 -->
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
+            </plugin>
+
+            <!-- 전이 의존성까지 라이선스 보고서. 허용 목록 밖이거나 라이선스 정보가 없으면 빌드 실패(licenses.md §4) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>third-party-report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>add-third-party</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <excludedScopes>test,provided,system</excludedScopes>
+                    <!-- 매번 검사한다(기본은 결과 파일이 최신이면 검사까지 건너뛴다) -->
+                    <force>true</force>
+                    <failOnMissing>true</failOnMissing>
+                    <failOnBlacklist>true</failOnBlacklist>
+                    <useMissingFile>true</useMissingFile>
+                    <missingFile>${project.basedir}/config/license/THIRD-PARTY.properties</missingFile>
+                    <thirdPartyFilename>THIRD-PARTY.txt</thirdPartyFilename>
+                    <outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
+                    <sortArtifactByName>true</sortArtifactByName>
+                    <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByMultiLicense.ftl</fileTemplate>
+                    <!-- 같은 라이선스의 여러 표기를 SPDX(Software Package Data Exchange) 식별자 하나로 모은다 -->
+                    <licenseMergesUrl>file://${project.basedir}/config/license/license-merges.txt</licenseMergesUrl>
+                    <includedLicenses>file://${project.basedir}/config/license/allowed-licenses.txt</includedLicenses>
+                </configuration>
+            </plugin>
+
+            <!-- SBOM(Software Bill of Materials, 구성 요소 명세). 설정은 Spring Boot parent 가 관리:
+                 jar 안 META-INF/sbom/application.cdx.json (CycloneDX 형식) -->
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- mvn -Pintegration test : .env 의 접속 정보로 노트북 DB 에 붙는 시험만 -->
+        <profile>
+            <id>integration</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>integration</groups>
+                            <excludedGroups combine.self="override"/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

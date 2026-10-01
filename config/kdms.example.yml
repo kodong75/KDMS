@@ -1,0 +1,38 @@
+# KDMS 작업 설정 예시. config/kdms.yml 로 복사해 쓴다(config/kdms.yml 은 커밋하지 않는다).
+# ${이름} / ${이름:기본값} 은 환경 변수 → .env 순서로 채운다. 비밀번호는 여기에 직접 쓰지 않는다.
+job_name: kdms_mock
+
+source:                                   # MS-SQL 2019 (원천)
+  host: ${KDMS_SRC_HOST}
+  port: ${KDMS_SRC_PORT:1433}
+  database: ${KDMS_SRC_DB:KDMS_MOCK}
+  user: ${KDMS_SRC_USER}
+  password: ${KDMS_SRC_PASSWORD}
+  properties:                             # mssql-jdbc 드라이버 속성 그대로
+    encrypt: "true"
+    # 시험 노트북은 자체 서명 인증서라 true(KIS:docs/issues.md E03). 운영은 false 로 두고 인증서를 신뢰 저장소에 넣는다
+    trustServerCertificate: ${KDMS_SRC_TRUST_CERT:false}
+
+target:                                   # PostgreSQL 16 (대상). 관리 스키마 kdms 도 여기에 만든다
+  host: ${KDMS_TGT_HOST}
+  port: ${KDMS_TGT_PORT:5432}
+  database: ${KDMS_TGT_DB:kdms}
+  user: ${KDMS_TGT_USER:kdms_app}
+  password: ${KDMS_TGT_PASSWORD}
+  properties:                             # PgJDBC 드라이버 속성 그대로
+    sslmode: ${KDMS_TGT_SSLMODE:prefer}
+
+load:                                     # 전체 적재 병렬도(3단계)
+  table_parallelism: 4
+  chunks_per_table: 2
+
+tables:                                   # schema.table, * 사용 가능(2단계부터 사용)
+  include: ["dbo.*"]
+  exclude: []
+
+# 작업별 변환 규칙 파일. 비우면 jar 안의 기본 규칙만. 예: config/kdms-rules.yml
+rules: ""
+
+web:                                      # 내장 웹. 127.0.0.1 이 아니면 LAN 에 열린다(인증 없음)
+  address: 127.0.0.1
+  port: 8080

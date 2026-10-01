@@ -82,3 +82,43 @@ MVP 는 외부 프런트엔드 라이브러리를 쓰지 않는다(직접 작성
 
 - **Debezium 은 포크하지 않는다.** Maven 의존성으로만 쓰고 확장은 공개 인터페이스(엔진 API, `OffsetBackingStore` 설정 등)로만 한다.
 - GPL·AGPL·SSPL 등 강한 카피레프트 라이선스가 jar 에 들어오면 1단계 보고서 검사로 빌드를 실패시킨다(허용 목록: Apache-2.0, MIT, BSD-2/3-Clause, 0BSD, EPL-2.0, LGPL-2.1(이중 라이선스 한정), 그 밖은 개별 승인).
+
+## 5. 1단계 자동 보고서 결과 (2026-10-01)
+
+`license-maven-plugin` 이 `package` 때마다 전이 의존성까지 검사한다(설정: `pom.xml`, `config/license/`).
+
+- 허용 목록: `config/license/allowed-licenses.txt` (Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, 0BSD, EPL-2.0). 이중 라이선스는 하나라도 허용 목록에 있으면 통과(Logback EPL-2.0/LGPL-2.1, Jakarta Annotations EPL-2.0/GPL-2.0+CPE).
+- 같은 라이선스의 여러 표기는 `config/license/license-merges.txt` 로 SPDX(Software Package Data Exchange) 식별자 하나로 모은다.
+- 라이선스 정보가 없거나 허용 목록 밖이면 빌드 실패. 허용 목록에서 EPL-2.0 을 빼 보면 실패하는 것을 확인했다.
+- 결과: jar 안 `META-INF/THIRD-PARTY.txt`(라이선스별 목록), `META-INF/sbom/application.cdx.json`(CycloneDX SBOM).
+- 라이선스 전문(全文) 모음(`download-licenses`)은 빌드 중 인터넷이 필요해 7단계 설치본에서 한다.
+
+### 5.1 실제로 들어간 버전 (§1 의 "확인 버전" 과 다른 것)
+
+§1 은 그날 최신판이고, jar 에는 Spring Boot 4.1.1 이 관리하는 버전이 들어간다. 예외는 `kafka.version` 하나(Debezium 기준 4.3.1).
+
+| 구성 요소 | §1 확인 버전 | 실제 | 비고 |
+|---|---|---|---|
+| mssql-jdbc | 13.6.0.jre11 | 13.4.0.jre11 | Boot 관리. Debezium 3.7 은 12.4.2.jre8 로 시험했다(4단계 실측 대상) |
+| Tomcat | 11.0.26 | 11.0.24 | Boot 관리 |
+| Jackson 2 (Debezium 용) | 2.22.3 | 2.21.5 | Boot 관리. Debezium 3.7 은 2.21.2. Spring 웹은 Jackson 3(`tools.jackson` 3.1.5) |
+| SnakeYAML | 2.7 | 2.6 | Boot 관리 |
+| Logback | 1.6.5 | 1.5.38 | Boot 관리 |
+| SLF4J | 2.0.20 | 2.0.18 | Boot 관리 |
+| ClassGraph | 4.8.196 | 4.8.179 | Kafka 4.3.1 고정 |
+| HikariCP, Micrometer core | — | 아직 없음 | 1단계에서는 쓰지 않아 넣지 않았다(필요한 단계에서 추가) |
+
+### 5.2 뺀 것 (pom.xml `exclusions`)
+
+Kafka Connect Runtime 이 끌어오지만 Embedded 엔진에서 쓰지 않는 것. `DebeziumClasspathTest` 가 엔진이 접속 단계까지 가고 스트리밍 단계 클래스가 모두 로드되는지 확인한다. 실제 스트리밍은 4단계에서 확인한다.
+
+| 뺀 것 | 라이선스 | 이유 |
+|---|---|---|
+| Jetty, Jersey(containers·inject) | EPL-2.0 / Apache-2.0, EPL-2.0 / GPL-2.0+CPE | Connect REST 서버 |
+| jakarta.ws.rs-api, jackson-jakarta-rs-*, jackson-module-jakarta-xmlbind-annotations | EPL-2.0 / GPL-2.0+CPE, Apache-2.0 | 위와 같음 |
+| javax.xml.bind:jaxb-api 2.3.1, javax.activation 1.1.1·activation-api 1.2.0 | CDDL-1.1 / GPL-2.0+CPE, CDDL-1.0 | 위와 같음. CDDL 은 허용 목록 밖이라 빼는 편이 낫다 |
+| jose4j, swagger-annotations | Apache-2.0 | Connect REST 요청 서명·API 문서 |
+| zstd-jni, snappy-java, lz4-java | BSD-2-Clause, Apache-2.0, Apache-2.0 | Kafka 메시지 압축(네이티브 라이브러리 포함). 브로커로 보내지 않으므로 쓰지 않는다 |
+| Debezium 이 끌어오는 mssql-jdbc | MIT | Boot 관리 버전 하나만 쓴다 |
+
+남아 있는 것 중 쓰지 않을 가능성이 큰 것: `debezium-storage-file`, `debezium-storage-kafka`, `connect-file`(모두 Apache-2.0). 4단계에서 JDBC 저장소로 엔진을 띄운 뒤 빼 볼 수 있다.

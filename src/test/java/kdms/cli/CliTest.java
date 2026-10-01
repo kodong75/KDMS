@@ -1,0 +1,69 @@
+package kdms.cli;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import kdms.Kdms;
+import picocli.CommandLine;
+
+class CliTest {
+
+    private final StringWriter out = new StringWriter();
+    private final StringWriter err = new StringWriter();
+
+    private int run(String... args) {
+        CommandLine cl = Kdms.newCommandLine();
+        cl.setOut(new PrintWriter(out));
+        cl.setErr(new PrintWriter(err));
+        return cl.execute(args);
+    }
+
+    @Test
+    void 도움말에_명령이_보인다() {
+        assertThat(run("--help")).isZero();
+        assertThat(out.toString()).contains("status").contains("init").contains("web");
+    }
+
+    @Test
+    void 설정파일이_없으면_한줄_오류와_종료코드_1() {
+        assertThat(run("status", "-c", "config/missing.yml", "--env-file", "missing.env")).isEqualTo(ErrorHandler.CONFIG_ERROR);
+        assertThat(err.toString()).startsWith("설정 오류: ").contains("kdms.example.yml").doesNotContain("Exception");
+    }
+
+    @Test
+    void 접속이_안되면_실패를_출력하고_종료코드_2(@TempDir Path dir) throws IOException {
+        // 127.0.0.1:1 은 아무도 듣지 않는 포트 → 즉시 거부
+        Path env = dir.resolve(".env");
+        Files.writeString(env, """
+                KDMS_SRC_HOST=127.0.0.1
+                KDMS_SRC_PORT=1
+                KDMS_SRC_USER=u
+                KDMS_SRC_PASSWORD=never-printed
+                KDMS_TGT_HOST=127.0.0.1
+                KDMS_TGT_PORT=1
+                KDMS_TGT_PASSWORD=never-printed
+                """);
+        int code = run("status", "-c", "config/kdms.example.yml", "--env-file", env.toString());
+        assertThat(code).isEqualTo(StatusCommand.CONNECTION_FAILED);
+        assertThat(out.toString())
+                .contains("[원천] u@127.0.0.1:1/KDMS_MOCK")
+                .contains("[대상] kdms_app@127.0.0.1:1/kdms")
+                .contains("실패")
+                .contains("변환 규칙: 기본(jar 안), 타입 규칙")
+                .doesNotContain("never-printed");
+    }
+
+    @Test
+    void 한글_표시폭_맞춤() {
+        assertThat(StatusCommand.pad("버전")).isEqualTo("  버전" + " ".repeat(16));
+        assertThat(StatusCommand.pad("SQL Agent")).isEqualTo("  SQL Agent" + " ".repeat(11));
+    }
+}

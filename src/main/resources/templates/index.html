@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KDMS</title>
+    <!-- 외부 CDN 없음: CSS·JS 는 jar 안 static/ 에서만 읽는다(plan.md T-N02) -->
+    <link rel="stylesheet" th:href="@{/kdms.css}">
+    <script th:src="@{/kdms.js}" defer></script>
+</head>
+<body>
+<header>
+    <h1>KDMS</h1>
+    <span class="sub">MS-SQL → PostgreSQL 데이터 이관</span>
+    <span class="meta" th:text="|버전 ${report.kdmsVersion}|">버전</span>
+</header>
+
+<main>
+    <section class="summary">
+        <div><span class="label">작업</span> <span th:text="${report.jobName}">job</span></div>
+        <div><span class="label">변환 규칙</span> <span th:text="${report.rulesSummary}">rules</span></div>
+        <div><span class="label">확인 시각</span>
+            <span th:text="${#temporals.format(report.checkedAt, 'yyyy-MM-dd HH:mm:ss')}">time</span>
+            <button type="button" id="refresh">다시 확인</button>
+        </div>
+    </section>
+
+    <section class="probes">
+        <article th:each="p : ${ {report.source, report.target} }" class="probe"
+                 th:classappend="${p.connected} ? 'ok' : 'fail'">
+            <h2>
+                <span th:text="${p.role}">원천</span>
+                <span class="state" th:text="${p.connected} ? '접속됨' : '접속 실패'">상태</span>
+            </h2>
+            <p class="target" th:text="${p.target}">user@host:port/db</p>
+            <table th:if="${p.connected}">
+                <tr th:each="i : ${p.items}">
+                    <th th:text="${i.name}">이름</th>
+                    <td th:text="${i.value}">값</td>
+                </tr>
+                <tr>
+                    <th>응답</th>
+                    <td th:text="|${p.elapsedMs} ms|">ms</td>
+                </tr>
+            </table>
+            <ul class="warnings" th:if="${!#lists.isEmpty(p.warnings)}">
+                <li th:each="w : ${p.warnings}" th:text="${w}">주의</li>
+            </ul>
+            <pre class="error" th:unless="${p.connected}" th:text="${p.error}">오류</pre>
+        </article>
+    </section>
+
+    <section class="next">
+        <h2>다음 단계</h2>
+        <p>1단계(골격)는 접속·버전 확인까지다. 스키마 변환(2단계), 전체 적재·검증(3단계), CDC 반영(4단계), 전환(5단계)은 차례로 이 화면에 붙는다.</p>
+        <p>상태 JSON: <a th:href="@{/api/status}">/api/status</a></p>
+    </section>
+</main>
+</body>
+</html>
