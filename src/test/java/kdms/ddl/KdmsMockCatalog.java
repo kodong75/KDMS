@@ -18,7 +18,7 @@ import kdms.catalog.SourceCatalog.Table;
  * KDMS_MOCK(= KIS MIG_MOCK 사본) 카탈로그를 KIS sql/10_mssql/11_schema_pitfalls.sql 대로 손으로 옮긴 것.
  * sys.columns 값(max_length 는 바이트, nvarchar 는 문자 수 × 2) 그대로. 실제 원천과 같은지는 SourceCatalogIT 가 Mac 에서 확인한다.
  * IDENTITY·SEQUENCE 현재값은 KIS sql/20_pg/gen/mock.sql(2026-09-30 생성)의 setval 값.
- * dbo.file_attach 는 그 뒤 KIS sql/10_mssql/19_file_name_data.sql(KIS #23)이 MIG_MOCK 에 더한 테이블이다.
+ * 노트북 실측(2026-10-01, 복원·CDC 결과)도 이 7개 테이블이다. KIS sql/10_mssql/19_file_name_data.sql 의 dbo.file_attach 는 노트북 MIG_MOCK 에 없다.
  */
 final class KdmsMockCatalog {
 
@@ -57,17 +57,6 @@ final class KdmsMockCatalog {
                         text(2, "table_nm", "sysname", 256, false),
                         col(3, "row_cnt", "bigint", 8, 19, 0, false)),
                 List.of(pk("pk_daily_count", "snap_dt", "table_nm")),
-                List.of(), List.of()));
-        t.add(table("file_attach", 20,
-                List.of(
-                        col(1, "file_id", "int", 4, 10, 0, false),
-                        text(2, "case_cd", "varchar", 10, false),
-                        text(3, "case_desc", "nvarchar", 400, false),
-                        text(4, "file_nm", "nvarchar", 520, true),
-                        text(5, "file_nm_a", "varchar", 260, true),
-                        text(6, "file_path", "nvarchar", 800, true),
-                        text(7, "file_url", "varchar", 2000, true)),
-                List.of(pk("pk_file_attach", "file_id")),
                 List.of(), List.of()));
         t.add(table("issuer", 2010,
                 List.of(

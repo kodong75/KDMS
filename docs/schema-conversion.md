@@ -49,8 +49,8 @@
 
 ## 4. KDMS_MOCK: KIS `sql/20_pg/gen/mock.sql` 과 비교 (2단계 완료 기준)
 
-**컬럼 타입은 7개 테이블 55개 컬럼 모두 같다.** KDMS_MOCK 에는 mock.sql 생성(2026-09-30) 뒤 KIS #23 이 더한 `dbo.file_attach`(파일명 인코딩 함정 F01~F20)까지 8개 테이블이 있고,
-그 7개 컬럼도 KIS `sql/10_mssql/20_gen_pg_ddl.sql` 의 같은 타입 규칙으로 계산한 값과 같다. `SchemaPlannerTest.KDMS_MOCK_대상_타입은_KIS_mock_sql_과_같다`(mock.sql 값을 그대로 옮겨 비교)와
+**컬럼 타입은 7개 테이블 55개 컬럼 모두 같다.** 노트북 실측 KDMS_MOCK 도 이 7개 테이블이다(KIS #23 의 `dbo.file_attach` 는 노트북 MIG_MOCK 에 없다. 나중에 생기면 `SourceCatalogIT` 가 차이로 알려 준다).
+`SchemaPlannerTest.KDMS_MOCK_대상_타입은_KIS_mock_sql_과_같다`(mock.sql 값을 그대로 옮겨 비교)와
 `TargetDdlIT`(PG 에 실제로 만든 뒤 `format_type` 으로 읽어 비교)가 확인한다. 시험 고정값(`KdmsMockCatalog`)이 실제 원천과 같은지는 `SourceCatalogIT` 가 Mac 에서 확인한다.
 
 타입 밖의 차이는 모두 규칙 결정이다.

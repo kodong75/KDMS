@@ -27,8 +27,7 @@ class SchemaPlannerTest {
 
     /**
      * 2단계 완료 기준(plan.md §6): KIS sql/20_pg/gen/mock.sql(2026-09-30 생성)의 테이블 정의와 같은 타입.
-     * 아래 값은 그 파일에서 그대로 옮겼다. file_attach 는 mock.sql 생성 뒤 KIS #23 이 더한 테이블이라
-     * KIS sql/10_mssql/20_gen_pg_ddl.sql 의 같은 타입 규칙으로 손으로 계산했다.
+     * 아래 값은 그 파일에서 그대로 옮겼다.
      */
     @Test
     void KDMS_MOCK_대상_타입은_KIS_mock_sql_과_같다() {
@@ -36,8 +35,6 @@ class SchemaPlannerTest {
         kis.put("app_user", "user_id integer, login_id varchar(30), user_nm varchar(50), email varchar(100), member_level smallint, joined_dtm timestamp(3)");
         kis.put("code_master", "code_grp varchar(20), code varchar(10), code_nm varchar(100), code_nm_short varchar(20), sort_no smallint, use_yn char(1)");
         kis.put("daily_count", "snap_dt date, table_nm varchar(128), row_cnt bigint");
-        kis.put("file_attach", "file_id integer, case_cd varchar(10), case_desc varchar(200), file_nm varchar(260), file_nm_a varchar(260), "
-                + "file_path varchar(400), file_url varchar(2000)");
         kis.put("issuer", "issuer_id integer, issuer_cd char(6), issuer_nm varchar(100), issuer_nm_cp949 varchar(40), issuer_nm_en varchar(200), "
                 + "region_cd char(2), industry_cd varchar(2), is_listed boolean, issuer_guid uuid, row_ver bytea, reg_dtm timestamp(3), upd_dtm timestamp(6)");
         kis.put("rating", "rating_id bigint, issuer_id integer, rating_cd varchar(10), outlook_cd char(1), rating_dt date, eff_dtm timestamp(3), "
@@ -276,7 +273,7 @@ class SchemaPlannerTest {
     void 보고서() {
         String r = PlanReport.render(mockPlan(), List.of("머리글"));
         assertThat(r).startsWith("머리글\n")
-                .contains("요약: 테이블 8개 (PK 없음 0, 제외 0) · 컬럼 62개")
+                .contains("요약: 테이블 7개 (PK 없음 0, 제외 0) · 컬럼 55개")
                 .contains("결과: 통과")
                 .contains("dbo.rating → dbo.rating")
                 .contains("[적재 뒤] CREATE UNIQUE INDEX \"uq_app_user_login\"")

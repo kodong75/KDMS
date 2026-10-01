@@ -143,7 +143,7 @@ java -jar target/kdms.jar schema 2>&1 | tee runs/${S}_p2_schema.txt
 |---|---|
 | `KDMS_MOCK` 대상 DDL 이 KIS mock.sql 과 같은 타입 | ④ `SourceCatalogIT`·`TargetDdlIT` 통과(`Tests run: 5, Failures: 0`). 차이의 이유는 [schema-conversion.md](schema-conversion.md) §4 |
 | 보고서 | ② `runs/…_p2_plan.txt`: 오류 0 · 경고 9 · 주의 3 |
-| 대상 적용 | ⑤ `적용: 문장 …개, 테이블 8개`, `상태 SCHEMA_DONE` |
+| 대상 적용 | ⑤ `적용: 문장 …개, 테이블 7개`, `상태 SCHEMA_DONE` |
 
 `SourceCatalogIT` 가 실패하면 실패 메시지(어느 테이블·컬럼 값이 다른지)를 그대로 보내 준다. 클라우드에서 원천 MS-SQL 을 확인하지 못했기 때문에 카탈로그 조회 SQL 이나 시험 고정값을 고친다.
 

@@ -126,8 +126,8 @@ class TargetDdlIT {
                 try (ResultSet rs = ps.executeQuery()) {
                     assertThat(rs.next()).isTrue();
                     assertThat(rs.getString(1)).isEqualTo("SCHEMA_DONE");
-                    assertThat(rs.getInt(2)).isEqualTo(8);
-                    assertThat(rs.getInt(3)).isEqualTo(8);
+                    assertThat(rs.getInt(2)).isEqualTo(7);
+                    assertThat(rs.getInt(3)).isEqualTo(7);
                 }
             }
         }
@@ -140,7 +140,7 @@ class TargetDdlIT {
             assertThatThrownBy(() -> SchemaApplier.apply(c, plan, Phase.PRE_LOAD, false, job))
                     .isInstanceOf(SchemaApplier.Refused.class).hasMessageContaining("--replace");
             SchemaApplier.Result r = SchemaApplier.apply(c, plan, Phase.PRE_LOAD, true, job);
-            assertThat(r.dropped()).hasSize(9); // 테이블 8 + 시퀀스 1
+            assertThat(r.dropped()).hasSize(8); // 테이블 7 + 시퀀스 1
 
             try (Statement st = c.createStatement()) {
                 st.execute("UPDATE kdms.job SET status = 'LOADING' WHERE job_name = '" + SCHEMA + "'");
