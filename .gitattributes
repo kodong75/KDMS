@@ -1,0 +1,6 @@
+# 줄끝: 대부분 LF, PowerShell 은 CRLF (KIS 와 같은 규칙)
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.jar binary
+*.png binary
+*.cmd text eol=crlf

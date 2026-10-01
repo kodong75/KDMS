@@ -1,0 +1,6 @@
+Apache-2.0
+MIT
+BSD-2-Clause
+BSD-3-Clause
+0BSD
+EPL-2.0

@@ -1,0 +1,21 @@
+# 비밀번호·접속 정보
+.env
+.env.*
+!.env.example
+config/kdms.yml
+
+# 빌드
+target/
+*.class
+
+# IDE·OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 실행 결과 중 덤프·대용량(원문 결과 txt 는 커밋한다)
+runs/*.bak
+runs/*.dmp
+runs/*.csv

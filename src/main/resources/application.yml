@@ -1,0 +1,14 @@
+# 내장 웹 설정. 주소·포트는 kdms web 명령이 config/kdms.yml 의 web: 값으로 덮어쓴다.
+spring:
+  main:
+    banner-mode: off
+  application:
+    name: kdms
+  thymeleaf:
+    cache: true
+
+server:
+  address: 127.0.0.1
+  port: 8080
+  error:
+    include-stacktrace: never

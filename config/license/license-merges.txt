@@ -1,0 +1,6 @@
+Apache-2.0|Apache License, Version 2.0|Apache Software License 2.0|The Apache License, Version 2.0|The Apache Software License, version 2.0|The Apache Software License, Version 2.0|Apache License 2.0|Apache 2.0
+MIT|MIT License|The MIT License|The MIT License (MIT)
+BSD-2-Clause|BSD 2-Clause License|The BSD 2-Clause License
+BSD-3-Clause|BSD 3-Clause License|The BSD 3-Clause License|BSD License 3|New BSD License
+EPL-2.0|EPL 2.0|Eclipse Public License 2.0|Eclipse Public License v2.0|Eclipse Public License - v 2.0
+GPL-2.0-with-classpath-exception|GPL2 w/ CPE|GNU General Public License, version 2 with the GNU Classpath Exception
