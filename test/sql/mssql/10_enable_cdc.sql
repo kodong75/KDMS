@@ -12,7 +12,8 @@
 SET NOCOUNT ON;
 USE master;
 
-IF NOT EXISTS (SELECT 1 FROM sys.dm_server_services WHERE servicename LIKE N'SQL Server Agent%' AND status_desc = N'Running')
+-- servicename 은 OS 언어에 따라 바뀐다(한국어 Windows: 'SQL Server 에이전트 (MSSQLSERVER)'). 실행 파일 이름 SQLAGENT 로 찾는다
+IF NOT EXISTS (SELECT 1 FROM sys.dm_server_services WHERE filename LIKE N'%SQLAGENT%' AND status_desc = N'Running')
     RAISERROR(N'SQL Server Agent 가 실행 중이 아니다. 관리자 PowerShell: Start-Service SQLSERVERAGENT', 16, 1);
 IF DB_ID(N'KDMS_MOCK') IS NULL
     RAISERROR(N'KDMS_MOCK 이 없다. 00_restore_kdms_mock.sql 을 먼저 실행한다.', 16, 1);

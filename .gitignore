@@ -22,3 +22,6 @@ Thumbs.db
 runs/*.bak
 runs/*.dmp
 runs/*.csv
+
+# 문서 도구(docs/design/tools)
+__pycache__/

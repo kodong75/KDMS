@@ -84,14 +84,16 @@ open -e .env                         # 텍스트 편집기로 열기
 cd ~/KDMS
 S=$(date +%Y%m%d_%H%M)
 
-# ① 온라인 빌드 1회(의존성을 ~/.m2 에 받는다) + 단위 시험·라이선스 검사
-./mvnw -B package 2>&1 | tee runs/${S}_p1_build_online.txt
+# ① 온라인 빌드 1회(의존성·플러그인을 ~/.m2 에 받는다) + 단위 시험·라이선스 검사
+#    clean 을 꼭 넣는다. 빼면 clean 플러그인을 받지 않아 ② 오프라인 빌드가 PluginResolutionException 으로 실패한다
+./mvnw -B clean package 2>&1 | tee runs/${S}_p1_build_online.txt
 
 # ② 오프라인 빌드(-o): 외부 다운로드 없이 다시 빌드되는지
 ./mvnw -B -o clean package 2>&1 | tee runs/${S}_p1_build_offline.txt
 
 # ③ 인터넷을 끊고(공유기의 인터넷(WAN) 선만 뽑아 LAN 은 살린다) 두 DB 버전 출력
-java -jar target/kdms.jar status 2>&1 | tee runs/${S}_p1_status.txt
+#    파이프(| tee) 뒤의 $? 는 tee 의 종료 코드라 늘 0 이다. 파일로 받은 뒤 종료 코드를 보고 내용을 출력한다
+java -jar target/kdms.jar status > runs/${S}_p1_status.txt 2>&1; echo "exit=$?"; cat runs/${S}_p1_status.txt
 
 # ④ 관리 스키마 만들기(두 번 해도 같다) 후 다시 status
 java -jar target/kdms.jar init 2>&1 | tee runs/${S}_p1_init.txt
@@ -154,7 +156,18 @@ java -jar target/kdms.jar schema 2>&1 | tee runs/${S}_p2_schema.txt
 | `설정 오류: … 환경 변수 KDMS_SRC_PASSWORD 가 없습니다` | `.env` 를 저장소 루트에 두지 않았거나 이름이 다르다. `--env-file 경로` 로 지정할 수도 있다 |
 | 원천 `The TCP/IP connection … has failed` | 1433 방화벽·SQL Server TCP 설정. Mac `nc -vz 192.168.0.12 1433` 부터 |
 | 원천 `PKIX path building failed` | 노트북 자체 서명 인증서. `.env` `KDMS_SRC_TRUST_CERT=true`(시험 환경만) |
+| 원천 `Login failed for user 'kodong_ms'` | 노트북 SQL Server 오류 로그의 원인 문구로 가른다(표 아래 명령). 흔한 것은 `.env` `KDMS_SRC_PASSWORD` 불일치, 혼합 인증 꺼짐, `KDMS_MOCK` 접근 권한 없음. `.env` 값은 따옴표 없이 쓴다(텍스트 편집기가 `"` 를 둥근 따옴표로 바꾸면 따옴표까지 암호가 된다) |
 | 대상 `password authentication failed for user "kdms_app"` | §3 에서 정한 암호와 `.env` `KDMS_TGT_PASSWORD` 가 다르다. §3 을 다시 실행하면 암호를 다시 맞춘다 |
 | `plan` 이 `결과: 막힘` · `계산 컬럼 식을 PG 로 옮겨야 한다` | `config/kdms.yml` 의 `rules:` 가 비어 있다. `rules: config/kdms-rules.yml` |
 | `schema` 가 `적용하지 않음: 대상에 이미 있다` | 이미 만든 테이블이다. 다시 만들려면 `--replace`(안의 데이터도 지워진다) |
+| `SQL Server Agent 가 실행 중이 아니다` 인데 `Get-Service SQLSERVERAGENT` 는 Running | 한국어 Windows 는 서비스 이름이 'SQL Server 에이전트'라 옛 검사가 못 찾았다. 2026-10-01 에 실행 파일 이름(SQLAGENT)으로 찾도록 고쳤다. 저장소를 `git pull` 한 뒤 다시 실행 |
+| ② 오프라인 빌드 `PluginResolutionException` | ① 을 `clean` 없이 돌려 clean 플러그인이 `~/.m2` 에 없다. 인터넷이 될 때 `./mvnw -B clean package` 한 번 → ② 다시 |
 | `nc` 는 되는데 Java 만 안 됨 | macOS 로컬 네트워크 권한: 시스템 설정 → 개인정보 보호 및 보안 → 로컬 네트워크 → 터미널 켜기 |
+
+원천 로그인 실패 원인 보기(노트북 PowerShell 7, Windows 인증):
+
+```powershell
+sqlcmd -E -f 65001 -W -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsIntegratedSecurityOnly') AS windows_only; EXEC xp_readerrorlog 0, 1, N'kodong_ms';" -o ("runs/{0}_p1_loginfail.txt" -f (Get-Date -Format 'yyyyMMdd_HHmm'))
+```
+
+`windows_only` 가 1 이면 혼합 인증이 꺼져 있다. 찾은 줄의 `Reason:`(또는 `원인:`) 문구가 원인이다. 암호 불일치는 "Password did not match", 로그인 없음은 "Could not find a login", 혼합 인증 꺼짐은 "configured for Windows authentication only", DB 접근 불가는 "Failed to open the explicitly specified database".
