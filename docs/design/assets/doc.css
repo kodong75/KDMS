@@ -7,14 +7,14 @@
 }
 
 :root {
-  --navy: #0B2545;
-  --primary: #1B4F8F;
-  --sky: #3B8FD9;
-  --text: #1E2A3A;
-  --muted: #5B6B80;
-  --line: #C9DCF0;
-  --soft: #F4F8FD;
-  --strong-fill: #DCEAF9;
+  --navy: #0A2342;
+  --primary: #164B8C;
+  --sky: #1F74C4;
+  --text: #16202C;
+  --muted: #3F4E61;
+  --line: #A9C3E2;
+  --soft: #F1F6FC;
+  --strong-fill: #D3E5F8;
   --bg: #FFFFFF;
 }
 

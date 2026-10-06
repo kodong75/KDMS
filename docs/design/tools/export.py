@@ -6,12 +6,13 @@
 필요한 것
 - Chromium 계열 브라우저(헤드리스). 환경 변수 CHROME 로 경로를 지정할 수 있다.
   창 크기를 정확히 지키는 headless_shell(Playwright 배포본)을 먼저 찾는다.
-- PPTX 는 python-pptx(MIT). 없으면 PPTX 만 건너뛴다.
+- PPTX 는 python-pptx(MIT)로 편집 가능한 도형을 만든다(pptx_export.py). 없으면 PPTX 만 건너뛴다.
 """
 
 from __future__ import annotations
 
 import glob
+import importlib
 import os
 import shutil
 import subprocess
@@ -47,7 +48,7 @@ def chrome(args: list[str]) -> None:
     subprocess.run([exe, *flags, *args], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def export_doc(doc_id: str) -> None:
+def export_doc(doc_id: str, module: str) -> None:
     svg = DESIGN_DIR / "diagrams" / f"{doc_id}.svg"
     html = DESIGN_DIR / f"{doc_id}.html"
     png = DIST / f"{doc_id}.png"
@@ -55,18 +56,12 @@ def export_doc(doc_id: str) -> None:
     chrome([f"--screenshot={png}", "--window-size=1600,900", f"--force-device-scale-factor={SCALE}", svg.as_uri()])
     chrome(["--no-pdf-header-footer", f"--print-to-pdf={pdf}", html.as_uri()])
     try:
-        from pptx import Presentation
-        from pptx.util import Emu
+        import pptx_export
     except ImportError:
         print("python-pptx 없음: PPTX 건너뜀")
         return
-    prs = Presentation()
-    prs.slide_width, prs.slide_height = Emu(12192000), Emu(6858000)  # 16:9 (33.867 x 19.05 cm)
-    slide = prs.slides.add_slide(prs.slide_layouts[6])               # 빈 레이아웃
-    slide.shapes.add_picture(str(png), 0, 0, prs.slide_width, prs.slide_height)
-    prs.core_properties.title = f"KDMS {doc_id}"
-    prs.core_properties.author = "KDMS"
-    prs.save(DIST / f"{doc_id}.pptx")
+    mod = importlib.import_module(module)
+    pptx_export.build(mod.build(), DIST / f"{doc_id}.pptx", f"KDMS {mod.TITLE}")
 
 
 def main() -> None:
@@ -74,7 +69,7 @@ def main() -> None:
     DIST.mkdir(exist_ok=True)
     for doc in build.DOCS:
         if "id" in doc:
-            export_doc(doc["id"])
+            export_doc(doc["id"], doc["module"])
             print("exported:", doc["id"], "(png, pdf, pptx)")
 
 

@@ -4,7 +4,7 @@ from diagram import Diagram
 
 ID = "d01-system-architecture"
 TITLE = "시스템 구성도"
-VERSION = "v0.1"
+VERSION = "v0.2"
 DATE = "2026-10-06"
 
 
@@ -14,55 +14,55 @@ def build() -> Diagram:
                 f"KDMS-D01 · {VERSION} · {DATE}")
 
     # 영역: 원천 / kdms.jar / 대상
-    d.zone(50, 290, 290, 480, "원천 · MS-SQL 2019", "JDBC(mssql-jdbc) · TCP 1433")
-    d.zone(410, 190, 780, 580, "kdms.jar · 단일 실행 파일", "Spring Boot · Java 17+ · 외부 다운로드 0",
+    d.zone(50, 270, 270, 506, "원천 · MS-SQL 2019", "JDBC(mssql-jdbc) · TCP 1433")
+    d.zone(390, 176, 820, 600, "kdms.jar · 단일 실행 파일", "Spring Boot · Java 17+ · 외부 다운로드 0",
            core=True, align="end")
-    d.zone(1260, 290, 290, 480, "대상 · PostgreSQL 16", "JDBC(PgJDBC) · TCP 5432")
+    d.zone(1270, 270, 280, 506, "대상 · PostgreSQL 16", "JDBC(PgJDBC) · TCP 5432")
 
-    d.pill("op", 470, 118, 410, 44, "운영자 · 브라우저 / 터미널", "person")
+    d.block("op", 450, 108, 433, 48, "운영자 · 브라우저 / 터미널", icon="person", pill=True)
 
     # 1행: 사용 화면·설정
-    d.block("web", 434, 256, 232, 92, "내장 웹 화면", ["진행률 · 지연 · 검증 결과"], icon="web")
-    d.block("cli", 684, 256, 232, 92, "CLI", ["plan · load · sync · cutover"], icon="terminal")
-    d.block("cfg", 934, 256, 232, 92, "설정 · 변환 규칙", ["kdms.yml · kdms-rules.yml"], icon="rule_settings")
+    d.block("web", 410, 248, 246, 100, "내장 웹 화면", ["진행률 · 지연 · 검증 결과"], icon="web")
+    d.block("cli", 677, 248, 246, 100, "CLI", ["plan · load · sync · cutover"], icon="terminal")
+    d.block("cfg", 944, 248, 246, 100, "설정 · 변환 규칙", ["kdms.yml · kdms-rules.yml"], icon="rule_settings")
 
     # 2행: 전체 적재
-    d.block("s1", 434, 368, 336, 110, "스키마 변환", ["카탈로그 → 대상 DDL (규칙 적용)"], icon="schema", num="1")
-    d.block("s2", 830, 368, 336, 110, "전체 적재기", ["SNAPSHOT 읽기 → COPY · 구간 병렬"], icon="database_upload", num="2")
+    d.block("s1", 410, 362, 360, 122, "스키마 변환", ["카탈로그 → 대상 DDL (규칙 적용)"], icon="schema", num="1")
+    d.block("s2", 830, 362, 360, 122, "전체 적재기", ["SNAPSHOT 읽기 → COPY · 구간 병렬"], icon="database_upload", num="2")
 
     # 3행: 변경분 동기화(무중단 핵심, 강조)
-    d.block("s3", 434, 498, 212, 110, "CDC 수집", ["Debezium Embedded"], icon="sync", num="3", strong=True)
-    d.block("buf", 694, 498, 212, 110, "변경 이벤트 버퍼", ["kdms.change_log"], icon="receipt_long")
-    d.block("s4", 954, 498, 212, 110, "반영기", ["LSN 순서 · 멱등 반영"], icon="published_with_changes", num="4", strong=True)
+    d.block("s3", 410, 498, 226, 122, "CDC 수집", ["Debezium Embedded"], icon="sync", num="3", strong=True)
+    d.block("buf", 687, 498, 226, 122, "변경 이벤트 버퍼", ["kdms.change_log"], icon="receipt_long")
+    d.block("s4", 964, 498, 226, 122, "반영기", ["LSN 순서 · 멱등 반영"], icon="published_with_changes", num="4", strong=True)
 
     # 4행: 검증·전환·상태
-    d.block("s5", 434, 628, 232, 110, "검증", ["건수 · 합계 · 해시 (양쪽)"], icon="fact_check", num="5")
-    d.block("s6", 684, 628, 232, 110, "전환 제어", ["마지막 반영 → 검증 → setval"], icon="swap_horiz", num="6")
-    d.block("s7", 934, 628, 232, 110, "상태 · 재시작", ["작업 상태 기계 · 이어 하기"], icon="restart_alt", num="7")
+    d.block("s5", 410, 634, 246, 122, "검증", ["건수 · 합계 · 해시 (양쪽)"], icon="fact_check", num="5")
+    d.block("s6", 677, 634, 246, 122, "전환 제어", ["마지막 반영 → 검증 → setval"], icon="swap_horiz", num="6")
+    d.block("s7", 944, 634, 246, 122, "상태 · 재시작", ["작업 상태 기계 · 이어 하기"], icon="restart_alt", num="7")
 
     # 원천
-    d.block("src", 74, 368, 242, 110, "업무 테이블", ["dbo.* · PK 구간 분할"], icon="table")
-    d.block("ct", 74, 498, 242, 110, "CDC 변경 테이블", ["cdc.*_CT · LSN"], icon="manage_history")
-    d.block("agent", 74, 628, 242, 110, "SQL Server Agent", ["CDC 캡처 · 정리 Job"], icon="schedule")
+    d.block("src", 70, 362, 230, 122, "업무 테이블", ["dbo.* · PK 구간 분할"], icon="table")
+    d.block("ct", 70, 498, 230, 122, "CDC 변경 테이블", ["cdc.*_CT · LSN"], icon="manage_history")
+    d.block("agent", 70, 634, 230, 122, "SQL Server Agent", ["CDC 캡처 · 정리 Job"], icon="schedule")
 
     # 대상
-    d.block("tgt", 1284, 368, 242, 240, "대상 테이블", ["변환된 스키마", "전환 후 FK · 트리거 켬"], icon="table")
-    d.block("meta", 1284, 628, 242, 110, "kdms 관리 스키마",
-            ["job · watermark · change_log", "verify_result · 오프셋"], icon="database")
+    d.block("tgt", 1290, 362, 240, 258, "대상 테이블", ["변환된 스키마", "전환 후 FK · 트리거 켬"], icon="table")
+    d.block("meta", 1290, 634, 240, 122, "kdms 관리 스키마",
+            ["job · watermark · 오프셋", "change_log · verify_result"], icon="database")
 
     # 연결선: 실선 = 실시간 질의, 점선 = 비동기 데이터 흐름
-    d.link("op", "b", "web", "t", a_off=-125, label="HTTP 127.0.0.1", label_at=0.3)
-    d.link("op", "b", "cli", "t", a_off=125, label="명령 실행", label_at=0.3)
+    d.link("op", "b", "web", "t", a_off=-133.5, label="HTTP 127.0.0.1", label_at=0.3)
+    d.link("op", "b", "cli", "t", a_off=133.5, label="명령 실행", label_at=0.3)
 
     d.link("src", "r", "s1", "l", label="SNAPSHOT 읽기")
     d.link("s1", "r", "s2", "l")
-    d.link("s2", "r", "tgt", "l", b_off=-65, label="COPY 병렬")
+    d.link("s2", "r", "tgt", "l", b_off=-68, label="COPY 병렬")
 
     d.link("agent", "t", "ct", "b", dashed=True)
     d.link("ct", "r", "s3", "l", dashed=True, label="변경 수집")
     d.link("s3", "r", "buf", "l", dashed=True)
     d.link("buf", "r", "s4", "l", dashed=True)
-    d.link("s4", "r", "tgt", "l", dashed=True, b_off=65, label="멱등 반영")
+    d.link("s4", "r", "tgt", "l", dashed=True, b_off=68, label="멱등 반영")
 
     d.link("s7", "r", "meta", "l", label="상태 기록")
 
