@@ -122,3 +122,14 @@ Kafka Connect Runtime 이 끌어오지만 Embedded 엔진에서 쓰지 않는 �
 | Debezium 이 끌어오는 mssql-jdbc | MIT | Boot 관리 버전 하나만 쓴다 |
 
 남아 있는 것 중 쓰지 않을 가능성이 큰 것: `debezium-storage-file`, `debezium-storage-kafka`, `connect-file`(모두 Apache-2.0). 4단계에서 JDBC 저장소로 엔진을 띄운 뒤 빼 볼 수 있다.
+
+## 6. 설계 문서(`docs/design`)에 넣은 것 (jar 에는 들어가지 않음)
+
+확인일 2026-10-06. 출처는 각 npm 패키지의 `package.json`·라이선스 파일. 폐쇄망에서 문서를 열 수 있도록 파일을 저장소에 넣었다.
+
+| 구성 요소 | 버전 | 라이선스 | 넣은 파일 | 의무와 한 일 |
+|---|---|---|---|---|
+| Pretendard 글꼴 (`pretendard`) | 1.3.9 | OFL-1.1 (SIL Open Font License) | `docs/design/assets/fonts/PretendardVariable.woff2` | 라이선스 전문을 함께 배포: `fonts/OFL.txt`. 글꼴 단독 판매 금지, 수정하면 이름 변경(수정하지 않는다) |
+| Material Symbols 아이콘 (`@material-symbols/svg-400`, Outlined) | 0.47.6 | Apache-2.0 | `docs/design/assets/icons/*.svg` (쓰는 것만) | 라이선스 전문 포함: `icons/LICENSE`. 원본 SVG 를 수정하지 않고 path 만 그림에 넣는다 |
+
+문서 배포본을 만드는 도구(배포물에 포함되지 않음): Chromium 헤드리스(PDF·PNG, BSD-3-Clause 외), python-pptx 1.0.2(PPTX, MIT).

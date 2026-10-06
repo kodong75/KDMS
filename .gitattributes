@@ -4,3 +4,7 @@
 *.jar binary
 *.png binary
 *.cmd text eol=crlf
+# 문서 산출물(docs/design)
+*.woff2 binary
+*.pdf binary
+*.pptx binary
