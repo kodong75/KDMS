@@ -119,6 +119,48 @@ class Link:
     label_at: float = 0.5
 
 
+@dataclass
+class Text:
+    """자유 글. y 는 글 기준선. anchor: start | middle | end."""
+    x: float
+    y: float
+    text: str
+    size: float = 14
+    bold: bool = False
+    color: str = "#3F4E61"
+    anchor: str = "start"
+
+
+@dataclass
+class Line:
+    """블록에 붙지 않는 선(격자·의존 방향 등)."""
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+    color: str = "#164B8C"
+    width: float = 2.2
+    dashed: bool = False
+    arrow: bool = False
+
+
+@dataclass
+class Bar:
+    """채운 사각형(간트 막대·구간 배경). 글은 가운데."""
+    x: float
+    y: float
+    w: float
+    h: float
+    fill: str
+    line: str | None = None
+    lw: float = 1.4
+    rx: float = 6
+    text: str = ""
+    text_color: str = "#FFFFFF"
+    size: float = 14
+    name: str = "막대"
+
+
 class Diagram:
     def __init__(self, width: int, height: int, title: str, subtitle: str, meta: str):
         self.width, self.height = width, height
@@ -127,6 +169,11 @@ class Diagram:
         self.blocks: dict[str, Block] = {}
         self.links: list[Link] = []
         self.notes: list[str] = []
+        self.texts: list[Text] = []
+        self.lines: list[Line] = []
+        self.bars: list[Bar] = []
+        # 범례 항목: ("sync"|"async"|"#색", 글). 기본은 사용자 지정 두 가지
+        self.legend: list[tuple[str, str]] = [("sync", "실시간 질의"), ("async", "비동기 데이터 흐름")]
 
     def zone(self, *a, **k) -> Zone:
         z = Zone(*a, **k)
@@ -142,6 +189,21 @@ class Diagram:
         l = Link(*a, **k)
         self.links.append(l)
         return l
+
+    def text(self, *a, **k) -> Text:
+        t = Text(*a, **k)
+        self.texts.append(t)
+        return t
+
+    def line(self, *a, **k) -> Line:
+        l = Line(*a, **k)
+        self.lines.append(l)
+        return l
+
+    def bar(self, *a, **k) -> Bar:
+        b = Bar(*a, **k)
+        self.bars.append(b)
+        return b
 
     # ---- 공통 계산 ----
     def route(self, l: Link) -> list[tuple[float, float]]:
@@ -205,8 +267,8 @@ class Diagram:
         tx = z.x + 22 if z.align == "start" else z.x + z.w - 22
         out = [f'<rect x="{z.x}" y="{z.y}" width="{z.w}" height="{z.h}" rx="18" fill="{fill}" stroke="{line}" stroke-width="{sw}"/>',
                f'<text x="{tx}" y="{z.y + 34}" font-size="{T["zone_title"]}" font-weight="800" fill="{C["navy"]}" text-anchor="{z.align}">{escape(z.title)}</text>']
-        if z.sub:
-            out.append(f'<text x="{tx}" y="{z.y + 57}" font-size="{T["zone_sub"]}" font-weight="500" fill="{C["muted"]}" text-anchor="{z.align}">{escape(z.sub)}</text>')
+        for i, sub in enumerate(z.sub.split("\n") if z.sub else []):
+            out.append(f'<text x="{tx}" y="{z.y + 57 + i * 20}" font-size="{T["zone_sub"]}" font-weight="500" fill="{C["muted"]}" text-anchor="{z.align}">{escape(sub)}</text>')
         return "\n".join(out)
 
     def _svg_block(self, b: Block) -> str:
@@ -247,21 +309,51 @@ class Diagram:
             f'<text x="{tx:.1f}" y="{b.y + b.h / 2 + 6:.1f}" font-size="{T["pill"]}" font-weight="700" fill="{C["navy"]}">{escape(b.title)}</text>',
         ])
 
-    def legend_box(self) -> tuple[float, float, float, float]:
-        return 50, self.height - 72, 440, 52
+    def legend_layout(self) -> tuple[tuple[float, float, float, float], list[tuple[str, str, float, float]]]:
+        """범례 상자와 항목별 (종류, 글, 표시 x, 글 x)."""
+        x, y, h = 50, self.height - 72, 52
+        cur = x + 70
+        items = []
+        for kind, label in self.legend:
+            items.append((kind, label, cur, cur + (56 if kind in ("sync", "async") else 34)))
+            cur = items[-1][3] + text_width(label, T["legend"]) + 30
+        return (x, y, cur - x - 10, h), items
 
     def _svg_legend(self) -> str:
-        x, y, w, h = self.legend_box()
+        (x, y, w, h), items = self.legend_layout()
         my = y + h / 2
         f = T["legend"]
-        return "\n".join([
-            f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="10" fill="{C["white"]}" stroke="{C["zone_line"]}" stroke-width="1.4"/>',
-            f'<text x="{x + 18}" y="{my + 5}" font-size="{f}" font-weight="800" fill="{C["navy"]}">범례</text>',
-            f'<line x1="{x + 70}" y1="{my}" x2="{x + 116}" y2="{my}" stroke="{C["primary"]}" stroke-width="{T["line"]}" marker-end="url(#arrow-sync)"/>',
-            f'<text x="{x + 126}" y="{my + 5}" font-size="{f}" font-weight="600" fill="{C["text"]}">실시간 질의</text>',
-            f'<line x1="{x + 236}" y1="{my}" x2="{x + 282}" y2="{my}" stroke="{C["sky"]}" stroke-width="{T["line"]}" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>',
-            f'<text x="{x + 292}" y="{my + 5}" font-size="{f}" font-weight="600" fill="{C["text"]}">비동기 데이터 흐름</text>',
-        ])
+        out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="10" fill="{C["white"]}" stroke="{C["zone_line"]}" stroke-width="1.4"/>',
+               f'<text x="{x + 18}" y="{my + 5}" font-size="{f}" font-weight="800" fill="{C["navy"]}">범례</text>']
+        for kind, label, mx, tx in items:
+            if kind == "sync":
+                out.append(f'<line x1="{mx}" y1="{my}" x2="{mx + 46}" y2="{my}" stroke="{C["primary"]}" stroke-width="{T["line"]}" marker-end="url(#arrow-sync)"/>')
+            elif kind == "async":
+                out.append(f'<line x1="{mx}" y1="{my}" x2="{mx + 46}" y2="{my}" stroke="{C["sky"]}" stroke-width="{T["line"]}" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>')
+            else:
+                out.append(f'<rect x="{mx}" y="{my - 9}" width="24" height="18" rx="4" fill="{kind}" stroke="{C["block_line"]}" stroke-width="1"/>')
+            out.append(f'<text x="{tx}" y="{my + 5}" font-size="{f}" font-weight="600" fill="{C["text"]}">{escape(label)}</text>')
+        return "\n".join(out)
+
+    def _svg_line(self, l: Line) -> str:
+        dash = ' stroke-dasharray="8 6"' if l.dashed else ""
+        mk = ""
+        if l.arrow:
+            mk = ' marker-end="url(#arrow-async)"' if l.dashed else ' marker-end="url(#arrow-sync)"'
+        return (f'<line x1="{l.x1}" y1="{l.y1}" x2="{l.x2}" y2="{l.y2}" stroke="{l.color}" '
+                f'stroke-width="{l.width}"{dash}{mk}/>')
+
+    def _svg_bar(self, b: Bar) -> str:
+        stroke = f' stroke="{b.line}" stroke-width="{b.lw}"' if b.line else ""
+        out = [f'<rect x="{b.x}" y="{b.y}" width="{b.w}" height="{b.h}" rx="{b.rx}" fill="{b.fill}"{stroke}/>']
+        if b.text:
+            out.append(f'<text x="{b.x + b.w / 2}" y="{b.y + b.h / 2 + b.size * 0.36:.1f}" font-size="{b.size}" '
+                       f'font-weight="700" fill="{b.text_color}" text-anchor="middle">{escape(b.text)}</text>')
+        return "\n".join(out)
+
+    def _svg_text(self, t: Text) -> str:
+        return (f'<text x="{t.x}" y="{t.y}" font-size="{t.size}" font-weight="{700 if t.bold else 500}" '
+                f'fill="{t.color}" text-anchor="{t.anchor}">{escape(t.text)}</text>')
 
     def svg(self, font_url: str | None = None, standalone: bool = True) -> str:
         defs = []
@@ -285,9 +377,13 @@ class Diagram:
                 f'<text x="70" y="96" font-size="{T["subtitle"]}" font-weight="500" fill="{C["muted"]}">{escape(self.subtitle)}</text>',
                 f'<text x="{self.width - 50}" y="68" font-size="{T["meta"]}" font-weight="500" fill="{C["muted"]}" text-anchor="end">{escape(self.meta)}</text>']
         body += [self._svg_zone(z) for z in self.zones]
+        body += [self._svg_bar(b) for b in self.bars]
+        body += [self._svg_line(l) for l in self.lines]
         body += [self._svg_link(l) for l in self.links]
         body += [self._svg_block(b) for b in self.blocks.values()]
-        body.append(self._svg_legend())
+        body += [self._svg_text(t) for t in self.texts]
+        if self.legend:
+            body.append(self._svg_legend())
         for i, (nx, ny, n) in enumerate(self.note_positions()):
             body.append(f'<text x="{nx}" y="{ny}" font-size="{T["note"]}" font-weight="500" fill="{C["muted"]}" text-anchor="end">{escape(n)}</text>')
         body.append("</svg>")

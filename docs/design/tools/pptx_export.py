@@ -128,7 +128,8 @@ def _arrow(connector) -> None:
     tail.set("len", "med")
 
 
-def connector(slide, kind, p1, p2, color, dashed, name, a=None, a_side=None, b=None, b_side=None):
+def connector(slide, kind, p1, p2, color, dashed, name, a=None, a_side=None, b=None, b_side=None,
+              arrow=True, width=None):
     c = slide.shapes.add_connector(kind, E(p1[0]), E(p1[1]), E(p2[0]), E(p2[1]))
     _plain(c)
     # 변 가운데(연결점)에 닿는 끝만 붙인다. 비켜난 끝까지 붙이면 뷰어가 선을 연결점으로 다시 그린다.
@@ -138,10 +139,11 @@ def connector(slide, kind, p1, p2, color, dashed, name, a=None, a_side=None, b=N
         c.end_connect(b, CXN[b_side])
     c.begin_x, c.begin_y, c.end_x, c.end_y = E(p1[0]), E(p1[1]), E(p2[0]), E(p2[1])
     c.line.color.rgb = rgb(color)
-    c.line.width = Pt(T["line"] * PT)
+    c.line.width = Pt((width or T["line"]) * PT)
     if dashed:
         c.line.dash_style = MSO_LINE_DASH_STYLE.DASH
-    _arrow(c)
+    if arrow:
+        _arrow(c)
     c.name = name
     return c
 
@@ -169,9 +171,21 @@ def build(d: Diagram, out_path, title: str) -> None:
         _margins(tf, 22, 14, 22, 0)
         tf.vertical_anchor = MSO_ANCHOR.TOP
         lines = [(z.title, T["zone_title"], True, C["navy"], 26)]
-        if z.sub:
-            lines.append((z.sub, T["zone_sub"], False, C["muted"], 22))
+        for sub in (z.sub.split("\n") if z.sub else []):
+            lines.append((sub, T["zone_sub"], False, C["muted"], 20))
         _paras(tf, lines, PP_ALIGN.LEFT if z.align == "start" else PP_ALIGN.RIGHT)
+
+    # 막대·자유 선(블록 아래에 깔린다)
+    for b in d.bars:
+        s = rrect(slide, b.x, b.y, b.w, b.h, b.fill, b.line, b.lw, b.rx, b.name)
+        if b.text:
+            tf = s.text_frame
+            _margins(tf)
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            _paras(tf, [(b.text, b.size, True, b.text_color, None)], PP_ALIGN.CENTER)
+    for l in d.lines:
+        connector(slide, MSO_CONNECTOR.STRAIGHT, (l.x1, l.y1), (l.x2, l.y2), l.color, l.dashed, "선",
+                  arrow=l.arrow, width=l.width)
 
     # 블록
     shapes = {}
@@ -225,15 +239,27 @@ def build(d: Diagram, out_path, title: str) -> None:
             textbox(slide, x, y, w, h, [(l.label, T["label"], True, color, None)], PP_ALIGN.CENTER,
                     name=f"라벨 {l.label}", fill=C["white"])
 
+    # 자유 글(기준선 → 글상자 위치)
+    for t in d.texts:
+        w = text_width(t.text, t.size) + 24
+        x = {"start": t.x, "middle": t.x - w / 2, "end": t.x - w}[t.anchor]
+        al = {"start": PP_ALIGN.LEFT, "middle": PP_ALIGN.CENTER, "end": PP_ALIGN.RIGHT}[t.anchor]
+        textbox(slide, x, t.y - t.size - 2, w, t.size + 8, [(t.text, t.size, t.bold, t.color, None)], al, name="글")
+
     # 범례(왼쪽 아래)
-    x, y, w, h = d.legend_box()
-    my = y + h / 2
-    rrect(slide, x, y, w, h, C["white"], C["zone_line"], 1.4, 10, "범례")
-    textbox(slide, x + 18, y, 50, h, [("범례", T["legend"], True, C["navy"], None)], name="범례 제목")
-    connector(slide, MSO_CONNECTOR.STRAIGHT, (x + 70, my), (x + 116, my), C["primary"], False, "범례 실선")
-    textbox(slide, x + 126, y, 100, h, [("실시간 질의", T["legend"], True, C["text"], None)], name="범례 실선 글")
-    connector(slide, MSO_CONNECTOR.STRAIGHT, (x + 236, my), (x + 282, my), C["sky"], True, "범례 점선")
-    textbox(slide, x + 292, y, 140, h, [("비동기 데이터 흐름", T["legend"], True, C["text"], None)], name="범례 점선 글")
+    if d.legend:
+        (x, y, w, h), items = d.legend_layout()
+        my = y + h / 2
+        rrect(slide, x, y, w, h, C["white"], C["zone_line"], 1.4, 10, "범례")
+        textbox(slide, x + 18, y, 50, h, [("범례", T["legend"], True, C["navy"], None)], name="범례 제목")
+        for kind, label, mx, tx in items:
+            if kind in ("sync", "async"):
+                connector(slide, MSO_CONNECTOR.STRAIGHT, (mx, my), (mx + 46, my),
+                          C["primary"] if kind == "sync" else C["sky"], kind == "async", f"범례 {label}")
+            else:
+                rrect(slide, mx, my - 9, 24, 18, kind, C["block_line"], 1, 4, f"범례 {label}")
+            textbox(slide, tx, y, text_width(label, T["legend"]) + 20, h,
+                    [(label, T["legend"], True, C["text"], None)], name=f"범례 글 {label}")
 
     for nx, ny, n in d.note_positions():
         wdt = text_width(n, T["note"]) + 40
