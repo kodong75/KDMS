@@ -88,7 +88,7 @@ final class KdmsMockCatalog {
                         col(7, "issue_amt", "money", 8, 19, 4, true),
                         col(8, "coupon_rate", "decimal", 5, 9, 4, true),
                         withDefault(col(9, "is_watch", "bit", 1, 1, 0, false), "df_rating_watch", "((0))"),
-                        computed(col(10, "rating_rank", "int", 4, 10, 0, true),
+                        computed(col(10, "rating_rank", "int", 4, 10, 0, false),
                                 "(case rtrim([rating_cd]) when 'AAA' then (1) when 'AA+' then (2) when 'AA' then (3) when 'AA-' then (4) "
                                         + "when 'A+' then (5) when 'A' then (6) when 'A-' then (7) when 'BBB+' then (8) when 'BBB' then (9) "
                                         + "when 'BBB-' then (10) else (99) end)", false)),

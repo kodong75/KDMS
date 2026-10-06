@@ -133,7 +133,7 @@ class SchemaPlannerTest {
         SchemaPlan p = SchemaPlanner.plan(KdmsMockCatalog.catalog(), ALL, RulesLoader.load(f), null);
         assertThat(p.blocked()).isFalse();
         String pre = DdlWriter.write(p, DdlWriter.Phase.PRE_LOAD);
-        assertThat(pre).contains("\"rating_rank\" integer,").contains("MS-SQL 계산 컬럼(값만 이관) 원문");
+        assertThat(pre).contains("\"rating_rank\" integer NOT NULL,").contains("MS-SQL 계산 컬럼(값만 이관) 원문");
         java.nio.file.Files.delete(f);
     }
 
