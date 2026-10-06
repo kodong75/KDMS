@@ -79,6 +79,39 @@ class RulesLoaderTest {
         assertThatThrownBy(() -> RulesLoader.load(f)).hasMessageContaining("round");
     }
 
+    @Test
+    void 테이블_컬럼_덮어쓰기와_기본값_함수(@TempDir Path dir) throws IOException {
+        Path f = write(dir, """
+                identifiers: { schemas: { DBO: mock } }
+                defaults:
+                  functions:
+                    my_fn: { to: "my_pg_fn()" }
+                tables:
+                  DBO.Rating:
+                    columns:
+                      Rating_CD: { trailing_space: rtrim, case: upper, default: none }
+                """);
+        Rules r = RulesLoader.load(f);
+        assertThat(r.schemaMap()).containsEntry("dbo", "mock");
+        assertThat(r.defaultFunctions().get("my_fn").to()).isEqualTo("my_pg_fn()");
+        assertThat(r.defaultFunctions().get("getdate").to()).isEqualTo("LOCALTIMESTAMP"); // 기본 표는 그대로
+        Rules.ColumnRule c = r.column("dbo", "rating", "rating_cd");
+        assertThat(c.trailingSpace()).isEqualTo("rtrim");
+        assertThat(c.caseRule()).isEqualTo("upper");
+        assertThat(c.defaultExpr()).isEqualTo("none");
+        assertThat(c.nulChar()).isNull(); // 지정 안 한 것은 전체 규칙을 따른다
+    }
+
+    @Test
+    void 테이블_덮어쓰기_오타도_오류(@TempDir Path dir) throws IOException {
+        Path f = write(dir, "tables: { dbo.t: { columns: { c: { trailing: rtrim } } } }\n");
+        assertThatThrownBy(() -> RulesLoader.load(f)).hasMessageContaining("tables.dbo.t.columns.c").hasMessageContaining("trailing");
+        Path g = write(dir, "tables: { t: { exclude: true } }\n");
+        assertThatThrownBy(() -> RulesLoader.load(g)).hasMessageContaining("schema.table");
+        Path h = write(dir, "tables: { dbo.t: { columns: { c: { computed: maybe } } } }\n");
+        assertThatThrownBy(() -> RulesLoader.load(h)).hasMessageContaining("generated_stored | value_with_warning");
+    }
+
     private static Path write(Path dir, String yaml) throws IOException {
         Path f = Files.createTempFile(dir, "rules", ".yml");
         Files.writeString(f, yaml);

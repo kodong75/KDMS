@@ -6,6 +6,9 @@ config/kdms.yml
 
 # 빌드
 target/
+
+# kdms plan 출력(보고서·DDL). 필요한 것은 runs/ 로 옮겨 커밋한다
+out/
 *.class
 
 # IDE·OS

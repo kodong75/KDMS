@@ -37,7 +37,7 @@ class ConfigLoaderTest {
         assertThat(c.target().properties()).containsEntry("sslmode", "prefer");
         assertThat(c.load().tableParallelism()).isEqualTo(4);
         assertThat(c.tables().include()).containsExactly("dbo.*");
-        assertThat(c.rules()).isEmpty();
+        assertThat(c.rules()).isEqualTo("config/kdms-rules.yml");
         assertThat(c.web().address()).isEqualTo("127.0.0.1");
         assertThat(c.web().isLoopbackOnly()).isTrue();
     }

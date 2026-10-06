@@ -29,7 +29,7 @@ class CliTest {
     @Test
     void 도움말에_명령이_보인다() {
         assertThat(run("--help")).isZero();
-        assertThat(out.toString()).contains("status").contains("init").contains("web");
+        assertThat(out.toString()).contains("status").contains("init").contains("plan").contains("schema").contains("web");
     }
 
     @Test
@@ -57,8 +57,30 @@ class CliTest {
                 .contains("[원천] u@127.0.0.1:1/KDMS_MOCK")
                 .contains("[대상] kdms_app@127.0.0.1:1/kdms")
                 .contains("실패")
-                .contains("변환 규칙: 기본(jar 안), 타입 규칙")
+                .contains("변환 규칙: 기본 + config/kdms-rules.yml, 타입 규칙")
                 .doesNotContain("never-printed");
+    }
+
+    @Test
+    void plan_은_원천에_못_붙으면_종료코드_2(@TempDir Path dir) throws IOException {
+        Path env = dir.resolve(".env");
+        Files.writeString(env, """
+                KDMS_SRC_HOST=127.0.0.1
+                KDMS_SRC_PORT=1
+                KDMS_SRC_USER=u
+                KDMS_SRC_PASSWORD=never-printed
+                KDMS_TGT_HOST=127.0.0.1
+                KDMS_TGT_PASSWORD=never-printed
+                """);
+        int code = run("plan", "-c", "config/kdms.example.yml", "--env-file", env.toString(), "-o", dir.resolve("out").toString());
+        assertThat(code).isEqualTo(StatusCommand.CONNECTION_FAILED);
+        assertThat(err.toString()).contains("원천 접속·조회 실패 (u@127.0.0.1:1/KDMS_MOCK)").doesNotContain("never-printed");
+    }
+
+    @Test
+    void schema_의_단계_이름이_틀리면_오류() {
+        assertThat(run("schema", "--phase", "later", "-c", "config/missing.yml")).isEqualTo(CommandLine.ExitCode.USAGE);
+        assertThat(err.toString()).contains("pre-load | post-load | cutover");
     }
 
     @Test
