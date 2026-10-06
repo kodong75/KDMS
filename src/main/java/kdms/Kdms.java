@@ -1,9 +1,11 @@
 package kdms;
 
 import kdms.cli.InitCommand;
+import kdms.cli.LoadCommand;
 import kdms.cli.PlanCommand;
 import kdms.cli.SchemaCommand;
 import kdms.cli.StatusCommand;
+import kdms.cli.VerifyCommand;
 import kdms.cli.VersionProvider;
 import kdms.cli.WebCommand;
 import picocli.CommandLine;
@@ -16,7 +18,7 @@ import picocli.CommandLine.Command;
         mixinStandardHelpOptions = true,
         versionProvider = VersionProvider.class,
         description = "MS-SQL 2019 → PostgreSQL 16 미니 DMS(데이터 이관 서비스)",
-        subcommands = {StatusCommand.class, InitCommand.class, PlanCommand.class, SchemaCommand.class, WebCommand.class, CommandLine.HelpCommand.class})
+        subcommands = {StatusCommand.class, InitCommand.class, PlanCommand.class, SchemaCommand.class, LoadCommand.class, VerifyCommand.class, WebCommand.class, CommandLine.HelpCommand.class})
 public class Kdms implements Runnable {
 
     @CommandLine.Spec

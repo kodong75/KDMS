@@ -29,7 +29,7 @@ class WebSmokeTest {
     @BeforeAll
     static void start() {
         KdmsConfig.Endpoint nowhere = new KdmsConfig.Endpoint("127.0.0.1", 1, "db", "u", "never-shown", Map.of());
-        KdmsConfig cfg = new KdmsConfig("smoke", nowhere, nowhere, new KdmsConfig.LoadSettings(1, 1),
+        KdmsConfig cfg = new KdmsConfig("smoke", nowhere, nowhere, new KdmsConfig.LoadSettings(1, 1, "snapshot"),
                 new KdmsConfig.TableSelection(List.of("dbo.*"), List.of()), "", new KdmsConfig.WebSettings("127.0.0.1", 0));
         ctx = WebCommand.start(cfg, RulesLoader.load(null));
         int port = ((WebServerApplicationContext) ctx).getWebServer().getPort();

@@ -27,3 +27,14 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 실행: `mvn -B package`, `mvn -o test -Pintegration -Dtest='TargetDdlIT,TargetSchemaIT' -Dkdms.config=<임시 설정>`
 - 결과: 단위 시험 55개 통과(타입 비교 7테이블 55컬럼 일치 포함), 라이선스 검사 통과(새 의존성 없음). TargetDdlIT 3개·TargetSchemaIT 2개 통과: 세 단계 DDL 적용, `format_type` 으로 읽은 타입 = 계획, `Kim01`/`kim01` UNIQUE 거부(B14), tinyint CHECK, 계산 컬럼 GENERATED 값(`'aa+ '` → 2, `.PDF` → `pdf`), 시퀀스 기본값 202600001, FK 거부, `--replace`·LOADING 거부, 실패 시 전부 되돌림.
 - 원천 쪽(카탈로그 조회 SQL 이 실제 서버에서 시험 고정값과 같은지, `--scan`)은 Mac 에서 해야 한다(docs/test-env.md §8). 실행 결과를 지어내지 않는다.
+
+## 2026-10-06 14:40 · 3단계 · 전체 적재·검증 확인 · 클라우드
+- 목적: `kdms load`·`kdms verify` 가 실제 MS-SQL·PG 에서 동작하는지, 강제 종료 뒤 이어서 적재되는지, 검증이 차이를 잡는지.
+- 환경: **클라우드 컨테이너**(노트북 아님). SQL Server 2019 Developer(Linux 컨테이너, 서버 콜레이션 Korean_Wansung_CI_AS)에 KIS `sql/10_mssql/10~12` + `test/sql/mssql/00·10·20` 으로 KDMS_MOCK 구성, 로그인 kodong_ms. 대상 PostgreSQL 16.15(컨테이너 안). OpenJDK 21.
+- 실행 명령·결과 원문: `runs/20261006_1440_p3_cloud_load_verify.txt` (status → schema → load → verify → kill -9 재시작 → 변조 검출 → 종료 코드).
+- 결과: 7개 테이블 48,047행, 검증 항목 30개 중 일치 30. `--throttle-ms 1000` 적재를 5초 뒤 `kill -9` → 다시 실행 시 남은 5개 구간만 적재, 검증 30/30. 대상 4건 변조(끝 공백·1ms·삭제·추가) → 각 PK 와 missing/extra/diff 검출, 종료 코드 5.
+  단위 시험 79개, 통합 시험 9개(LoadVerifyIT 포함) 통과.
+- 오류 원문: 기본 규칙(`nul_char: fail`)에서 `dbo.issuer` 구간 2 실패(T-L09, NUL 문자).
+- 원인 → 해결: KIS 가 심은 NUL → `config/kdms-rules.yml` 에 `issuer_nm: { nul_char: replace }` (docs/load-verify.md §4) → 그 구간만 다시 적재, 검증 일치.
+  검증에서 issuer 해시가 전부 다름 → NUL REPLACE 에 cp1252 이진 콜레이션을 써서 한글이 `?` 로 바뀜 → `Latin1_General_100_BIN2_UTF8` 로 바꿈 → 일치.
+- 노트북 원천·PG 에서의 확인은 Mac 에서 해야 한다(docs/test-env.md §9).

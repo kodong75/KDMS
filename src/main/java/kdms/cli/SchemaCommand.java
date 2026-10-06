@@ -74,7 +74,8 @@ public class SchemaCommand implements Callable<Integer> {
         try (Connection c = Jdbc.openTarget(cfg.target())) {
             SchemaApplier.Result r = SchemaApplier.apply(c, plan, p, replace, job);
             out.println("대상 " + cfg.target() + " 에 " + phase + " 적용: 문장 " + r.statements() + "개, 테이블 "
-                    + plan.tables().size() + "개" + (r.dropped().isEmpty() ? "" : ", 지우고 다시 만든 것: " + String.join(", ", r.dropped())));
+                    + plan.tables().size() + "개" + (r.dropped().isEmpty() ? "" : ", 지우고 다시 만든 것: " + String.join(", ", r.dropped()))
+                    + (r.skipped() > 0 ? ", 이미 있어 건너뜀 " + r.skipped() + "개" : ""));
             if (r.jobId() > 0) {
                 out.println("작업 " + cfg.jobName() + " (job_id " + r.jobId() + ")" + (p == Phase.PRE_LOAD ? " 상태 SCHEMA_DONE" : ""));
             }

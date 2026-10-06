@@ -37,8 +37,14 @@ public record KdmsConfig(
         }
     }
 
-    /** 전체 적재 병렬도(plan.md §4.3). */
-    public record LoadSettings(int tableParallelism, int chunksPerTable) {
+    /**
+     * 전체 적재(plan.md §4.3).
+     *
+     * @param tableParallelism 동시에 적재하는 테이블 수
+     * @param chunksPerTable   테이블 하나를 나누는 PK 구간 수(= 테이블 안에서 동시에 도는 구간 수)
+     * @param isolation        원천 읽기 격리 수준: snapshot(기본, 원천 DB 에 ALLOW_SNAPSHOT_ISOLATION ON 필요) | read_committed
+     */
+    public record LoadSettings(int tableParallelism, int chunksPerTable, String isolation) {
     }
 
     /** 이관 대상 테이블. {@code schema.table} 형식, {@code *} 와일드카드. */

@@ -22,9 +22,10 @@ target:                                   # PostgreSQL 16 (대상). 관리 스�
   properties:                             # PgJDBC 드라이버 속성 그대로
     sslmode: ${KDMS_TGT_SSLMODE:prefer}
 
-load:                                     # 전체 적재 병렬도(3단계)
-  table_parallelism: 4
-  chunks_per_table: 2
+load:                                     # 전체 적재(3단계). docs/load-verify.md
+  table_parallelism: 4                    # 동시에 적재하는 테이블 수
+  chunks_per_table: 2                     # 테이블 하나를 PK 구간 몇 개로 나눌지(구간끼리 동시에 돈다)
+  isolation: snapshot                     # 원천 읽기: snapshot(ALLOW_SNAPSHOT_ISOLATION ON 필요) | read_committed
 
 tables:                                   # schema.table, * 사용 가능(2단계부터 사용)
   include: ["dbo.*"]

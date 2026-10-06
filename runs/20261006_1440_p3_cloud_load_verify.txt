@@ -1,0 +1,222 @@
+# 3단계 전체 적재·검증 · 클라우드 컨테이너 · 2026-10-06 14:40 UTC
+# 원천: SQL Server 2019 Developer(Linux 컨테이너 mcr.microsoft.com/mssql/server:2019-latest, 서버 콜레이션 Korean_Wansung_CI_AS)
+#       KIS sql/10_mssql/10·11·12 → KDMS test/sql/mssql/00·10·20 으로 만든 KDMS_MOCK. 노트북 원천이 아니다
+# 대상: PostgreSQL 16.15(컨테이너 안 임시 클러스터, UTF8 / C.UTF-8). 노트북 PG 가 아니다
+# 접속 정보는 임시 설정 파일(-c, --env-file)로. 비밀번호는 적지 않는다
+
+$ kdms status
+KDMS 0.1.0-SNAPSHOT  작업 kdms_mock  2026-10-06 14:40:32 +00:00
+변환 규칙: 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[원천] kodong_ms@127.0.0.1:14330/KDMS_MOCK
+  접속                OK (392 ms)
+  버전                Microsoft SQL Server 2019 (RTM-CU32-GDR) (KB5122772) - 15.0.4490.9 (X64)
+  제품 버전           15.0.4490.9 RTM CU32 / Developer Edition (64-bit)
+  DB                  KDMS_MOCK
+  콜레이션            Korean_Wansung_CI_AS
+  로그인              kodong_ms
+  CDC                 켜짐 (캡처 테이블 0개)
+  스냅숏 격리         ON
+  복구 모델           SIMPLE
+  SQL Agent           Running
+
+[대상] kdms_app@127.0.0.1:55432/kdms
+  접속                OK (253 ms)
+  버전                PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+  DB                  kdms
+  로그인              kdms_app
+  인코딩 / 콜레이션   UTF8 / C.UTF-8
+  관리 스키마 kdms    없음 (kdms init 으로 만든다)
+
+$ kdms schema
+대상 kdms_app@127.0.0.1:55432/kdms 에 pre-load 적용: 문장 11개, 테이블 7개
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+
+$ kdms load   # ① 규칙에서 issuer_nm 의 nul_char: replace 를 뺀 설정(기본 fail) → T-L09
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+주의: kdms schema 때와 설정·규칙 파일 내용이 다르다. 값 규칙이 바뀌었으면 --reset 으로 처음부터 적재한다
+dbo.daily_count 구간 1/1: 0행, 0.1초
+dbo.code_master 구간 2/2: 13행, 0.1초
+dbo.code_master 구간 1/2: 14행, 0.1초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.3초
+dbo.daily_count → dbo.daily_count: 완료 0행, 구간 1개, 0.3초
+dbo.app_user 구간 2/2: 501행, 0.2초
+dbo.app_user 구간 1/2: 500행, 0.2초
+dbo.app_user → dbo.app_user: 완료 1,001행, 구간 2개, 0.4초
+dbo.issuer 구간 1/2: 1,002행, 0.3초
+dbo.issuer 구간 2/2: 실패 NUL 문자(A02)가 든 값: dbo.issuer.issuer_nm 1행. 규칙 text.nul_char: fail 이라 적재하지 않았다. 컬럼별로 tables.<테이블>.columns.<컬럼>.nul_char: strip | replace 로 정한다(docs/load-verify.md §4)
+dbo.issuer → dbo.issuer: 실패 1,002행, 구간 2개, 0.5초
+  오류: 구간 2: NUL 문자(A02)가 든 값: dbo.issuer.issuer_nm 1행. 규칙 text.nul_char: fail 이라 적재하지 않았다. 컬럼별로 tables.<테이블>.columns.<컬럼>.nul_char: strip | replace 로 정한다(docs/load-verify.md §4)
+dbo.research_doc 구간 2/2: 6행, 0.4초
+dbo.rating_hist 구간 2/2: 10,002행, 0.6초
+dbo.rating_hist 구간 1/2: 10,002행, 0.6초
+dbo.rating 구간 1/2: 10,002행, 0.6초
+dbo.rating 구간 2/2: 10,002행, 0.7초
+dbo.rating_hist → dbo.rating_hist: 완료 20,004행, 구간 2개, 0.8초
+dbo.rating → dbo.rating: 완료 20,004행, 구간 2개, 0.8초
+dbo.research_doc 구간 1/2: 5,000행, 0.6초
+dbo.research_doc → dbo.research_doc: 완료 5,006행, 구간 2개, 0.7초
+
+결과: 테이블 7개 중 적재 6개(이미 적재돼 건너뜀 0), 실패 1개, 대상 행 47,044
+실패한 구간만 다시 하려면 같은 명령을 다시 실행한다(끝난 구간은 건너뛴다)
+(종료 코드: 위 기록은 파이프 뒤 grep 의 값이라 지웠다. 아래 ⑤ 에서 따로 확인)
+
+$ kdms load   # ② 저장소 규칙(issuer_nm nul_char: replace)으로 다시: 실패한 구간만
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+dbo.daily_count: 이미 적재됨(0행). 다시 하려면 --reset
+dbo.code_master: 이미 적재됨(27행). 다시 하려면 --reset
+dbo.app_user: 이미 적재됨(1,001행). 다시 하려면 --reset
+dbo.rating: 이미 적재됨(20,004행). 다시 하려면 --reset
+dbo.issuer: 끝난 구간 1개는 건너뛰고 1개를 적재한다
+dbo.research_doc: 이미 적재됨(5,006행). 다시 하려면 --reset
+dbo.rating_hist: 이미 적재됨(20,004행). 다시 하려면 --reset
+dbo.issuer 구간 2/2: 1,003행, 0.2초
+dbo.issuer → dbo.issuer: 완료 2,005행, 구간 2개(건너뜀 1), 0.5초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 6), 실패 0개, 대상 행 48,047
+적재 뒤 DDL(UNIQUE·인덱스) 적용: 문장 8개
+다음: kdms verify
+
+$ kdms verify
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 2026-10-06 14:40:39 +00:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,001 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 0 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.issuer → dbo.issuer: 건수 2,005 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.rating → dbo.rating: 건수 20,004 · 해시 같음 · 합계 5개 같음 (0.6초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 20,004 · 해시 같음 · 합계 2개 같음 (0.5초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,006 · 해시 같음 · 합계 4개 같음 (0.6초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 1)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+
+# ③ T-L16: --reset 후 1,000행마다 1초 쉬게 해서 5초 뒤 kill -9
+$ kdms load --reset --throttle-ms 1000 &  sleep 5; kill -9
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+--reset: 대상 테이블 7개를 비우고 구간 기록을 지웠다
+dbo.code_master 구간 2/2: 13행, 0.1초
+dbo.daily_count 구간 1/1: 0행, 0.2초
+dbo.code_master 구간 1/2: 14행, 0.2초
+dbo.daily_count → dbo.daily_count: 완료 0행, 구간 1개, 0.3초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.3초
+dbo.app_user 구간 1/2: 500행, 0.3초
+dbo.app_user 구간 2/2: 501행, 0.3초
+dbo.app_user → dbo.app_user: 완료 1,001행, 구간 2개, 0.5초
+dbo.research_doc 구간 2/2: 6행, 0.5초
+dbo.issuer 구간 1/2: 1,002행, 1.4초
+dbo.issuer 구간 2/2: 1,003행, 1.4초
+dbo.issuer → dbo.issuer: 완료 2,005행, 구간 2개, 1.5초
+(kill -9)
+
+$ psql: 강제 종료 직후 구간 상태와 대상 행 수
+  src_table   | table_status | chunk_no | status  | row_count | attempts 
+--------------+--------------+----------+---------+-----------+----------
+ app_user     | LOADED       |        1 | DONE    |       500 |        1
+ app_user     | LOADED       |        2 | DONE    |       501 |        1
+ code_master  | LOADED       |        1 | DONE    |        14 |        1
+ code_master  | LOADED       |        2 | DONE    |        13 |        1
+ daily_count  | LOADED       |        1 | DONE    |         0 |        1
+ issuer       | LOADED       |        1 | DONE    |      1002 |        1
+ issuer       | LOADED       |        2 | DONE    |      1003 |        1
+ rating       | LOADING      |        1 | RUNNING |           |        1
+ rating       | LOADING      |        2 | RUNNING |           |        1
+ rating_hist  | LOADING      |        1 | RUNNING |           |        1
+ rating_hist  | LOADING      |        2 | RUNNING |           |        1
+ research_doc | LOADING      |        1 | RUNNING |           |        1
+ research_doc | LOADING      |        2 | DONE    |         6 |        1
+(13 rows)
+
+      t       | count 
+--------------+-------
+ rating       |     0
+ rating_hist  |     0
+ research_doc |     6
+(3 rows)
+
+$ kdms load   # 다시 실행
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+dbo.code_master: 이미 적재됨(27행). 다시 하려면 --reset
+dbo.daily_count: 이미 적재됨(0행). 다시 하려면 --reset
+dbo.issuer: 이미 적재됨(2,005행). 다시 하려면 --reset
+dbo.research_doc: 끝난 구간 1개는 건너뛰고 1개를 적재한다
+dbo.app_user: 이미 적재됨(1,001행). 다시 하려면 --reset
+dbo.rating_hist 구간 1/2: 10,002행, 0.5초
+dbo.rating_hist 구간 2/2: 10,002행, 0.5초
+dbo.rating 구간 2/2: 10,002행, 0.6초
+dbo.rating_hist → dbo.rating_hist: 완료 20,004행, 구간 2개, 0.7초
+dbo.rating 구간 1/2: 10,002행, 0.7초
+dbo.rating → dbo.rating: 완료 20,004행, 구간 2개, 0.7초
+dbo.research_doc 구간 1/2: 5,000행, 0.7초
+dbo.research_doc → dbo.research_doc: 완료 5,006행, 구간 2개(건너뜀 1), 0.7초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 4), 실패 0개, 대상 행 48,047
+적재 뒤 DDL(UNIQUE·인덱스) 적용: 문장 0개, 이미 있어 건너뜀 8개
+다음: kdms verify
+
+$ kdms verify
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 2026-10-06 14:40:50 +00:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,001 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 0 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.issuer → dbo.issuer: 건수 2,005 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.rating → dbo.rating: 건수 20,004 · 해시 같음 · 합계 5개 같음 (0.5초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 20,004 · 해시 같음 · 합계 2개 같음 (0.4초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,006 · 해시 같음 · 합계 4개 같음 (0.2초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 2)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+종료 코드 0
+
+# ④ 검증이 차이를 잡는지: 대상 4행을 바꾼 뒤
+$ psql: UPDATE dbo.rating SET rating_cd = rating_cd || ' ' WHERE rating_id = 5; DELETE FROM dbo.app_user WHERE user_id = 7; INSERT INTO dbo.code_master (code_grp, code, code_nm) VALUES ('ZZ','1','x'); UPDATE dbo.research_doc SET pub_dtm = pub_dtm + interval '1 millisecond' WHERE doc_id = 3;
+$ kdms verify -t dbo.rating -t dbo.app_user -t dbo.code_master -t dbo.research_doc
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@127.0.0.1:14330/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 2026-10-06 14:40:52 +00:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[불일치] dbo.app_user → dbo.app_user: 건수 1,001 ≠ 1,000 · 해시 다름 · 합계 2개 중 2개 다름 (0.2초)
+    합계 user_id: 원천 501501 ≠ 대상 501494
+    합계 member_level: 원천 1500 ≠ 대상 1497
+    차이 행 1건: missing(원천에만) 1 · extra(대상에만) 0 · diff(값 다름) 0
+      missing PK [7]
+[불일치] dbo.code_master → dbo.code_master: 건수 27 ≠ 28 · 해시 다름 · 합계 1개 같음 (0.1초)
+    차이 행 1건: missing(원천에만) 0 · extra(대상에만) 1 · diff(값 다름) 0
+      extra PK [ZZ, 1]
+[불일치] dbo.rating → dbo.rating: 건수 20,004 · 해시 다름 · 합계 5개 같음 (1.3초)
+    차이 행 1건: missing(원천에만) 0 · extra(대상에만) 0 · diff(값 다름) 1
+      diff PK [5]
+[불일치] dbo.research_doc → dbo.research_doc: 건수 5,006 · 해시 다름 · 합계 4개 같음 (0.5초)
+    차이 행 1건: missing(원천에만) 0 · extra(대상에만) 0 · diff(값 다름) 1
+      diff PK [3]
+
+결과: 검증 항목 20개 중 일치 12 · 불일치 8 / 테이블 4개 중 일치 0 (kdms.verify_run run_id 3)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+종료 코드 5
+$ kdms load --reset -t dbo.rating -t dbo.app_user -t dbo.code_master -t dbo.research_doc  # 되돌리기
+
+결과: 테이블 4개 중 적재 4개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 26,038
+적재 뒤 DDL(UNIQUE·인덱스) 적용: 문장 0개, 이미 있어 건너뜀 8개
+다음: kdms verify
+$ kdms verify
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 4)
+
+# ⑤ 종료 코드 확인: NUL fail 규칙으로 issuer 만 --reset 적재 → 5, 저장소 규칙으로 되돌리기 → 0
+$ kdms load --reset -t dbo.issuer (nul_char: fail) → 종료 코드 5
+  오류: 구간 2: NUL 문자(A02)가 든 값: dbo.issuer.issuer_nm 1행. 규칙 text.nul_char: fail 이라 적재하지 않았다. 컬럼별로 tables.<테이블>.columns.<컬럼>.nul_char: strip | replace 로 정한다(docs/load-verify.md §4)
+결과: 테이블 1개 중 적재 0개(이미 적재돼 건너뜀 0), 실패 1개, 대상 행 1,002
+$ kdms load --reset -t dbo.issuer (저장소 규칙) → 종료 코드 0
+결과: 테이블 1개 중 적재 1개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 2,005
+$ kdms verify → 종료 코드 0
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 5)
