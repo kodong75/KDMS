@@ -106,12 +106,17 @@ public final class SourceCatalogReader {
             ORDER BY SCHEMA_NAME(s.schema_id), s.name""";
 
     // 뷰·SP·함수·SYNONYM·CLR 객체·테이블 타입. 트리거는 테이블별로 따로 읽는다
+    // 테이블 타입은 sys.objects 에서 TT_이름_해시 행이 is_ms_shipped = 1 로 나와 빠지므로(2026-10-06 Mac 실측) sys.table_types 에서 이름으로 읽는다
     static final String OTHER_OBJECTS_SQL = """
             SELECT SCHEMA_NAME(o.schema_id), o.name, o.type_desc
             FROM sys.objects AS o
             WHERE o.is_ms_shipped = 0 AND SCHEMA_NAME(o.schema_id) <> N'cdc'
-              AND o.type IN ('V', 'P', 'PC', 'X', 'FN', 'IF', 'TF', 'FS', 'FT', 'AF', 'SN', 'TT')
-            ORDER BY o.type_desc, SCHEMA_NAME(o.schema_id), o.name""";
+              AND o.type IN ('V', 'P', 'PC', 'X', 'FN', 'IF', 'TF', 'FS', 'FT', 'AF', 'SN')
+            UNION ALL
+            SELECT SCHEMA_NAME(tt.schema_id), tt.name, N'TABLE_TYPE'
+            FROM sys.table_types AS tt
+            WHERE tt.is_user_defined = 1
+            ORDER BY 3, 1, 2""";
 
     private SourceCatalogReader() {
     }

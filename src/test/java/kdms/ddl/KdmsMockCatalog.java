@@ -132,7 +132,7 @@ final class KdmsMockCatalog {
                 new SourceCatalog.DbObject("dbo", "usp_search_docs", "SQL_STORED_PROCEDURE"),
                 new SourceCatalog.DbObject("dbo", "usp_upsert_ratings", "SQL_STORED_PROCEDURE"),
                 new SourceCatalog.DbObject("dbo", "syn_region", "SYNONYM"),
-                new SourceCatalog.DbObject("dbo", "TT_rating_tvp_0000", "TYPE_TABLE"),
+                new SourceCatalog.DbObject("dbo", "rating_tvp", "TABLE_TYPE"),
                 new SourceCatalog.DbObject("dbo", "vw_issuer_region", "VIEW"));
         return new SourceCatalog("KDMS_MOCK", CI, List.copyOf(t), seq, others);
     }
