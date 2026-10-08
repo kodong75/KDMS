@@ -72,3 +72,14 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
   5. 캡처 Job 을 멈춰도 지연이 0.0초로 표시 → 지연 계산이 캡처된 커밋(`lsn_time_mapping`)만 봄 → 캡처 Job 의 마지막 로그 훑기가 15초보다 오래되면 그 시간을 지연으로 쓰고 경고 → 위 T-C09 결과.
 - 통합 시험(같은 클라우드 DB): TargetDdlIT·TargetSchemaIT 통과. SourceCatalogIT(NUL 행)·LoadVerifyIT(rating_id 5 변조 검출) 는 실패 — 쓰기 시험이 원천 KDMS_MOCK 의 해당 행을 바꾸거나 지웠기 때문(원천에서 rating_id 5 없음, NUL 행 0 확인). 코드 문제가 아니라 시험 데이터가 바뀐 것이라 test-env.md §10 에 "쓰기 시험 뒤에는 00_restore REPLACE=1 로 되돌린다" 를 적었다.
 - 노트북 원천·PG 에서의 확인은 Mac 에서 해야 한다(docs/test-env.md §10). 실행 결과를 지어내지 않는다.
+
+## 2026-10-08 12:26 · 4단계 · 변경분 수집·반영(CDC) 확인 · Mac(노트북 DB)
+- 목적: plan.md §6 4단계 완료 기준(원천 쓰기를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치)을 노트북 원천 MS-SQL·대상 PG 로 확인.
+- 환경: Mac(Java 21, 브랜치 claude/stage4-cdc-fxm28p 3117b14) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK, 로그인 kodong_ms, SQL Agent 실행 중 / PG 5432 kdms, kdms_app). 원천 쓰기는 노트북 PowerShell 7 `Invoke-KdmsSql.ps1 -File test/sql/mssql/30_writes.sql -Var @{ DURATION_SEC = '300' }`.
+- 실행: docs/test-env.md §10 순서. 결과 원문 `runs/20261008_1226_p4_*.txt`(Mac 에서 올림, 노트북 쓰기 기록은 노트북에만 있음).
+  build → `reset --yes` → `schema --replace`(문장 11개, job_id 10) → `sync`(워터마크 00000060:00001f68:0003) → 노트북 쓰기 300초 시작 → `load --throttle-ms 2000` → 적재 중 `pkill -9 -f 'kdms.jar sync'` → `sync` 다시 시작 → 쓰기 끝 → Ctrl+C → `sync --drain` → `verify` → `schema --phase post-load`.
+- 결과: 적재 7개 테이블 48,535행, 실패 0, 적재 뒤 DDL 은 미룸. kill -9 전 수집 1,132·반영 288(적재 전 테이블 변경은 대기), 다시 시작 때 "저장된 오프셋 다음부터 이어 받는다" → 수집·반영 9,688건, 반영 대기 0.
+  `--drain` 7초, 종료 코드 0. **검증 항목 30개 중 일치 30**, 테이블 7개 일치(run_id 6), 종료 코드 0. post-load DDL 8개 적용.
+- 오류: 없음. 손 실수 하나: 다시 시작한 sync 를 다른 창에서 돌려 `S` 가 없어 `runs/_p4_sync2.txt` 로 저장 → 이름만 바꿈(내용 영향 없음).
+- 관찰(고치지 않음, 5단계 전환 화면에서 다룬다): 적재 전 첫 수집 때 지연이 348~369초로 표시 → 아직 반영한 변경이 없으면 워터마크 LSN 의 커밋 시각부터 재는데, 그 LSN 은 스트리밍 시작 전 마지막 커밋이라 원천이 조용했던 시간까지 지연에 들어간다. 반영이 시작되자 0.6초로 정상.
+- 고침: `sync` 시작 줄의 워터마크 기록 시각이 UTC(03:30)로 찍혀 다른 줄(지역 시각 12:30)과 달라 보임 → 지역 시각대로 바꿔 찍는다(SyncRunner, 단위 시험 통과, DB 재실행은 하지 않음).

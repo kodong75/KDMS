@@ -126,7 +126,7 @@ public final class SyncRunner {
                         + noPk.stream().map(TablePlan::srcQualified).collect(Collectors.joining(", ")));
             }
             out.println(wm == null ? "워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다"
-                    : "워터마크 " + wm.startLsn() + " (" + wm.recordedAt().toLocalDateTime().withNano(0) + " 기록) · 저장된 오프셋 다음부터 이어 받는다");
+                    : "워터마크 " + wm.startLsn() + " (" + wm.recordedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime().withNano(0) + " 기록) · 저장된 오프셋 다음부터 이어 받는다");
             out.flush();
             log(state, jobId, "INFO", "sync 시작" + (o.drain() ? " (--drain)" : "") + ", 캡처 테이블 " + cdcTables.size());
 
