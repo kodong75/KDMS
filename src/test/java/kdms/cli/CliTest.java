@@ -30,7 +30,13 @@ class CliTest {
     void 도움말에_명령이_보인다() {
         assertThat(run("--help")).isZero();
         assertThat(out.toString()).contains("status").contains("init").contains("plan").contains("schema")
-                .contains("load").contains("verify").contains("web");
+                .contains("load").contains("verify").contains("cutover").contains("web");
+    }
+
+    @Test
+    void cutover_는_yes_없이_거부_종료코드_4() {
+        assertThat(run("cutover", "-c", "config/kdms.example.yml")).isEqualTo(SchemaCommand.REFUSED);
+        assertThat(err.toString()).contains("원천 앱 쓰기를 멈춘 뒤").contains("--yes");
     }
 
     @Test

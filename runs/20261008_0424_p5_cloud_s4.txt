@@ -1,0 +1,30 @@
+# 5단계 전환 시나리오 · 클라우드 컨테이너(노트북 아님)
+# 원천 SQL Server 2019 CU32(Linux 컨테이너) KDMS_MOCK · 대상 PostgreSQL 16.15 · OpenJDK 21
+# 명령: java -jar target/kdms.jar <명령> -c kdms.yml --env-file e2e.env (비밀번호는 env 파일에만, 여기에 남기지 않음)
+# 원천 쓰기: test/sql/mssql/30_writes.sql (시험용 sysadmin 로그인)
+# S4 전환 뒤 대상 신규 입력(IDENTITY·SEQUENCE·FK). S3 끝난 상태에서 실행, 입력은 ROLLBACK
+
+===== 2026-10-08 04:24:36 [S4] 전환 뒤 대상에 새 행 입력(IDENTITY·SEQUENCE·FK, T-C11·T-L05·T-L06)
+        what         | value 
+---------------------+-------
+ app_user 새 user_id |  1172
+
+        ?column?        | hist_id 
+------------------------+---------
+ rating_hist 새 hist_id |   23413
+
+      ?column?      |  nextval  
+--------------------+-----------
+ seq_doc_no 다음 값 | 202605224
+
+NOTICE:  dbo.issuer.issuer_id : MAX 2681 < 다음 값 2682 → 충돌 없음
+NOTICE:  dbo.rating.rating_id : MAX 21713 < 다음 값 21715 → 충돌 없음
+NOTICE:  dbo.app_user.user_id : MAX 1172 < 다음 값 1173 → 충돌 없음
+NOTICE:  dbo.rating_hist.hist_id : MAX 23413 < 다음 값 23414 → 충돌 없음
+NOTICE:  dbo.research_doc.doc_id : MAX 10218 < 다음 값 10219 → 충돌 없음
+ERROR:  insert or update on table "rating" violates foreign key constraint "fk_rating_issuer"
+DETAIL:  Key (issuer_id)=(-1) is not present in table "issuer".
+(위 입력은 ROLLBACK 했다)
+IDENT_CURRENT app_user 1171
+IDENT_CURRENT rating_hist 23412
+seq_doc_no current_value 202605223

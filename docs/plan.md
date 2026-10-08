@@ -279,7 +279,7 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 | **2. 스키마 변환** | 원천 카탈로그 읽기, 규칙 엔진, DDL 생성·적용, `kdms plan` 보고서 (구현: [schema-conversion.md](schema-conversion.md)) | `KDMS_MOCK` 의 대상 DDL 이 KIS `sql/20_pg/gen/mock.sql` 의 테이블 정의와 같은 타입(차이는 규칙 파일 결정으로 설명) |
 | **3. 전체 적재 + 검증** | 구간 분할, COPY 적재, 재시작, 건수·합계·해시 검증, 행 단위 차이 (구현: [load-verify.md](load-verify.md), [normalization.md](normalization.md)) | 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치(KIS 76/76 처럼 항목 수로 보고). 적재 도중 프로세스를 죽였다 다시 실행해 이어서 끝나고 검증 일치 |
 | **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 (구현: [cdc.md](cdc.md)) | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 |
-| **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | §8 시나리오 S1~S4 통과, 전환 소요 시간 보고 |
+| **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | 시나리오 S1~S4(정의는 [cutover.md](cutover.md) §6) 통과, 전환 소요 시간 보고 |
 | **6. MVP 리허설** | §8 전체를 처음부터 2회. 문서(운영 절차서) | 두 번 모두 합격, 절차서만 보고 다시 할 수 있음 |
 | 7. 설치본 | jlink 로 JRE 포함 압축본(Windows·Linux), 시작 스크립트 | 자바가 없는 PC 에서 실행 |
 | 8. 확장 | `KDMS_SITE`(22테이블), PK 없는 테이블, DDL 변경 감지 후 캡처 인스턴스 교체, 대용량 성능 | 별도 계획 |

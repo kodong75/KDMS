@@ -58,8 +58,12 @@ public final class Loader {
      * @param postLoad   작업의 테이블이 모두 적재되면 적재 뒤 DDL(UNIQUE·인덱스)을 적용한다
      * @param throttleMs 1,000행마다 쉬는 시간(원천 부하 조절·중단 시험). 0 이면 쉬지 않음
      * @param noCdc      워터마크 없이 적재한다(원천 쓰기가 없을 때만 맞다)
+     * @param cutover    kdms cutover 가 PK 없는 테이블을 다시 적재한다(작업 상태 CUTOVER 에서만, 작업 상태를 바꾸지 않는다)
      */
-    public record Options(Set<String> tables, boolean reset, boolean postLoad, long throttleMs, boolean noCdc) {
+    public record Options(Set<String> tables, boolean reset, boolean postLoad, long throttleMs, boolean noCdc, boolean cutover) {
+        public Options(Set<String> tables, boolean reset, boolean postLoad, long throttleMs, boolean noCdc) {
+            this(tables, reset, postLoad, throttleMs, noCdc, false);
+        }
     }
 
     /** @param status LOADED | FAILED | SKIPPED(이미 적재됨) */
@@ -133,7 +137,7 @@ public final class Loader {
             if (job == null) {
                 throw new Refused("작업 " + cfg.jobName() + " 이 없다. 먼저 kdms schema 로 대상 테이블을 만든다");
             }
-            if (!LOADABLE.contains(job.status())) {
+            if (o.cutover() ? !"CUTOVER".equals(job.status()) : !LOADABLE.contains(job.status())) {
                 throw new Refused("작업 " + cfg.jobName() + " 은 " + job.status() + " 단계다. 전체 적재는 SCHEMA_DONE·LOADING·SYNCING·FAILED 에서만 한다");
             }
             CaptureStore.Watermark wm = CaptureStore.watermark(state, job.id());
@@ -168,7 +172,9 @@ public final class Loader {
                     LoadState.setConfigSha256(state, job.id(), configSha256);
                 }
             }
-            LoadState.setJobStatus(state, job.id(), "LOADING", null);
+            if (!o.cutover()) {
+                LoadState.setJobStatus(state, job.id(), "LOADING", null);
+            }
             LoadState.log(state, job.id(), "INFO", "load 시작: 테이블 " + selected.size() + "개, 병렬 " + cfg.load().tableParallelism()
                     + "×" + cfg.load().chunksPerTable() + ", 격리 " + cfg.load().isolation() + (o.reset() ? ", --reset" : ""));
 
@@ -181,7 +187,9 @@ public final class Loader {
             boolean failed = results.stream().anyMatch(r -> "FAILED".equals(r.status()));
             Map<String, JobTable> after = LoadState.tables(state, job.id());
             boolean allLoaded = after.values().stream().allMatch(t -> "LOADED".equals(t.status()) || "EXCLUDED".equals(t.status()));
-            if (failed) {
+            if (failed && o.cutover()) {
+                postLoad = null;
+            } else if (failed) {
                 LoadState.setJobStatus(state, job.id(), "LOADING", "적재 실패 테이블 "
                         + results.stream().filter(r -> "FAILED".equals(r.status())).map(TableResult::srcTable).collect(Collectors.joining(", ")));
             } else if (allLoaded && cdc) {

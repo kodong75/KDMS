@@ -8,6 +8,7 @@ import kdms.catalog.ProbeResult;
 import kdms.catalog.StatusReport;
 import kdms.config.KdmsConfig;
 import kdms.rules.Rules;
+import kdms.state.JobView;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -33,7 +34,17 @@ public class StatusCommand implements Callable<Integer> {
         KdmsConfig cfg = options.loadConfig();
         Rules rules = options.loadRules(cfg);
         StatusReport report = StatusReport.collect(VersionProvider.version(), cfg, rulesSummary(cfg, rules));
-        print(report, spec.commandLine().getOut());
+        PrintWriter out = spec.commandLine().getOut();
+        print(report, out);
+        if (report.target().connected()) {
+            try (java.sql.Connection c = kdms.config.Jdbc.openTarget(cfg.target())) {
+                printJob(JobView.read(c, cfg.jobName(), 0), kdms.cdc.CaptureStore.runningNow(c, cfg.jobName()), out);
+            } catch (java.sql.SQLException e) {
+                out.println();
+                out.println("[작업] 조회 실패: " + e.getMessage());
+            }
+            out.flush();
+        }
         return report.allConnected() ? 0 : CONNECTION_FAILED;
     }
 
@@ -49,6 +60,41 @@ public class StatusCommand implements Callable<Integer> {
         printProbe(r.source(), out);
         printProbe(r.target(), out);
         out.flush();
+    }
+
+    /** 작업 진행(적재·반영·검증·전환). 웹 화면과 같은 값(kdms.state.JobView) */
+    static void printJob(JobView v, java.util.List<String> running, PrintWriter out) {
+        out.println();
+        if (v.job() == null) {
+            out.println("[작업] 없음 (kdms schema 로 만든다)");
+            return;
+        }
+        out.println("[작업] " + v.job().name() + " (job_id " + v.job().id() + ")");
+        out.println(pad("상태") + v.job().status() + (running.isEmpty() ? "" : " · 실행 중: " + String.join(", ", running.stream().map(r -> "kdms " + r).toList())));
+        if (v.job().lastError() != null) {
+            out.println(pad("마지막 오류") + v.job().lastError());
+        }
+        long loaded = v.tables().stream().filter(t -> "LOADED".equals(t.status()) || "EXCLUDED".equals(t.status())).count();
+        out.println(pad("전체 적재") + "테이블 " + v.tables().size() + "개 중 " + loaded + "개 끝, 적재한 행 "
+                + String.format("%,d", v.tables().stream().mapToLong(t -> t.rowsLoaded() == null ? 0 : t.rowsLoaded()).sum()));
+        JobView.Sync s = v.sync();
+        if (s == null) {
+            out.println(pad("변경분 반영") + "워터마크 없음");
+        } else {
+            out.println(pad("변경분 반영") + "수집 " + String.format("%,d", s.captured()) + " · 반영 " + String.format("%,d", s.applied())
+                    + " · 대기 " + (s.pending() == null ? "-" : String.format("%,d", s.pending()))
+                    + " · 지연 " + (s.lagSeconds() == null ? "-" : s.lagSeconds().setScale(1, java.math.RoundingMode.HALF_UP) + "초")
+                    + (s.statusAt() == null ? "" : " (" + s.statusAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime().withNano(0) + " 기준)"));
+        }
+        JobView.Verify vf = v.verify();
+        out.println(pad("검증") + (vf == null ? "안 함" : "run " + vf.runId() + ": " + (vf.checks() == null ? "진행 중"
+                : "항목 " + vf.checks() + "개 중 일치 " + (vf.checks() - vf.mismatches()) + " · 불일치 " + vf.mismatches())));
+        JobView.Cutover co = v.cutover();
+        if (co != null) {
+            out.println(pad("전환") + "cutover " + co.id() + ": " + co.status()
+                    + (co.elapsedMs() == null ? "" : String.format(" · 소요 %.1f초", co.elapsedMs() / 1000.0))
+                    + (co.lastError() == null ? "" : " · " + co.lastError()));
+        }
     }
 
     private static void printProbe(ProbeResult p, PrintWriter out) {

@@ -260,6 +260,89 @@ java -jar target/kdms.jar schema --phase post-load 2>&1 | tee runs/${S}_p4_postl
 - ⑤ 가 불일치면 `runs/${S}_p4_*.txt` 전부와 노트북 `runs\…_p4_writes.txt` 를 보내 준다.
 - `30_writes.sql` 은 `KDMS_MOCK` 데이터를 바꾼다(KIS 가 심은 NUL 행 이름 변경, rating_id 5 삭제 등). 그 뒤에는 §8 ④·§9 ⑤ 통합 시험(SourceCatalogIT·LoadVerifyIT)이 고정값과 달라 실패한다. 다시 하려면 노트북 §2 ② 를 `REPLACE = '1'` 로 → ③ → ④ 로 되돌리고, Mac 에서 `schema --replace` 부터 한다.
 
+## 11. Mac + 노트북: 5단계(전환·화면) 확인
+
+§10 까지 끝난 상태에서 한다. 명령의 뜻은 [cutover.md](cutover.md). 창은 넷: Mac 터미널 A(`kdms sync`), B(적재·전환), C(웹 화면), 노트북 PowerShell 7(원천 쓰기).
+4단계 쓰기 시험으로 `KDMS_MOCK` 이 바뀌어 있으므로 먼저 되돌린다.
+
+**준비(노트북 PowerShell 7)**: §2 ② 를 `REPLACE = '1'` 로, 이어서 ③·④
+
+```powershell
+cd C:\Projects\KDMS
+git fetch origin; git checkout claude/stage5-cutover-jdq5mm      # 머지 뒤에는 git checkout main; git pull
+Get-Service SQLSERVERAGENT                                     # Running (아니면 [관리자] Start-Service SQLSERVERAGENT)
+./scripts/Invoke-KdmsSql.ps1 -File test/sql/mssql/00_restore_kdms_mock.sql -Stage p5_restore -Var @{ REPLACE = '1' }
+./scripts/Invoke-KdmsSql.ps1 -File test/sql/mssql/10_enable_cdc.sql -Stage p5_cdc
+./scripts/Invoke-KdmsSql.ps1 -File test/sql/mssql/20_grant_kdms_login.sql -Stage p5_grant -Var @{ KDMS_LOGIN = 'kodong_ms' }
+```
+
+**① 터미널 B (Mac): 빌드, 처음부터**
+
+```bash
+cd /Users/kodong/Projects/KDMS
+git fetch origin && git checkout claude/stage5-cutover-jdq5mm
+S=$(date +%Y%m%d_%H%M); echo $S                                    # 다른 창에서도 이 값을 쓴다
+./mvnw -B package 2>&1 | tee runs/${S}_p5_build.txt                 # BUILD SUCCESS
+java -jar target/kdms.jar reset --yes 2>&1 | tee runs/${S}_p5_reset.txt
+java -jar target/kdms.jar schema --replace 2>&1 | tee runs/${S}_p5_schema.txt   # 4단계에서 만든 UNIQUE·인덱스까지 지우고 다시 만든다
+```
+
+**② 터미널 C: 웹 화면** (브라우저로 http://127.0.0.1:8080 을 열어 두고 아래 단계마다 본다)
+
+```bash
+cd /Users/kodong/Projects/KDMS && java -jar target/kdms.jar web
+```
+
+**③ 터미널 A: 동기화** → "워터마크 기록" 이 나오면 노트북에서 쓰기 5분, 20초쯤 뒤 터미널 B 에서 적재
+
+```bash
+cd /Users/kodong/Projects/KDMS; S=여기에_①의_값
+java -jar target/kdms.jar sync 2>&1 | tee runs/${S}_p5_sync.txt
+# 적재 전 진행 줄의 지연이 0 근처여야 한다(4단계에서는 348초처럼 크게 보였다). 대기 괄호에 "적재 전 테이블 7개, 그 변경 N"
+```
+```powershell
+./scripts/Invoke-KdmsSql.ps1 -File test/sql/mssql/30_writes.sql -Stage p5_writes -Var @{ DURATION_SEC = '300' }
+```
+```bash
+java -jar target/kdms.jar load --throttle-ms 2000 2>&1 | tee runs/${S}_p5_load.txt     # 터미널 B. 끝에 "실패 0개"
+```
+
+**④ 쓰기가 끝난 뒤(노트북 결과 줄) 전환: S1**
+
+```bash
+# 터미널 A: Ctrl+C ("중지 요청: 진행 중 배치를 마치고 멈춘다")
+# 터미널 B:
+java -jar target/kdms.jar cutover --yes 2>&1 | tee runs/${S}_p5_cutover.txt; echo "종료 코드 ${pipestatus[1]}" | tee -a runs/${S}_p5_cutover.txt
+# [1/6] ~ [6/6] 이 모두 완료·건너뜀, "검증 항목 30개 중 일치 30", 끝에 "소요 시간(예상 다운타임) N초", 종료 코드 0
+java -jar target/kdms.jar status 2>&1 | tee runs/${S}_p5_status.txt      # [작업] 상태 DONE, 전환 cutover N: DONE
+```
+
+**⑤ 전환 뒤 새 입력: S4** (노트북 PowerShell 7. PG 컨테이너 안 psql 로 kdms_app 으로 붙는다. 입력은 ROLLBACK 한다)
+
+```powershell
+@'
+BEGIN;
+INSERT INTO dbo.app_user (login_id, user_nm) VALUES ('kdms_s4_new', 'S4') RETURNING user_id;
+SELECT nextval('dbo.seq_doc_no');
+INSERT INTO dbo.rating (issuer_id, rating_cd, rating_dt, eff_dtm, issue_amt, coupon_rate, is_watch) VALUES (-1, 'AAA', '2026-10-08', now(), 1, 1, false);
+ROLLBACK;
+'@ | docker exec -i mig-pg psql -U kdms_app -d kdms 2>&1 | Tee-Object runs\p5_s4.txt
+```
+
+- `user_id` 가 ④ 출력의 `IDENTITY "dbo"."app_user"."user_id": 원천 N → 대상 다음 값 N+1` 의 N+1, `nextval` 이 `SEQUENCE "dbo"."seq_doc_no"` 의 다음 값과 같아야 한다.
+- 마지막 INSERT 는 `violates foreign key constraint` 오류여야 한다(FK 가 켜졌다). 결과 파일 `runs\p5_s4.txt` 내용을 채팅에 붙여 준다.
+
+| 기준(plan.md §6 5단계, cutover.md §6) | 어디서 보나 |
+|---|---|
+| S1 정상 전환, 전환 소요 시간 | ④ 종료 코드 0, 30/30, `소요 시간(예상 다운타임)` |
+| S4 전환 뒤 새 입력 | ⑤ 새 id 가 원천 `IDENT_CURRENT + 1`, FK 오류 |
+| 화면(진행률·지연·검증) | ② 화면이 단계마다 바뀌고 끝에 "완료"·검증 30/30·전환 단계 표 |
+| S2·S3 | 클라우드에서 확인했다(WORKLOG 5단계). 노트북에서도 하려면 cutover.md §6 순서대로 |
+
+- ④ 의 `[1/6] 마지막 반영` 이 "원천 쓰기가 아직 있다" 를 찍고 끝나지 않으면 노트북 쓰기가 아직 돌고 있는 것이다. 기본 600초 뒤 종료 코드 6 으로 멈춘다(작업 FAILED). 쓰기가 끝난 뒤 같은 명령을 다시 한다.
+- ④ 가 종료 코드 5(검증 불일치)면 `runs/${S}_p5_*.txt` 전부와 노트북 `runs\…_p5_writes.txt` 를 보내 준다.
+- 웹 화면 버튼으로 해 보려면 ① 부터 다시 한 뒤 ③ 의 `sync`·`load` 대신 화면의 "동기화 시작"·"전체 적재", ④ 대신 "전환 시작" 을 누른다(화면에서 띄운 동기화는 전환이 먼저 멈춘다).
+
 ## 7. 자주 막히는 곳
 
 | 증상 | 원인 → 해결 |

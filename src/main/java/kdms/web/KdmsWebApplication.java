@@ -25,6 +25,20 @@ public class KdmsWebApplication {
     public record RulesSummary(String text) {
     }
 
+    /** 명령 실행 요청(POST)에 붙어야 하는 값. 프로세스마다 새로 만든다 */
+    public record Token(String value) {
+        static Token random() {
+            byte[] b = new byte[24];
+            new java.security.SecureRandom().nextBytes(b);
+            return new Token(java.util.HexFormat.of().formatHex(b));
+        }
+    }
+
+    @Bean
+    Token kdmsToken() {
+        return Token.random();
+    }
+
     /** 시작할 때 관리 스키마를 최신으로(plan.md §1.2). 대상에 못 붙어도 화면은 띄워 오류를 보여 준다. */
     @Bean
     ApplicationRunner installSchemaOnStart(KdmsConfig cfg) {

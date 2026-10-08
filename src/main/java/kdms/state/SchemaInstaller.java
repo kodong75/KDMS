@@ -16,7 +16,7 @@ import java.util.List;
 public final class SchemaInstaller {
 
     /** 버전 n 의 스크립트 = SCRIPTS.get(n - 1). */
-    static final List<String> SCRIPTS = List.of("db/kdms-schema.sql", "db/kdms-schema-v2.sql");
+    static final List<String> SCRIPTS = List.of("db/kdms-schema.sql", "db/kdms-schema-v2.sql", "db/kdms-schema-v3.sql");
     public static final int CURRENT_VERSION = SCRIPTS.size();
 
     /** 같은 DB 에서 init 이 동시에 돌지 않게(임의의 고정 키). */
