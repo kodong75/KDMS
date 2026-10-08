@@ -1,0 +1,896 @@
+# 클라우드 컨테이너(노트북 아님): 원천 SQL Server 2019 CU32 Linux 컨테이너(서버 콜레이션 기본값, KDMS_MOCK 은 Korean_Wansung_CI_AS) · 대상 PostgreSQL 16.15 · OpenJDK 21.
+# 노트북 단계는 Invoke-KdmsRehearsal.ps1 과 같은 SQL 을 컨테이너 sqlcmd(sysadmin 시험 로그인)로 실행했다. 스크립트는 사람 모드로 돌리고 안내를 읽어 대신 Enter 를 쳤다. 인터넷을 끊을 수 없어 T-N01 은 미시행.
+# KDMS 6단계 MVP 리허설 1회차 · 2026-10-08 07:38:26 · 절차 docs/rehearsal.md
+# 저장소 claude/stage6-lis0lo 163d6b8 · Linux x86_64 · openjdk version "21.0.12.1" 2026-08-18
+# 원천 127.0.0.1:14331 · 대상 127.0.0.1:55432 (비밀번호는 .env 에만) · 노트북 단계: 사람이 노트북에서
+# 원천 쓰기 300초 · 중간 파일 out/rehearsal/cloud_r1
+
+===== 2026-10-08 07:38:26 [r1] 0. 인터넷 차단 확인(T-N01)
+인터넷 연결됨(T-N01 미시행)
+
+===== 2026-10-08 07:38:27 [r1] 노트북: restore 
+사람: 노트북 restore 끝
+
+===== 2026-10-08 07:38:38 [r1] 1. 빌드(오프라인, 단위 시험 포함): ./mvnw -o -B clean package
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.162 s -- in kdms.config.EnvResolverTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.182 s -- in kdms.config.ConfigLoaderTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.157 s -- in kdms.load.CopyValuesTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in kdms.load.SafeMessageTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in kdms.load.ChunksTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.609 s -- in kdms.web.WebSmokeTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in kdms.web.StaticAssetsTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.132 s -- in kdms.ddl.SchemaPlannerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in kdms.ddl.DefaultTranslatorTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s -- in kdms.apply.ApplySqlTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.046 s -- in kdms.rules.RulesLoaderTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in kdms.cutover.AfterCutoverCheckTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in kdms.cutover.CutoverTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.315 s -- in kdms.cli.CliTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in kdms.state.SchemaScriptTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s -- in kdms.verify.NormalizerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in kdms.cdc.LsnAndOffsetTest
+2026-10-08 07:38:50.974 ERROR [debezium-sqlserverconnector-kdms-connection-validation] i.d.c.sqlserver.SqlServerConnector - Failed testing connection for {connector.class=io.debezium.connector.sqlserver.SqlServerConnector, record.processing.shutdown.timeout.ms=1000, bootstrap.servers=localhost:9092, record.processing.order=ORDERED, topic.prefix=kdms, offset.storage.file.filename=, record.processing.threads=, errors.retry.delay.initial.ms=300, value.converter=org.apache.kafka.connect.json.JsonConverter, key.converter=org.apache.kafka.connect.json.JsonConverter, database.encrypt=false, database.user=u, database.names=KDMS_MOCK, offset.storage=org.apache.kafka.connect.storage.MemoryOffsetBackingStore, offset.flush.timeout.ms=5000, errors.retry.delay.max.ms=10000, database.port=1, offset.flush.interval.ms=60000, internal.task.management.timeout.ms=40000, schema.history.internal=io.debezium.relational.history.MemorySchemaHistory, record.processing.with.serial.consumer=false, errors.max.retries=0, database.hostname=127.0.0.1, database.password=********, name=kdms-classpath-smoke, snapshot.mode=no_data} with user '[database.user,null,[],[],true]'
+2026-10-08 07:38:50.984 ERROR [pool-6-thread-1] i.d.e.async.AsyncEmbeddedEngine - Engine has failed with 
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.173 s -- in kdms.cdc.DebeziumClasspathTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in kdms.cdc.CdcValuesTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in kdms.cdc.LagTest
+[INFO] Tests run: 107, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+exit 0
+
+===== 2026-10-08 07:38:52 [r1] 2. jar 안 화면 파일의 외부 URL(T-N02)
+외부 URL 참조 0개 (templates·static)
+
+===== 2026-10-08 07:38:52 [r1] kdms status (status)
+KDMS 0.1.0-SNAPSHOT  작업 kdms_mock  2026-10-08 07:38:53 +00:00
+변환 규칙: 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[원천] kodong_ms@127.0.0.1:14331/KDMS_MOCK
+  접속                OK (428 ms)
+  버전                Microsoft SQL Server 2019 (RTM-CU32) (KB5054833) - 15.0.4430.1 (X64)
+  제품 버전           15.0.4430.1 RTM CU32 / Developer Edition (64-bit)
+  DB                  KDMS_MOCK
+  콜레이션            Korean_Wansung_CI_AS
+  로그인              kodong_ms
+  CDC                 켜짐 (캡처 테이블 7개)
+  스냅숏 격리         ON
+  복구 모델           SIMPLE
+  SQL Agent           Running
+
+[대상] kdms_app@127.0.0.1:55432/kdms
+  접속                OK (314 ms)
+  버전                PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+  DB                  kdms
+  로그인              kdms_app
+  인코딩 / 콜레이션   UTF8 / C.UTF-8
+  관리 스키마 kdms    버전 3 (2026-10-08T07:23:55.643889Z)
+
+[작업] kdms_mock (job_id 1)
+  상태                DONE
+  전체 적재           테이블 7개 중 7개 끝, 적재한 행 49,069
+  변경분 반영         수집 6,820 · 반영 6,820 · 대기 0 · 지연 0.0초 (2026-10-08T07:34 기준)
+  검증                run 4: 항목 30개 중 일치 30 · 불일치 0
+  전환                cutover 3: DONE · 소요 8.8초
+exit 0
+
+===== 2026-10-08 07:38:53 [r1] kdms plan --scan (plan)
+파일: out/kdms_mock/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+KDMS 0.1.0-SNAPSHOT 스키마 변환 계획 · 작업 kdms_mock · 2026-10-08 07:38:54 +00:00
+변환 규칙: 기본 + config/kdms-rules.yml, 타입 규칙 30개 · 데이터 검사(--scan) 함
+원천: KDMS_MOCK (콜레이션 Korean_Wansung_CI_AS)
+요약: 테이블 7개 (PK 없음 0, 제외 0) · 컬럼 55개 · 시퀀스 1개 · 오류 0 · 경고 10 · 주의 6
+결과: 통과. kdms schema 로 대상에 만들 수 있다
+
+== 테이블 ==
+
+dbo.app_user → dbo.app_user   행(추정) 1,001   PK (user_id)
+  원천 컬럼     원천 타입          대상                                          비고
+  user_id       int IDENTITY(1,1)  integer IDENTITY NOT NULL                     IDENT_CURRENT 1002 → 전환 때 setval(A09)
+  login_id      varchar(30) CI     varchar(30) NOT NULL                          CP949 → UTF-8(바이트 증가)
+  user_nm       nvarchar(50) CI    varchar(50) NOT NULL                          
+  email         varchar(100) CI    varchar(100)                                  CP949 → UTF-8(바이트 증가)
+  member_level  tinyint            smallint NOT NULL DEFAULT 0 CHECK             
+  joined_dtm    datetime           timestamp(3) NOT NULL DEFAULT LOCALTIMESTAMP  
+  [적재 뒤] CREATE UNIQUE INDEX "uq_app_user_login" ON "dbo"."app_user" (lower("login_id"))
+            ↳ 대소문자 무시 UNIQUE → lower() 유일 인덱스(B14, collation.ci_unique: lower_index)
+
+dbo.code_master → dbo.code_master   행(추정) 27   PK (code_grp, code)
+  원천 컬럼      원천 타입         대상                          비고
+  code_grp       varchar(20) CI    varchar(20) NOT NULL          CP949 → UTF-8(바이트 증가)
+  code           varchar(10) CI    varchar(10) NOT NULL          CP949 → UTF-8(바이트 증가)
+  code_nm        nvarchar(100) CI  varchar(100) NOT NULL         
+  code_nm_short  varchar(20) CI    varchar(20)                   CP949 → UTF-8(바이트 증가)
+  sort_no        smallint          smallint NOT NULL DEFAULT 0   
+  use_yn         char(1) CI        char(1) NOT NULL DEFAULT 'Y'  CP949 → UTF-8(바이트 증가)
+  [적재 뒤] CREATE UNIQUE INDEX "pk_code_master_ci" ON "dbo"."code_master" (lower("code_grp"), lower("code"))
+            ↳ PK 대소문자 무시 중복 방지(B14, collation.ci_unique: lower_index)
+
+dbo.daily_count → dbo.daily_count   행(추정) 0   PK (snap_dt, table_nm)
+  원천 컬럼     원천 타입     대상                   비고
+  snap_dt       date          date NOT NULL          
+  table_nm      sysname CI    varchar(128) NOT NULL  
+  row_cnt       bigint        bigint NOT NULL        
+  [적재 뒤] CREATE UNIQUE INDEX "pk_daily_count_ci" ON "dbo"."daily_count" ("snap_dt", lower("table_nm"))
+            ↳ PK 대소문자 무시 중복 방지(B14, collation.ci_unique: lower_index)
+
+dbo.issuer → dbo.issuer   행(추정) 2,005   PK (issuer_id)
+  원천 컬럼        원천 타입          대상                                          비고
+  issuer_id        int IDENTITY(1,1)  integer IDENTITY NOT NULL                     IDENT_CURRENT 2010 → 전환 때 setval(A09)
+  issuer_cd        char(6) CI         char(6) NOT NULL                              CP949 → UTF-8(바이트 증가)
+  issuer_nm        nvarchar(100) CI   varchar(100) NOT NULL                         
+  issuer_nm_cp949  varchar(40) CI     varchar(40)                                   CP949 → UTF-8(바이트 증가)
+  issuer_nm_en     varchar(200) CI    varchar(200)                                  CP949 → UTF-8(바이트 증가)
+  region_cd        char(2) CI         char(2)                                       CP949 → UTF-8(바이트 증가)
+  industry_cd      varchar(2) CI      varchar(2)                                    CP949 → UTF-8(바이트 증가)
+  is_listed        bit                boolean NOT NULL DEFAULT false                
+  issuer_guid      uniqueidentifier   uuid NOT NULL DEFAULT gen_random_uuid()       
+  row_ver          rowversion         bytea NOT NULL                                
+  reg_dtm          datetime           timestamp(3) NOT NULL DEFAULT LOCALTIMESTAMP  
+  upd_dtm          datetime2(7)       timestamp(6)                                  소수 7자리 → 6자리(half_up, A06)
+  [적재 뒤] CREATE UNIQUE INDEX "uq_issuer_cd" ON "dbo"."issuer" (lower("issuer_cd"))
+            ↳ 대소문자 무시 UNIQUE → lower() 유일 인덱스(B14, collation.ci_unique: lower_index)
+  [적재 뒤] CREATE INDEX "ix_issuer_nm" ON "dbo"."issuer" ("issuer_nm")
+
+dbo.rating → dbo.rating   행(추정) 20,004   PK (rating_id)
+  원천 컬럼     원천 타입             대상                            비고
+  rating_id     bigint IDENTITY(1,1)  bigint IDENTITY NOT NULL        IDENT_CURRENT 20004 → 전환 때 setval(A09)
+  issuer_id     int                   integer NOT NULL                
+  rating_cd     varchar(10) CI        varchar(10) NOT NULL            CP949 → UTF-8(바이트 증가)
+  outlook_cd    char(1) CI            char(1)                         CP949 → UTF-8(바이트 증가)
+  rating_dt     date                  date NOT NULL                   
+  eff_dtm       datetime              timestamp(3) NOT NULL           
+  issue_amt     money                 numeric(19,4)                   
+  coupon_rate   decimal(9,4)          numeric(9,4)                    
+  is_watch      bit                   boolean NOT NULL DEFAULT false  
+  rating_rank   int 계산              integer GENERATED NOT NULL      계산 컬럼 → GENERATED STORED(B12), 적재·반영에서 뺀다
+  [적재 뒤] CREATE INDEX "ix_rating_issuer_dt" ON "dbo"."rating" ("issuer_id", "rating_dt")
+  [적재 뒤] CREATE INDEX "ix_rating_dt" ON "dbo"."rating" ("rating_dt")
+  [전환 때] ALTER TABLE "dbo"."rating" ADD CONSTRAINT "fk_rating_issuer" FOREIGN KEY ("issuer_id") REFERENCES "dbo"."issuer" ("issuer_id")
+
+dbo.rating_hist → dbo.rating_hist   행(추정) 20,004   PK (hist_id)
+  원천 컬럼      원천 타입             대상                                          비고
+  hist_id        bigint IDENTITY(1,1)  bigint IDENTITY NOT NULL                      IDENT_CURRENT 20004 → 전환 때 setval(A09)
+  rating_id      bigint                bigint NOT NULL                               
+  action_cd      char(1) CI            char(1) NOT NULL                              CP949 → UTF-8(바이트 증가)
+  old_rating_cd  varchar(10) CI        varchar(10)                                   CP949 → UTF-8(바이트 증가)
+  new_rating_cd  varchar(10) CI        varchar(10)                                   CP949 → UTF-8(바이트 증가)
+  changed_by     sysname CI            varchar(128) NOT NULL DEFAULT session_user    
+  changed_dtm    datetime2(3)          timestamp(3) NOT NULL DEFAULT LOCALTIMESTAMP  
+
+dbo.research_doc → dbo.research_doc   행(추정) 5,006   PK (doc_id)
+  원천 컬럼     원천 타입                        대상                                                             비고
+  doc_id        int IDENTITY(1,1)                integer IDENTITY NOT NULL                                        IDENT_CURRENT 10001 → 전환 때 setval(A09)
+  doc_no        bigint                           bigint NOT NULL DEFAULT nextval('"dbo"."seq_doc_no"'::regclass)  NEXT VALUE FOR → nextval(B13)
+  doc_type_cd   varchar(2) CI                    varchar(2) NOT NULL                                              CP949 → UTF-8(바이트 증가)
+  issuer_id     int                              integer                                                          
+  title         nvarchar(400) CI                 varchar(400) NOT NULL                                            
+  file_nm       varchar(100) CI                  varchar(100)                                                     CP949 → UTF-8(바이트 증가)
+  file_path     nvarchar(400) CI                 varchar(400)                                                     
+  file_ext      varchar(200) 계산(PERSISTED) CI  varchar(200) GENERATED                                           CP949 → UTF-8(바이트 증가); 계산 컬럼 → GENERATED STORED(B12), 적재·반영에서 뺀다
+  pub_dtm       datetime                         timestamp(3) NOT NULL                                            
+  body          nvarchar(max) CI                 text                                                             
+  view_cnt      int                              integer NOT NULL DEFAULT 0                                       
+  [적재 뒤] CREATE INDEX "ix_doc_pub" ON "dbo"."research_doc" ("pub_dtm")
+  [전환 때] ALTER TABLE "dbo"."research_doc" ADD CONSTRAINT "fk_doc_issuer" FOREIGN KEY ("issuer_id") REFERENCES "dbo"."issuer" ("issuer_id")
+
+== 시퀀스 ==
+  dbo.seq_doc_no → dbo.seq_doc_no  bigint 시작 202600001 증가 1 현재 202605006 (전환 때 setval, B13)
+
+== 경고 (적용은 하지만 확인할 것) ==
+  [(DB)] 자동 변환하지 않는 객체 6개(뷰·SP·함수·SYNONYM 등). KIS:docs/appcompat.md 방식으로 수작업 전환(plan.md §3.2)
+  [dbo.app_user.joined_dtm] 기본값 (getdate()) → LOCALTIMESTAMP: 대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값
+  [dbo.issuer.issuer_nm] NUL 문자가 든 행 1건(A02). text.nul_char: replace
+  [dbo.issuer.issuer_guid] uniqueidentifier → uuid: 정렬 순서가 달라진다
+  [dbo.issuer.issuer_guid] 기본값 (newsequentialid()) → gen_random_uuid(): 순차 GUID 가 아니라 임의 UUID(정렬·인덱스 지역성이 달라진다)
+  [dbo.issuer.row_ver] rowversion → bytea: 앱이 낙관적 잠금에 쓰면 별도 설계(값은 이관 시점 값으로 고정)
+  [dbo.issuer.reg_dtm] 기본값 (getdate()) → LOCALTIMESTAMP: 대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값
+  [dbo.rating] 트리거 trg_rating_audit: 자동 변환 안 함(B11). 반영 중에는 대상 트리거를 두지 않고 전환 뒤 PL/pgSQL 로 배포
+  [dbo.rating_hist.changed_by] 기본값 (suser_sname()) → session_user: 원천 로그인 이름 대신 PG 접속 역할 이름이 들어간다
+  [dbo.rating_hist.changed_dtm] 기본값 (sysdatetime()) → LOCALTIMESTAMP: 대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값
+
+== 주의: 값은 같지만 조회 결과가 다른 곳(규칙 결정, KIS B01~B14) ==
+  [collation.target: C] 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  [text.trailing_space: keep] 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  [문자 인코딩] 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+  [dbo.rating.rating_dt] 센티널 날짜 행 1건(A08). sentinel_dates.action: keep
+  [dbo.rating.eff_dtm] 센티널 날짜 행 1건(A08). sentinel_dates.action: keep
+  [dbo.research_doc.pub_dtm] 센티널 날짜 행 2건(A08). sentinel_dates.action: keep
+
+== 자동 변환하지 않는 객체 (KIS:docs/appcompat.md 방식으로 수작업) ==
+  SQL_STORED_PROCEDURE 3: dbo.usp_daily_count, dbo.usp_search_docs, dbo.usp_upsert_ratings
+  SYNONYM 1: dbo.syn_region
+  TABLE_TYPE 1: dbo.rating_tvp
+  VIEW 1: dbo.vw_issuer_region
+exit 0
+
+===== 2026-10-08 07:38:54 [r1] kdms plan --scan -c out/rehearsal/cloud_r1/kdms-nulfail.yml -o out/rehearsal/cloud_r1/plan_nulfail (plan_nulfail)
+파일: out/rehearsal/cloud_r1/plan_nulfail/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+KDMS 0.1.0-SNAPSHOT 스키마 변환 계획 · 작업 kdms_mock · 2026-10-08 07:38:55 +00:00
+변환 규칙: 기본 + config/rehearsal/rules-nul-fail.yml, 타입 규칙 30개 · 데이터 검사(--scan) 함
+원천: KDMS_MOCK (콜레이션 Korean_Wansung_CI_AS)
+요약: 테이블 7개 (PK 없음 0, 제외 0) · 컬럼 55개 · 시퀀스 1개 · 오류 1 · 경고 9 · 주의 6
+결과: 막힘. 아래 오류를 규칙 파일에서 고친 뒤 kdms plan 을 다시 실행한다
+
+== 오류 (고치기 전에는 대상에 만들지 않는다) ==
+  [dbo.issuer.issuer_nm] NUL 문자가 든 행 1건(A02). text.nul_char: fail → strip/replace 로 정하거나 원천을 고친다
+
+== 테이블 ==
+
+dbo.app_user → dbo.app_user   행(추정) 1,001   PK (user_id)
+  원천 컬럼     원천 타입          대상                                          비고
+  user_id       int IDENTITY(1,1)  integer IDENTITY NOT NULL                     IDENT_CURRENT 1002 → 전환 때 setval(A09)
+  login_id      varchar(30) CI     varchar(30) NOT NULL                          CP949 → UTF-8(바이트 증가)
+  user_nm       nvarchar(50) CI    varchar(50) NOT NULL                          
+  email         varchar(100) CI    varchar(100)                                  CP949 → UTF-8(바이트 증가)
+  member_level  tinyint            smallint NOT NULL DEFAULT 0 CHECK             
+  joined_dtm    datetime           timestamp(3) NOT NULL DEFAULT LOCALTIMESTAMP  
+  [적재 뒤] CREATE UNIQUE INDEX "uq_app_user_login" ON "dbo"."app_user" (lower("login_id"))
+            ↳ 대소문자 무시 UNIQUE → lower() 유일 인덱스(B14, collation.ci_unique: lower_index)
+
+dbo.code_master → dbo.code_master   행(추정) 27   PK (code_grp, code)
+  원천 컬럼      원천 타입         대상                          비고
+  code_grp       varchar(20) CI    varchar(20) NOT NULL          CP949 → UTF-8(바이트 증가)
+  code           varchar(10) CI    varchar(10) NOT NULL          CP949 → UTF-8(바이트 증가)
+  code_nm        nvarchar(100) CI  varchar(100) NOT NULL         
+  code_nm_short  varchar(20) CI    varchar(20)                   CP949 → UTF-8(바이트 증가)
+  sort_no        smallint          smallint NOT NULL DEFAULT 0   
+  use_yn         char(1) CI        char(1) NOT NULL DEFAULT 'Y'  CP949 → UTF-8(바이트 증가)
+  [적재 뒤] CREATE UNIQUE INDEX "pk_code_master_ci" ON "dbo"."code_master" (lower("code_grp"), lower("code"))
+            ↳ PK 대소문자 무시 중복 방지(B14, collation.ci_unique: lower_index)
+
+dbo.daily_count → dbo.daily_count   행(추정) 0   PK (snap_dt, table_nm)
+  원천 컬럼     원천 타입     대상                   비고
+  snap_dt       date          date NOT NULL          
+  table_nm      sysname CI    varchar(128) NOT NULL  
+  row_cnt       bigint        bigint NOT NULL        
+  [적재 뒤] CREATE UNIQUE INDEX "pk_daily_count_ci" ON "dbo"."daily_count" ("snap_dt", lower("table_nm"))
+            ↳ PK 대소문자 무시 중복 방지(B14, collation.ci_unique: lower_index)
+
+dbo.issuer → dbo.issuer   행(추정) 2,005   PK (issuer_id)
+  원천 컬럼        원천 타입          대상                                          비고
+  issuer_id        int IDENTITY(1,1)  integer IDENTITY NOT NULL                     IDENT_CURRENT 2010 → 전환 때 setval(A09)
+  issuer_cd        char(6) CI         char(6) NOT NULL                              CP949 → UTF-8(바이트 증가)
+  issuer_nm        nvarchar(100) CI   varchar(100) NOT NULL                         
+  issuer_nm_cp949  varchar(40) CI     varchar(40)                                   CP949 → UTF-8(바이트 증가)
+  issuer_nm_en     varchar(200) CI    varchar(200)                                  CP949 → UTF-8(바이트 증가)
+  region_cd        char(2) CI         char(2)                                       CP949 → UTF-8(바이트 증가)
+  industry_cd      varchar(2) CI      varchar(2)                                    CP949 → UTF-8(바이트 증가)
+  is_listed        bit                boolean NOT NULL DEFAULT false                
+  issuer_guid      uniqueidentifier   uuid NOT NULL DEFAULT gen_random_uuid()       
+  row_ver          rowversion         bytea NOT NULL                                
+  reg_dtm          datetime           timestamp(3) NOT NULL DEFAULT LOCALTIMESTAMP  
+  upd_dtm          datetime2(7)       timestamp(6)                                  소수 7자리 → 6자리(half_up, A06)
+  [적재 뒤] CREATE UNIQUE INDEX "uq_issuer_cd" ON "dbo"."issuer" (lower("issuer_cd"))
+            ↳ 대소문자 무시 UNIQUE → lower() 유일 인덱스(B14, collation.ci_unique: lower_index)
+  [적재 뒤] CREATE INDEX "ix_issuer_nm" ON "dbo"."issuer" ("issuer_nm")
+
+dbo.rating → dbo.rating   행(추정) 20,004   PK (rating_id)
+  원천 컬럼     원천 타입             대상                            비고
+  rating_id     bigint IDENTITY(1,1)  bigint IDENTITY NOT NULL        IDENT_CURRENT 20004 → 전환 때 setval(A09)
+  issuer_id     int                   integer NOT NULL                
+  rating_cd     varchar(10) CI        varchar(10) NOT NULL            CP949 → UTF-8(바이트 증가)
+  outlook_cd    char(1) CI            char(1)                         CP949 → UTF-8(바이트 증가)
+  rating_dt     date                  date NOT NULL                   
+  eff_dtm       datetime              timestamp(3) NOT NULL           
+  issue_amt     money                 numeric(19,4)                   
+  coupon_rate   decimal(9,4)          numeric(9,4)                    
+  is_watch      bit                   boolean NOT NULL DEFAULT false  
+  rating_rank   int 계산              integer GENERATED NOT NULL      계산 컬럼 → GENERATED STORED(B12), 적재·반영에서 뺀다
+  [적재 뒤] CREATE INDEX "ix_rating_issuer_dt" ON "dbo"."rating" ("issuer_id", "rating_dt")
+  [적재 뒤] CREATE INDEX "ix_rating_dt" ON "dbo"."rating" ("rating_dt")
+  [전환 때] ALTER TABLE "dbo"."rating" ADD CONSTRAINT "fk_rating_issuer" FOREIGN KEY ("issuer_id") REFERENCES "dbo"."issuer" ("issuer_id")
+
+dbo.rating_hist → dbo.rating_hist   행(추정) 20,004   PK (hist_id)
+  원천 컬럼      원천 타입             대상                                          비고
+  hist_id        bigint IDENTITY(1,1)  bigint IDENTITY NOT NULL                      IDENT_CURRENT 20004 → 전환 때 setval(A09)
+  rating_id      bigint                bigint NOT NULL                               
+  action_cd      char(1) CI            char(1) NOT NULL                              CP949 → UTF-8(바이트 증가)
+  old_rating_cd  varchar(10) CI        varchar(10)                                   CP949 → UTF-8(바이트 증가)
+  new_rating_cd  varchar(10) CI        varchar(10)                                   CP949 → UTF-8(바이트 증가)
+  changed_by     sysname CI            varchar(128) NOT NULL DEFAULT session_user    
+  changed_dtm    datetime2(3)          timestamp(3) NOT NULL DEFAULT LOCALTIMESTAMP  
+
+dbo.research_doc → dbo.research_doc   행(추정) 5,006   PK (doc_id)
+  원천 컬럼     원천 타입                        대상                                                             비고
+  doc_id        int IDENTITY(1,1)                integer IDENTITY NOT NULL                                        IDENT_CURRENT 10001 → 전환 때 setval(A09)
+  doc_no        bigint                           bigint NOT NULL DEFAULT nextval('"dbo"."seq_doc_no"'::regclass)  NEXT VALUE FOR → nextval(B13)
+  doc_type_cd   varchar(2) CI                    varchar(2) NOT NULL                                              CP949 → UTF-8(바이트 증가)
+  issuer_id     int                              integer                                                          
+  title         nvarchar(400) CI                 varchar(400) NOT NULL                                            
+  file_nm       varchar(100) CI                  varchar(100)                                                     CP949 → UTF-8(바이트 증가)
+  file_path     nvarchar(400) CI                 varchar(400)                                                     
+  file_ext      varchar(200) 계산(PERSISTED) CI  varchar(200) GENERATED                                           CP949 → UTF-8(바이트 증가); 계산 컬럼 → GENERATED STORED(B12), 적재·반영에서 뺀다
+  pub_dtm       datetime                         timestamp(3) NOT NULL                                            
+  body          nvarchar(max) CI                 text                                                             
+  view_cnt      int                              integer NOT NULL DEFAULT 0                                       
+  [적재 뒤] CREATE INDEX "ix_doc_pub" ON "dbo"."research_doc" ("pub_dtm")
+  [전환 때] ALTER TABLE "dbo"."research_doc" ADD CONSTRAINT "fk_doc_issuer" FOREIGN KEY ("issuer_id") REFERENCES "dbo"."issuer" ("issuer_id")
+
+== 시퀀스 ==
+  dbo.seq_doc_no → dbo.seq_doc_no  bigint 시작 202600001 증가 1 현재 202605006 (전환 때 setval, B13)
+
+== 경고 (적용은 하지만 확인할 것) ==
+  [(DB)] 자동 변환하지 않는 객체 6개(뷰·SP·함수·SYNONYM 등). KIS:docs/appcompat.md 방식으로 수작업 전환(plan.md §3.2)
+  [dbo.app_user.joined_dtm] 기본값 (getdate()) → LOCALTIMESTAMP: 대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값
+  [dbo.issuer.issuer_guid] uniqueidentifier → uuid: 정렬 순서가 달라진다
+  [dbo.issuer.issuer_guid] 기본값 (newsequentialid()) → gen_random_uuid(): 순차 GUID 가 아니라 임의 UUID(정렬·인덱스 지역성이 달라진다)
+  [dbo.issuer.row_ver] rowversion → bytea: 앱이 낙관적 잠금에 쓰면 별도 설계(값은 이관 시점 값으로 고정)
+  [dbo.issuer.reg_dtm] 기본값 (getdate()) → LOCALTIMESTAMP: 대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값
+  [dbo.rating] 트리거 trg_rating_audit: 자동 변환 안 함(B11). 반영 중에는 대상 트리거를 두지 않고 전환 뒤 PL/pgSQL 로 배포
+  [dbo.rating_hist.changed_by] 기본값 (suser_sname()) → session_user: 원천 로그인 이름 대신 PG 접속 역할 이름이 들어간다
+  [dbo.rating_hist.changed_dtm] 기본값 (sysdatetime()) → LOCALTIMESTAMP: 대상 PG 서버 시간대(timezone)가 원천 Windows 시간대와 같아야 같은 값
+
+== 주의: 값은 같지만 조회 결과가 다른 곳(규칙 결정, KIS B01~B14) ==
+  [collation.target: C] 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  [text.trailing_space: keep] 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  [문자 인코딩] 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+  [dbo.rating.rating_dt] 센티널 날짜 행 1건(A08). sentinel_dates.action: keep
+  [dbo.rating.eff_dtm] 센티널 날짜 행 1건(A08). sentinel_dates.action: keep
+  [dbo.research_doc.pub_dtm] 센티널 날짜 행 2건(A08). sentinel_dates.action: keep
+
+== 자동 변환하지 않는 객체 (KIS:docs/appcompat.md 방식으로 수작업) ==
+  SQL_STORED_PROCEDURE 3: dbo.usp_daily_count, dbo.usp_search_docs, dbo.usp_upsert_ratings
+  SYNONYM 1: dbo.syn_region
+  TABLE_TYPE 1: dbo.rating_tvp
+  VIEW 1: dbo.vw_issuer_region
+exit 3
+
+===== 2026-10-08 07:38:55 [r1] L. 원천 쓰기 없음: 적재 → 검증 → 전환 → 점검
+
+===== 2026-10-08 07:38:55 [r1] kdms reset --yes (l_reset)
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 07:38:56 [r1] kdms schema --replace (l_schema)
+파일: out/kdms_mock/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+대상 kdms_app@127.0.0.1:55432/kdms 에 pre-load 적용: 문장 11개, 테이블 7개, 지우고 다시 만든 것: "dbo"."app_user", "dbo"."code_master", "dbo"."daily_count", "dbo"."issuer", "dbo"."rating", "dbo"."rating_hist", "dbo"."research_doc", "dbo"."seq_doc_no"
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+exit 0
+
+===== 2026-10-08 07:38:57 [r1] kdms load --no-cdc -c out/rehearsal/cloud_r1/kdms-nulfail.yml (l_load_nulfail)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+주의: kdms schema 때와 설정·규칙 파일 내용이 다르다. 값 규칙이 바뀌었으면 --reset 으로 처음부터 적재한다
+dbo.daily_count 구간 1/1: 0행, 0.1초
+dbo.code_master 구간 2/2: 13행, 0.1초
+dbo.daily_count → dbo.daily_count: 완료 0행, 구간 1개, 0.3초
+dbo.code_master 구간 1/2: 14행, 0.1초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.3초
+dbo.app_user 구간 2/2: 501행, 0.2초
+dbo.app_user 구간 1/2: 500행, 0.3초
+dbo.app_user → dbo.app_user: 완료 1,001행, 구간 2개, 0.4초
+dbo.issuer 구간 2/2: 실패 NUL 문자(A02)가 든 값: dbo.issuer.issuer_nm 1행. 규칙 text.nul_char: fail 이라 적재하지 않았다. 컬럼별로 tables.<테이블>.columns.<컬럼>.nul_char: strip | replace 로 정한다(docs/load-verify.md §4)
+dbo.issuer 구간 1/2: 1,002행, 0.3초
+dbo.issuer → dbo.issuer: 실패 1,002행, 구간 2개, 0.5초
+  오류: 구간 2: NUL 문자(A02)가 든 값: dbo.issuer.issuer_nm 1행. 규칙 text.nul_char: fail 이라 적재하지 않았다. 컬럼별로 tables.<테이블>.columns.<컬럼>.nul_char: strip | replace 로 정한다(docs/load-verify.md §4)
+dbo.research_doc 구간 2/2: 6행, 0.2초
+dbo.rating_hist 구간 2/2: 10,002행, 0.4초
+dbo.rating_hist 구간 1/2: 10,002행, 0.5초
+dbo.rating 구간 2/2: 10,002행, 0.5초
+dbo.rating 구간 1/2: 10,002행, 0.5초
+dbo.rating_hist → dbo.rating_hist: 완료 20,004행, 구간 2개, 0.6초
+dbo.rating → dbo.rating: 완료 20,004행, 구간 2개, 0.6초
+dbo.research_doc 구간 1/2: 5,000행, 0.5초
+dbo.research_doc → dbo.research_doc: 완료 5,006행, 구간 2개, 0.5초
+
+결과: 테이블 7개 중 적재 6개(이미 적재돼 건너뜀 0), 실패 1개, 대상 행 47,044
+실패한 구간만 다시 하려면 같은 명령을 다시 실행한다(끝난 구간은 건너뛴다)
+exit 5
+
+===== 2026-10-08 07:38:59 [r1] kdms load --no-cdc --reset --throttle-ms 1000 (l_load_kill, 뒤에서)
+
+===== 2026-10-08 07:39:05 [r1] (l_load_kill 원문)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+--reset: 대상 테이블 7개를 비우고 구간 기록을 지웠다
+dbo.daily_count 구간 1/1: 0행, 0.1초
+dbo.code_master 구간 1/2: 14행, 0.1초
+dbo.code_master 구간 2/2: 13행, 0.1초
+dbo.daily_count → dbo.daily_count: 완료 0행, 구간 1개, 0.2초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.2초
+dbo.app_user 구간 2/2: 501행, 0.2초
+dbo.app_user 구간 1/2: 500행, 0.2초
+dbo.app_user → dbo.app_user: 완료 1,001행, 구간 2개, 0.3초
+dbo.research_doc 구간 2/2: 6행, 0.2초
+dbo.issuer 구간 1/2: 1,002행, 1.2초
+dbo.issuer 구간 2/2: 1,003행, 1.2초
+dbo.issuer → dbo.issuer: 완료 2,005행, 구간 2개, 1.3초
+exit 137
+kill -9 (적재 6초 뒤)
+
+===== 2026-10-08 07:39:05 [r1] kdms load --no-cdc (l_load_resume)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+dbo.issuer: 이미 적재됨(2,005행). 다시 하려면 --reset
+dbo.app_user: 이미 적재됨(1,001행). 다시 하려면 --reset
+dbo.daily_count: 이미 적재됨(0행). 다시 하려면 --reset
+dbo.code_master: 이미 적재됨(27행). 다시 하려면 --reset
+dbo.research_doc: 끝난 구간 1개는 건너뛰고 1개를 적재한다
+dbo.rating_hist 구간 1/2: 10,002행, 0.6초
+dbo.rating_hist 구간 2/2: 10,002행, 0.7초
+dbo.rating 구간 2/2: 10,002행, 0.7초
+dbo.rating 구간 1/2: 10,002행, 0.7초
+dbo.rating_hist → dbo.rating_hist: 완료 20,004행, 구간 2개, 0.7초
+dbo.rating → dbo.rating: 완료 20,004행, 구간 2개, 0.7초
+dbo.research_doc 구간 1/2: 5,000행, 0.8초
+dbo.research_doc → dbo.research_doc: 완료 5,006행, 구간 2개(건너뜀 1), 0.9초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 4), 실패 0개, 대상 행 48,047
+적재 뒤 DDL(UNIQUE·인덱스) 적용: 문장 8개
+다음: kdms verify
+exit 0
+
+===== 2026-10-08 07:39:07 [r1] kdms verify (l_verify)
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 2026-10-08 07:39:08 +00:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,001 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 0 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.issuer → dbo.issuer: 건수 2,005 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.rating → dbo.rating: 건수 20,004 · 해시 같음 · 합계 5개 같음 (0.5초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 20,004 · 해시 같음 · 합계 2개 같음 (0.4초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,006 · 해시 같음 · 합계 4개 같음 (0.4초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 5)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+exit 0
+
+===== 2026-10-08 07:39:10 [r1] kdms cutover --yes --no-cdc (l_cutover)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 4) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T07:39:11 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+  → 건너뜀 (0.0초): --no-cdc: 워터마크 없이 적재한 작업이라 반영할 변경이 없다
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.0초): 문장 0개 적용, 이미 있어 건너뜀 8개
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,001 · 해시 같음 · 합계 2개 같음 (0.1초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 0 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.issuer → dbo.issuer: 건수 2,005 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.rating → dbo.rating: 건수 20,004 · 해시 같음 · 합계 5개 같음 (0.5초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 20,004 · 해시 같음 · 합계 2개 같음 (0.4초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,006 · 해시 같음 · 합계 4개 같음 (0.3초)
+  → 완료 (1.5초): 검증 항목 30개 중 일치 30 · 불일치 0 (run_id 6)
+
+[5/6] IDENTITY·SEQUENCE
+  IDENTITY "dbo"."app_user"."user_id": 원천 1002 → 대상 다음 값 1003
+  IDENTITY "dbo"."issuer"."issuer_id": 원천 2010 → 대상 다음 값 2011
+  IDENTITY "dbo"."rating"."rating_id": 원천 20004 → 대상 다음 값 20005
+  IDENTITY "dbo"."rating_hist"."hist_id": 원천 20004 → 대상 다음 값 20005
+  IDENTITY "dbo"."research_doc"."doc_id": 원천 10001 → 대상 다음 값 10002
+  SEQUENCE "dbo"."seq_doc_no": 원천 202605006 → 대상 다음 값 202605007
+  → 완료 (0.1초): "dbo"."app_user"."user_id" 다음 1003, "dbo"."issuer"."issuer_id" 다음 2011, "dbo"."rating"."rating_id" 다음 20005, "dbo"."rating_hist"."hist_id" 다음 20005, "dbo"."research_doc"."doc_id" 다음 10002, "dbo"."seq_doc_no" 다음 202605007
+
+[6/6] FK
+  → 완료 (0.0초): 문장 2개 적용
+
+전환 끝
+  1 마지막 반영         건너뜀      0.0초  --no-cdc: 워터마크 없이 적재한 작업이라 반영할 변경이 없다
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.0초  문장 0개 적용, 이미 있어 건너뜀 8개
+  4 검증                완료        1.5초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 6)
+  5 IDENTITY·SEQUENCE   완료        0.1초  "dbo"."app_user"."user_id" 다음 1003, "dbo"."issuer"."issuer_id" 다음 2011, "dbo"."rating"."rating_id" 다음 20005, "dbo"."rating_hist"."hist_id" 다음 20005, "dbo"."research_doc"."doc_id" 다음 10002, "dbo"."seq_doc_no" 다음 202605007
+  6 FK                  완료        0.0초  문장 2개 적용
+소요 시간(예상 다운타임) 1.7초
+
+전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+  - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+exit 0
+
+===== 2026-10-08 07:39:13 [r1] kdms check --probe (l_check)
+KDMS 0.1.0-SNAPSHOT 전환 뒤 점검 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 2026-10-08 07:39:14 +00:00
+입력 시험 포함(--probe): 대상에 행을 넣어 보고 모두 되돌린다. 시퀀스는 쓰지 않는다
+
+[작업]
+  통과    작업 kdms_mock: 상태 DONE
+  통과    마지막 전환 cutover 4: DONE, 소요 시간 1.7초
+  통과    전환 검증 run_id 6: 검증 항목 30개 중 일치 30 · 불일치 0
+
+[다음 값 IDENTITY·SEQUENCE (A09, T-L05·T-L06)]
+  통과    "dbo"."app_user"."user_id": 대상 다음 값 1003 = 원천 1002 + 1 · 대상 MAX 1001
+  통과    "dbo"."issuer"."issuer_id": 대상 다음 값 2011 = 원천 2010 + 1 · 대상 MAX 2005
+  통과    "dbo"."rating"."rating_id": 대상 다음 값 20005 = 원천 20004 + 1 · 대상 MAX 20004
+  통과    "dbo"."rating_hist"."hist_id": 대상 다음 값 20005 = 원천 20004 + 1 · 대상 MAX 20004
+  통과    "dbo"."research_doc"."doc_id": 대상 다음 값 10002 = 원천 10001 + 1 · 대상 MAX 10001
+  통과    "dbo"."seq_doc_no": 대상 다음 값 202605007 = 원천 202605006 + 1
+
+[제약·인덱스 (T-C11)]
+  통과    "dbo"."app_user" PK: (user_id)
+  통과    "dbo"."app_user" uq_app_user_login: 유일 인덱스 유효
+  통과    "dbo"."code_master" PK: (code_grp, code)
+  통과    "dbo"."code_master" pk_code_master_ci: 유일 인덱스 유효
+  통과    "dbo"."daily_count" PK: (snap_dt, table_nm)
+  통과    "dbo"."daily_count" pk_daily_count_ci: 유일 인덱스 유효
+  통과    "dbo"."issuer" PK: (issuer_id)
+  통과    "dbo"."issuer" uq_issuer_cd: 유일 인덱스 유효
+  통과    "dbo"."issuer" ix_issuer_nm: 인덱스 유효
+  통과    "dbo"."rating" PK: (rating_id)
+  통과    "dbo"."rating" ix_rating_issuer_dt: 인덱스 유효
+  통과    "dbo"."rating" ix_rating_dt: 인덱스 유효
+  통과    "dbo"."rating" fk_rating_issuer: FK 기존 행까지 검사됨
+  통과    "dbo"."rating_hist" PK: (hist_id)
+  통과    "dbo"."research_doc" PK: (doc_id)
+  통과    "dbo"."research_doc" ix_doc_pub: 인덱스 유효
+  통과    "dbo"."research_doc" fk_doc_issuer: FK 기존 행까지 검사됨
+
+[계산 컬럼 (B12, T-L13)]
+  통과    "dbo"."rating"."rating_rank": GENERATED ALWAYS AS (…) STORED
+  통과    "dbo"."research_doc"."file_ext": GENERATED ALWAYS AS (…) STORED
+
+[입력 시험 (모두 되돌림)]
+  통과    "dbo"."app_user" uq_app_user_login: 대소문자만 다른 login_id 입력 (T-L12): 입력이 막혔다(유일 인덱스 uq_app_user_login)
+  통과    "dbo"."code_master" pk_code_master_ci: 대소문자만 다른 code_grp·code 입력 (T-L12): 입력이 막혔다(유일 인덱스 pk_code_master_ci)
+  건너뜀  "dbo"."daily_count" pk_daily_count_ci: 대소문자만 다른 table_nm 입력 (T-L12): 복사할 행이 없다
+  건너뜀  "dbo"."issuer" uq_issuer_cd: 대소문자만 다른 issuer_cd 입력 (T-L12): 복사할 행이 없다
+  통과    "dbo"."rating" fk_rating_issuer: 부모에 없는 값 입력 (T-C11): 입력이 막혔다(FK fk_rating_issuer)
+  통과    "dbo"."research_doc" fk_doc_issuer: 부모에 없는 값 입력 (T-C11): 입력이 막혔다(FK fk_doc_issuer)
+
+[사람이 할 일 (자동 변환하지 않음, KIS:docs/appcompat.md)]
+  경고    dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  경고    뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+
+결과: 점검 36개 · 통과 32 · 실패 0 · 경고 2 · 건너뜀 2
+실패 없음. 경고(사람이 할 일)를 처리한 뒤 앱 접속을 대상으로 돌린다(docs/runbook.md §7)
+exit 0
+
+===== 2026-10-08 07:39:14 [r1] C. 원천 쓰기 중: 동기화 → 적재 → 강제 종료·캡처 중지 → 전환 → 점검
+
+===== 2026-10-08 07:39:14 [r1] kdms reset --yes (c_reset)
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 07:39:15 [r1] kdms schema --replace (c_schema)
+파일: out/kdms_mock/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+대상 kdms_app@127.0.0.1:55432/kdms 에 pre-load 적용: 문장 11개, 테이블 7개, 지우고 다시 만든 것: "dbo"."app_user", "dbo"."code_master", "dbo"."daily_count", "dbo"."issuer", "dbo"."rating", "dbo"."rating_hist", "dbo"."research_doc", "dbo"."seq_doc_no"
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+exit 0
+
+===== 2026-10-08 07:39:16 [r1] kdms load (c_load_nowm)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+적재하지 않음: 워터마크가 없다. 원천 쓰기가 있으면 먼저 다른 터미널에서 kdms sync 를 실행해 "워터마크 기록" 이 나온 뒤 적재한다(그래야 적재 중 변경을 놓치지 않는다, docs/cdc.md). 원천 쓰기가 없는 시험이면 --no-cdc
+exit 4
+
+===== 2026-10-08 07:39:18 [r1] kdms sync (c_sync0, 뒤에서)
+
+===== 2026-10-08 07:39:22 [r1] 노트북: writes 20초
+사람: 노트북 writes 끝
+
+===== 2026-10-08 07:40:00 [r1] (c_sync0 원문)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+워터마크 기록: 0000002d:00004ca8:0074 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+[07:39:21] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초 · 원천 마지막 변경 07:38:38
+[07:39:31] 수집 333 · 반영 0 · 대기 333(적재 전 테이블 7개, 그 변경 333) · 지연 0.0초 · 원천 마지막 변경 07:39:30
+[07:39:41] 수집 815 · 반영 0 · 대기 815(적재 전 테이블 7개, 그 변경 815) · 지연 0.0초 · 원천 마지막 변경 07:39:40
+[07:39:51] 수집 883 · 반영 0 · 대기 883(적재 전 테이블 7개, 그 변경 883) · 지연 0.0초 · 원천 마지막 변경 07:39:44
+중지 요청: 진행 중 배치를 마치고 멈춘다
+exit 143
+
+===== 2026-10-08 07:40:00 [r1] 노트북: tc10 
+사람: 노트북 tc10 끝
+
+===== 2026-10-08 07:40:05 [r1] kdms sync (c_sync_tc10, 뒤에서)
+
+===== 2026-10-08 07:40:07 [r1] (c_sync_tc10 원문)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 0000002d:00004ca8:0074 (2026-10-08T07:39:21 기록) · 저장된 오프셋 다음부터 이어 받는다
+2026-10-08 07:40:07.285 WARN  [pool-2-thread-1] i.d.connector.common.BaseSourceTask - Last recorded offset is no longer available on the server.
+2026-10-08 07:40:07.290 ERROR [kdms-cdc] i.d.e.async.AsyncEmbeddedEngine - 1 task(s) out of 1 failed to start.
+2026-10-08 07:40:07.291 ERROR [kdms-cdc] i.d.e.async.AsyncEmbeddedEngine - Engine has failed with 
+java.util.concurrent.ExecutionException: io.debezium.DebeziumException: The connector is trying to read change stream starting at SqlServerOffsetContext [sourceInfoSchema=Schema{io.debezium.connector.sqlserver.Source:STRUCT}, sourceInfo=SourceInfo [serverName=kdms, changeLsn=0000002d:00006bf8:0004, commitLsn=0000002d:00006bf8:00af, eventSerialNo=null, commandId=3, snapshot=FALSE, sourceTime=null], snapshotCompleted=false, eventSerialNo=2], but this is no longer available on the server. Reconfigure the connector to use a snapshot mode when needed.
+	at java.base/java.util.concurrent.FutureTask.report(FutureTask.java:122)
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:191)
+	at io.debezium.embedded.async.AsyncEmbeddedEngine.startSourceTasks(AsyncEmbeddedEngine.java:471)
+	at io.debezium.embedded.async.AsyncEmbeddedEngine.run(AsyncEmbeddedEngine.java:211)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: io.debezium.DebeziumException: The connector is trying to read change stream starting at SqlServerOffsetContext [sourceInfoSchema=Schema{io.debezium.connector.sqlserver.Source:STRUCT}, sourceInfo=SourceInfo [serverName=kdms, changeLsn=0000002d:00006bf8:0004, commitLsn=0000002d:00006bf8:00af, eventSerialNo=null, commandId=3, snapshot=FALSE, sourceTime=null], snapshotCompleted=false, eventSerialNo=2], but this is no longer available on the server. Reconfigure the connector to use a snapshot mode when needed.
+	at io.debezium.connector.common.BaseSourceTask.validateSchemaHistory(BaseSourceTask.java:165)
+	at io.debezium.connector.sqlserver.SqlServerConnectorTask.start(SqlServerConnectorTask.java:137)
+	at io.debezium.connector.common.BaseSourceTask.start(BaseSourceTask.java:286)
+	at io.debezium.embedded.async.AsyncEmbeddedEngine.lambda$startSourceTasks$4(AsyncEmbeddedEngine.java:450)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	... 3 common frames omitted
+수집 오류: 원천 CDC 보존 기간이 지나 마지막 위치 뒤의 변경이 지워졌다(T-C10). 이어 받을 수 없으므로 kdms reset --yes 뒤 kdms sync → kdms load 로 전체 적재부터 다시 한다
+exit 5
+
+===== 2026-10-08 07:40:07 [r1] kdms reset --yes (c_reset2)
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 07:40:08 [r1] kdms sync (c_sync1, 뒤에서)
+
+===== 2026-10-08 07:40:11 [r1] 노트북: 원천 쓰기 300초 시작
+사람: 노트북 쓰기 시작
+
+===== 2026-10-08 07:40:26 [r1] kdms load --throttle-ms 2000 (c_load, 뒤에서)
+
+===== 2026-10-08 07:40:36 [r1] (c_sync1 원문)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+워터마크 기록: 0000002d:00006d20:0003 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+[07:40:11] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초 · 원천 마지막 변경 07:40:00
+[07:40:21] 수집 367 · 반영 0 · 대기 367(적재 전 테이블 7개, 그 변경 367) · 지연 0.0초 · 원천 마지막 변경 07:40:20
+[07:40:32] 수집 875 · 반영 152 · 대기 723(적재 전 테이블 3개, 그 변경 723) · 지연 0.0초 · 원천 마지막 변경 07:40:30
+exit 137
+kill -9 sync (적재 중)
+
+===== 2026-10-08 07:40:36 [r1] kdms sync (c_sync2, 뒤에서)
+
+===== 2026-10-08 07:40:49 [r1] (c_load 원문)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 0000002d:00006d20:0003 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+dbo.code_master 구간 2/2: 13행, 0.1초
+dbo.daily_count 구간 1/1: 1행, 0.2초
+dbo.code_master 구간 1/2: 14행, 0.2초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.3초
+dbo.daily_count → dbo.daily_count: 완료 1행, 구간 1개, 0.3초
+dbo.app_user 구간 2/2: 505행, 0.2초
+dbo.app_user 구간 1/2: 501행, 0.2초
+dbo.app_user → dbo.app_user: 완료 1,006행, 구간 2개, 0.4초
+dbo.research_doc 구간 2/2: 42행, 0.3초
+dbo.issuer 구간 1/2: 1,071행, 2.6초
+dbo.issuer 구간 2/2: 1,067행, 2.5초
+dbo.issuer → dbo.issuer: 완료 2,138행, 구간 2개, 2.7초
+dbo.research_doc 구간 1/2: 5,005행, 10.6초
+dbo.research_doc → dbo.research_doc: 완료 5,047행, 구간 2개, 10.7초
+dbo.rating_hist 구간 2/2: 10,309행, 20.2초
+dbo.rating_hist 구간 1/2: 10,306행, 20.3초
+dbo.rating 구간 1/2: 10,136행, 20.4초
+dbo.rating 구간 2/2: 10,056행, 20.4초
+dbo.rating → dbo.rating: 완료 20,192행, 구간 2개, 20.5초
+dbo.rating_hist → dbo.rating_hist: 완료 20,615행, 구간 2개, 20.5초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 49,026
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. kdms cutover 가 마지막 반영 뒤 적용한다
+다음: 원천 쓰기를 멈춘 뒤 kdms sync 를 멈추고 kdms cutover --yes
+exit 0
+
+===== 2026-10-08 07:41:09 [r1] (c_sync2 원문)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 0000002d:00006d20:0003 (2026-10-08T07:40:10 기록) · 저장된 오프셋 다음부터 이어 받는다
+[07:40:40] 수집 996 · 반영 258 · 대기 738(적재 전 테이블 2개, 그 변경 738) · 지연 5.2초 · 원천 마지막 변경 07:40:40
+[07:40:50] 수집 1,475 · 반영 1,475 · 대기 0 · 지연 4.6초 · 원천 마지막 변경 07:40:49
+[07:41:00] 수집 1,866 · 반영 1,866 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 07:41:00
+exit 137
+kill -9 sync (반영 중)
+
+===== 2026-10-08 07:41:09 [r1] kdms sync (c_sync3, 뒤에서)
+
+===== 2026-10-08 07:41:21 [r1] 노트북: capture-stop 
+사람: 노트북 capture-stop 끝
+
+===== 2026-10-08 07:42:24 [r1] 노트북: capture-start 
+사람: 노트북 capture-start 끝
+
+===== 2026-10-08 07:42:26 [r1] 노트북: 원천 쓰기가 끝나기를 기다림
+사람: 노트북 쓰기 끝
+
+===== 2026-10-08 07:45:33 [r1] (c_sync3 원문)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 0000002d:00006d20:0003 (2026-10-08T07:40:10 기록) · 저장된 오프셋 다음부터 이어 받는다
+[07:41:13] 수집 2,531 · 반영 2,531 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:41:08
+[07:41:23] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:41:20
+[07:41:33] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:41:20
+[07:41:43] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 23.0초 · 원천 마지막 변경 07:41:20 · 원천 캡처 Job 이 23초째 로그를 읽지 않음(SQL Agent 확인)
+[07:41:53] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 33.0초 · 원천 마지막 변경 07:41:20 · 원천 캡처 Job 이 33초째 로그를 읽지 않음(SQL Agent 확인)
+[07:42:03] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 43.0초 · 원천 마지막 변경 07:41:20 · 원천 캡처 Job 이 43초째 로그를 읽지 않음(SQL Agent 확인)
+[07:42:13] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 53.0초 · 원천 마지막 변경 07:41:20 · 원천 캡처 Job 이 53초째 로그를 읽지 않음(SQL Agent 확인)
+[07:42:23] 수집 3,038 · 반영 3,038 · 대기 0 · 지연 63.0초 · 원천 마지막 변경 07:41:20 · 원천 캡처 Job 이 63초째 로그를 읽지 않음(SQL Agent 확인)
+[07:42:34] 수집 6,060 · 반영 6,060 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:42:30
+[07:42:44] 수집 6,578 · 반영 6,578 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:42:40
+[07:42:54] 수집 6,926 · 반영 6,926 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:42:50
+[07:43:04] 수집 7,484 · 반영 7,484 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:00
+[07:43:14] 수집 7,782 · 반영 7,782 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:10
+[07:43:24] 수집 8,362 · 반영 8,362 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:20
+[07:43:34] 수집 8,719 · 반영 8,719 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:30
+[07:43:45] 수집 9,198 · 반영 9,198 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:40
+[07:43:55] 수집 9,572 · 반영 9,572 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:50
+[07:44:05] 수집 10,008 · 반영 10,008 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:43:58
+[07:44:15] 수집 10,477 · 반영 10,477 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:44:10
+[07:44:25] 수집 10,859 · 반영 10,859 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:44:20
+[07:44:35] 수집 11,440 · 반영 11,440 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 07:44:35
+[07:44:45] 수집 11,779 · 반영 11,779 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 07:44:45
+[07:44:55] 수집 12,277 · 반영 12,277 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 07:44:55
+[07:45:05] 수집 12,632 · 반영 12,632 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 07:45:05
+[07:45:16] 수집 13,109 · 반영 13,109 · 대기 0 · 지연 1.3초 · 원천 마지막 변경 07:45:11
+[07:45:26] 수집 13,166 · 반영 13,166 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:45:11
+중지 요청: 진행 중 배치를 마치고 멈춘다
+exit 143
+
+===== 2026-10-08 07:45:33 [r1] kdms cutover --yes (c_cutover)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 5) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T07:45:34 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 0000002d:00006d20:0003 (2026-10-08T07:40:10 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T07:45:35 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[07:45:37] 수집 13,166 · 반영 13,166 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:45:11
+[07:45:41] 수집 13,166 · 반영 13,166 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 07:45:11
+따라잡음(--drain): 원천 마지막 변경 00000034:000040a8:0004 까지 반영, 반영 대기 0건 · 6초
+  → 완료 (7.1초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.1초): 문장 8개 적용
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,094 · 해시 같음 · 합계 2개 같음 (0.0초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.issuer → dbo.issuer: 건수 2,976 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.rating → dbo.rating: 건수 21,491 · 해시 같음 · 합계 5개 같음 (0.5초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 25,198 · 해시 같음 · 합계 2개 같음 (0.5초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,323 · 해시 같음 · 합계 4개 같음 (0.3초)
+  → 완료 (1.5초): 검증 항목 30개 중 일치 30 · 불일치 0 (run_id 7)
+
+[5/6] IDENTITY·SEQUENCE
+  IDENTITY "dbo"."app_user"."user_id": 원천 1243 → 대상 다음 값 1244
+  IDENTITY "dbo"."issuer"."issuer_id": 원천 2981 → 대상 다음 값 2982
+  IDENTITY "dbo"."rating"."rating_id": 원천 22588 → 대상 다음 값 22589
+  IDENTITY "dbo"."rating_hist"."hist_id": 원천 25198 → 대상 다음 값 25199
+  IDENTITY "dbo"."research_doc"."doc_id": 원천 10318 → 대상 다음 값 10319
+  SEQUENCE "dbo"."seq_doc_no": 원천 202605323 → 대상 다음 값 202605324
+  → 완료 (0.1초): "dbo"."app_user"."user_id" 다음 1244, "dbo"."issuer"."issuer_id" 다음 2982, "dbo"."rating"."rating_id" 다음 22589, "dbo"."rating_hist"."hist_id" 다음 25199, "dbo"."research_doc"."doc_id" 다음 10319, "dbo"."seq_doc_no" 다음 202605324
+
+[6/6] FK
+  → 완료 (0.0초): 문장 2개 적용
+
+전환 끝
+  1 마지막 반영         완료        7.1초  반영 대기 0, 원천 마지막 커밋까지 반영
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.1초  문장 8개 적용
+  4 검증                완료        1.5초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 7)
+  5 IDENTITY·SEQUENCE   완료        0.1초  "dbo"."app_user"."user_id" 다음 1244, "dbo"."issuer"."issuer_id" 다음 2982, "dbo"."rating"."rating_id" 다음 22589, "dbo"."rating_hist"."hist_id" 다음 25199, "dbo"."research_doc"."doc_id" 다음 10319, "dbo"."seq_doc_no" 다음 202605324
+  6 FK                  완료        0.0초  문장 2개 적용
+소요 시간(예상 다운타임) 8.8초
+
+전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+  - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+exit 0
+
+===== 2026-10-08 07:45:43 [r1] kdms check --probe (c_check)
+KDMS 0.1.0-SNAPSHOT 전환 뒤 점검 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 2026-10-08 07:45:44 +00:00
+입력 시험 포함(--probe): 대상에 행을 넣어 보고 모두 되돌린다. 시퀀스는 쓰지 않는다
+
+[작업]
+  통과    작업 kdms_mock: 상태 DONE
+  통과    마지막 전환 cutover 5: DONE, 소요 시간 8.8초
+  통과    전환 검증 run_id 7: 검증 항목 30개 중 일치 30 · 불일치 0
+
+[다음 값 IDENTITY·SEQUENCE (A09, T-L05·T-L06)]
+  통과    "dbo"."app_user"."user_id": 대상 다음 값 1244 = 원천 1243 + 1 · 대상 MAX 1243
+  통과    "dbo"."issuer"."issuer_id": 대상 다음 값 2982 = 원천 2981 + 1 · 대상 MAX 2981
+  통과    "dbo"."rating"."rating_id": 대상 다음 값 22589 = 원천 22588 + 1 · 대상 MAX 22587
+  통과    "dbo"."rating_hist"."hist_id": 대상 다음 값 25199 = 원천 25198 + 1 · 대상 MAX 25198
+  통과    "dbo"."research_doc"."doc_id": 대상 다음 값 10319 = 원천 10318 + 1 · 대상 MAX 10318
+  통과    "dbo"."seq_doc_no": 대상 다음 값 202605324 = 원천 202605323 + 1
+
+[제약·인덱스 (T-C11)]
+  통과    "dbo"."app_user" PK: (user_id)
+  통과    "dbo"."app_user" uq_app_user_login: 유일 인덱스 유효
+  통과    "dbo"."code_master" PK: (code_grp, code)
+  통과    "dbo"."code_master" pk_code_master_ci: 유일 인덱스 유효
+  통과    "dbo"."daily_count" PK: (snap_dt, table_nm)
+  통과    "dbo"."daily_count" pk_daily_count_ci: 유일 인덱스 유효
+  통과    "dbo"."issuer" PK: (issuer_id)
+  통과    "dbo"."issuer" uq_issuer_cd: 유일 인덱스 유효
+  통과    "dbo"."issuer" ix_issuer_nm: 인덱스 유효
+  통과    "dbo"."rating" PK: (rating_id)
+  통과    "dbo"."rating" ix_rating_issuer_dt: 인덱스 유효
+  통과    "dbo"."rating" ix_rating_dt: 인덱스 유효
+  통과    "dbo"."rating" fk_rating_issuer: FK 기존 행까지 검사됨
+  통과    "dbo"."rating_hist" PK: (hist_id)
+  통과    "dbo"."research_doc" PK: (doc_id)
+  통과    "dbo"."research_doc" ix_doc_pub: 인덱스 유효
+  통과    "dbo"."research_doc" fk_doc_issuer: FK 기존 행까지 검사됨
+
+[계산 컬럼 (B12, T-L13)]
+  통과    "dbo"."rating"."rating_rank": GENERATED ALWAYS AS (…) STORED
+  통과    "dbo"."research_doc"."file_ext": GENERATED ALWAYS AS (…) STORED
+
+[입력 시험 (모두 되돌림)]
+  통과    "dbo"."app_user" uq_app_user_login: 대소문자만 다른 login_id 입력 (T-L12): 입력이 막혔다(유일 인덱스 uq_app_user_login)
+  통과    "dbo"."code_master" pk_code_master_ci: 대소문자만 다른 code_grp·code 입력 (T-L12): 입력이 막혔다(유일 인덱스 pk_code_master_ci)
+  통과    "dbo"."daily_count" pk_daily_count_ci: 대소문자만 다른 table_nm 입력 (T-L12): 입력이 막혔다(유일 인덱스 pk_daily_count_ci)
+  통과    "dbo"."issuer" uq_issuer_cd: 대소문자만 다른 issuer_cd 입력 (T-L12): 입력이 막혔다(유일 인덱스 uq_issuer_cd)
+  통과    "dbo"."rating" fk_rating_issuer: 부모에 없는 값 입력 (T-C11): 입력이 막혔다(FK fk_rating_issuer)
+  통과    "dbo"."research_doc" fk_doc_issuer: 부모에 없는 값 입력 (T-C11): 입력이 막혔다(FK fk_doc_issuer)
+
+[사람이 할 일 (자동 변환하지 않음, KIS:docs/appcompat.md)]
+  경고    dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  경고    뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+
+결과: 점검 36개 · 통과 34 · 실패 0 · 경고 2 · 건너뜀 0
+실패 없음. 경고(사람이 할 일)를 처리한 뒤 앱 접속을 대상으로 돌린다(docs/runbook.md §7)
+exit 0
+
+===== 2026-10-08 07:45:44 [r1] kdms status (c_status)
+KDMS 0.1.0-SNAPSHOT  작업 kdms_mock  2026-10-08 07:45:44 +00:00
+변환 규칙: 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[원천] kodong_ms@127.0.0.1:14331/KDMS_MOCK
+  접속                OK (319 ms)
+  버전                Microsoft SQL Server 2019 (RTM-CU32) (KB5054833) - 15.0.4430.1 (X64)
+  제품 버전           15.0.4430.1 RTM CU32 / Developer Edition (64-bit)
+  DB                  KDMS_MOCK
+  콜레이션            Korean_Wansung_CI_AS
+  로그인              kodong_ms
+  CDC                 켜짐 (캡처 테이블 7개)
+  스냅숏 격리         ON
+  복구 모델           SIMPLE
+  SQL Agent           Running
+
+[대상] kdms_app@127.0.0.1:55432/kdms
+  접속                OK (279 ms)
+  버전                PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+  DB                  kdms
+  로그인              kdms_app
+  인코딩 / 콜레이션   UTF8 / C.UTF-8
+  관리 스키마 kdms    버전 3 (2026-10-08T07:23:55.643889Z)
+
+[작업] kdms_mock (job_id 1)
+  상태                DONE
+  전체 적재           테이블 7개 중 7개 끝, 적재한 행 49,026
+  변경분 반영         수집 13,166 · 반영 13,166 · 대기 0 · 지연 0.0초 (2026-10-08T07:45:41 기준)
+  검증                run 7: 항목 30개 중 일치 30 · 불일치 0
+  전환                cutover 5: DONE · 소요 8.8초
+exit 0
+외부 연결 감시: 본 연결 상대 = 127.0.0.1:14331 127.0.0.1:55432 
+# KDMS 6단계 MVP 리허설 1회차 채점 · 2026-10-08 07:45:45 · 실행 원문 runs/20261008_0738_p6_cloud_r1_log.txt
+# 시험   결과   기대 · 근거(실행 원문의 단계 이름)
+T-L01  합격    datetime 3.33ms 값 해시 일치 · 근거: l_verify
+T-L02  합격    datetime2(7) → 6자리 해시 일치 · 근거: l_verify
+T-L03  합격    money 극값 합계 오버플로 없음 · 근거: l_verify(합계)
+T-L04  합격    bit → boolean 해시 일치 · 근거: l_verify
+T-L05  합격    IDENTITY 다음 값 = 원천 IDENT_CURRENT + 1 · 근거: l_check·c_check 다음 값
+T-L06  합격    SEQUENCE 기본값 nextval·현재값 setval 일치 · 근거: l_check·c_check 다음 값, plan
+T-L07  합격    char 끝 공백 RTRIM 정규화로 일치 · 근거: l_verify
+T-L08  합격    varchar 끝 공백 keep 값 보존·해시 일치, 보고서 주의 · 근거: l_verify, plan 주의
+T-L09  합격    NUL fail 이면 계획 막힘·적재가 그 구간에서 멈춤, replace 면 일치 · 근거: plan_nulfail·l_load_nulfail·l_verify
+T-L10  합격    CP949 varchar 한글 보존 · 근거: l_verify, plan 문자 인코딩
+T-L11  합격    nvarchar 한글 문자 수 그대로(근접 인덱스 경고는 SchemaPlannerTest) · 근거: l_verify
+T-L12  합격    CI UNIQUE: 대상도 대소문자만 다른 값 거부 · 근거: l_check·c_check 입력 시험
+T-L13  합격    계산 컬럼 GENERATED STORED, 값 일치 · 근거: l_check 계산 컬럼, l_verify
+T-L14  합격    센티널 날짜 keep · 근거: plan 주의, l_verify
+T-L15  합격    탭·CR·LF·역슬래시 값 해시 일치 · 근거: l_verify
+T-L16  합격    적재 중 kill -9 → 다시 실행하면 끝난 구간 건너뛰고 일치 · 근거: l_load_kill·l_load_resume·l_verify
+T-L17  합격    생성 검증 SQL 에 ISNULL 없음(NormalizerTest 포함 단위 시험 통과) · 근거: build
+T-C01  합격    쓰기 중 적재 + 반영 → 쓰기 중지 → 검증 일치 · 근거: c_cutover [4/6]
+T-C02  합격    워터마크 없이 적재하면 거부 · 근거: c_load_nowm
+T-C03  합격    적재 중 입력 후 삭제된 행이 유령으로 남지 않음 · 근거: c_cutover 검증(extra 0)
+T-C04  합격    원천 트리거 이력 행 수 = 원천(중복 없음) · 근거: c_cutover 검증 rating_hist 건수
+T-C05  합격    적재 경로·CDC 경로 값 동일 · 근거: c_cutover 검증 해시
+T-C06  합격    LOB 미변경 UPDATE 뒤 대상 LOB 유지 · 근거: c_cutover 검증 research_doc 해시
+T-C07  합격    PK 를 바꾸는 UPDATE · 근거: c_cutover 검증 code_master
+T-C08  합격    수집 중·반영 중 kill -9 뒤 이어 받고 일치 · 근거: c_sync2·c_sync3 '이어 받는다', c_cutover
+T-C09  합격    캡처 Job 1분 중지: 지연이 늘었다 따라잡음, 화면·로그에 경고 · 근거: c_sync3 '로그를 읽지 않음', 마지막 지연 0.0초
+T-C10  합격    보존 기간 초과면 멈추고 reset 안내 · 근거: c_sync_tc10
+T-C11  합격    전환: 마지막 반영 → 검증 → setval → FK, 소요 시간, 새 입력 PK 충돌 없음 · 근거: c_cutover, c_check
+T-C12  합격    긴 트랜잭션 늦은 커밋도 누락 없음 · 근거: c_cutover 검증(30_writes 500번째마다 3초 트랜잭션)
+T-N02  합격    jar 안 화면 파일이 외부 URL 을 읽지 않음 · 근거: 2. jar 안 화면 파일
+T-N03  합격    실행 중 외부 연결 0(설정한 두 DB 만) · 근거: lsof 1초 간격, 상대 127.0.0.1:14331 127.0.0.1:55432 
+T-N01  미시행  인터넷 차단 상태에서 빌드·적재·CDC·검증·전환 · 근거: 인터넷이 연결된 채 실행(시작 0·끝 0, 1 = 차단)
+
+결과: 시험 32개 · 합격 31 · 불합격 0 · 미시행 1
+전환 소요 시간(예상 다운타임, C 단계): 8.8초 · 리허설 전체 7분 19초
+1회차 불합격(불합격·미시행 줄을 본다)

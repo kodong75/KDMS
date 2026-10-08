@@ -104,7 +104,7 @@ Mac (개발, kdms.jar 실행)  ───── 같은 LAN ─────>  Wind
 | 검증 | 테이블별 건수·수치 합계·행 해시 합(KIS:docs/normalization.md 규칙 그대로), 불일치 시 PK 구간을 좁혀 행 단위 차이 목록 |
 | 상태·재시작 | 작업·테이블·구간·워터마크·반영 위치를 `kdms` 스키마에. 어느 단계에서 죽어도 다시 실행하면 이어서 |
 | 화면 | localhost 웹: 작업 목록, 테이블별 진행률, CDC 지연, 검증 결과, 시작·중지·전환 버튼 |
-| CLI | 같은 기능을 명령으로(`kdms plan`, `kdms load`, `kdms sync`, `kdms cutover`, `kdms verify`, `kdms status`) |
+| CLI | 같은 기능을 명령으로(`kdms plan`, `kdms load`, `kdms sync`, `kdms cutover`, `kdms verify`, `kdms status`, 6단계 전환 뒤 점검 `kdms check`) |
 | 폐쇄망 | 실행 중 외부 접속 0 을 시험으로 확인(네트워크를 끊고 실행) |
 
 ### 3.2 빠지는 것 (MVP 뒤)
@@ -280,7 +280,7 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 | **3. 전체 적재 + 검증** | 구간 분할, COPY 적재, 재시작, 건수·합계·해시 검증, 행 단위 차이 (구현: [load-verify.md](load-verify.md), [normalization.md](normalization.md)) | 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치(KIS 76/76 처럼 항목 수로 보고). 적재 도중 프로세스를 죽였다 다시 실행해 이어서 끝나고 검증 일치 |
 | **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 (구현: [cdc.md](cdc.md)) | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 |
 | **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | 시나리오 S1~S4(정의는 [cutover.md](cutover.md) §6) 통과, 전환 소요 시간 보고 |
-| **6. MVP 리허설** | §8 전체를 처음부터 2회. 문서(운영 절차서) | 두 번 모두 합격, 절차서만 보고 다시 할 수 있음 |
+| **6. MVP 리허설** | §8 전체를 처음부터 2회. 문서(운영 절차서) (구현: [runbook.md](runbook.md) 운영 절차서, [rehearsal.md](rehearsal.md) 리허설 스크립트·채점, 전환 뒤 점검 `kdms check`) | 두 번 모두 합격, 절차서만 보고 다시 할 수 있음 |
 | 7. 설치본 | jlink 로 JRE 포함 압축본(Windows·Linux), 시작 스크립트 | 자바가 없는 PC 에서 실행 |
 | 8. 확장 | `KDMS_SITE`(22테이블), PK 없는 테이블, DDL 변경 감지 후 캡처 인스턴스 교체, 대용량 성능 | 별도 계획 |
 
