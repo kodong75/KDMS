@@ -74,6 +74,9 @@ public final class Loader {
     /**
      * @param postLoad 적재 뒤 DDL 결과: null(하지 않음), "applied …", 또는 오류
      */
+    /** CDC 모드에서 적재 뒤 DDL 을 미뤘을 때 안내. kdms cutover 가 마지막 반영 뒤 적용한다 */
+    public static final String CDC_POST_LOAD = "적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. kdms cutover 가 마지막 반영 뒤 적용한다";
+
     public record Result(long jobId, List<TableResult> tables, String postLoad, boolean postLoadFailed) {
 
         public boolean allLoaded() {
@@ -194,7 +197,7 @@ public final class Loader {
                         + results.stream().filter(r -> "FAILED".equals(r.status())).map(TableResult::srcTable).collect(Collectors.joining(", ")));
             } else if (allLoaded && cdc) {
                 // 반영 중 일시적 UNIQUE 위반을 피하려고 UNIQUE·인덱스는 전환 때(5단계) 만든다
-                postLoad = "적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load";
+                postLoad = CDC_POST_LOAD;
             } else if (allLoaded && o.postLoad()) {
                 try {
                     SchemaApplier.Result r = SchemaApplier.apply(state, plan, DdlWriter.Phase.POST_LOAD, false,

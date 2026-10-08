@@ -92,6 +92,8 @@ public class LoadCommand implements Callable<Integer> {
         }
         if (!r.allLoaded()) {
             out.println("실패한 구간만 다시 하려면 같은 명령을 다시 실행한다(끝난 구간은 건너뛴다)");
+        } else if (Loader.CDC_POST_LOAD.equals(r.postLoad())) {
+            out.println("다음: 원천 쓰기를 멈춘 뒤 kdms sync 를 멈추고 kdms cutover --yes");
         } else {
             out.println("다음: kdms verify");
         }
