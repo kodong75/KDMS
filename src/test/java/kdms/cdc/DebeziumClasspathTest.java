@@ -99,4 +99,14 @@ class DebeziumClasspathTest {
         }
         return b.toString();
     }
+
+    @Test
+    void 오프셋_저장소를_ServiceLoader_로_찾는다() throws Exception {
+        // storage-jdbc 가 provided 로만 선언한 storage-common 이 jar 에 있어야 한다
+        Class.forName("io.debezium.spi.storage.DefaultOffsetStorageReader");
+        assertThat(java.util.ServiceLoader.load(io.debezium.spi.storage.OffsetStoreProvider.class).stream()
+                .map(java.util.ServiceLoader.Provider::get)
+                .filter(p -> KdmsOffsetStoreProvider.NAME.equals(p.getName()))
+                .map(p -> p.getOffsetStoreClassName().orElse(""))).containsExactly(KdmsOffsetStore.class.getName());
+    }
 }

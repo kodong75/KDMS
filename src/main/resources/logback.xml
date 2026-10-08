@@ -9,7 +9,11 @@
     </appender>
 
     <logger name="org.apache.kafka" level="WARN"/>
-    <logger name="io.debezium" level="INFO"/>
+    <logger name="io.debezium" level="WARN"/>
+    <!-- 기본값 식(getdate() 등)을 못 읽는다는 경고: KDMS 는 Debezium 의 기본값을 쓰지 않는다(값은 이벤트에 다 있다) -->
+    <logger name="io.debezium.connector.sqlserver.SqlServerDefaultValueConverter" level="ERROR"/>
+    <!-- sp_cdc_help_jobs 는 db_owner 만 부를 수 있다. 실패하면 Debezium 이 기본 폴링 간격(5초)을 쓰고 계속한다 -->
+    <logger name="io.debezium.connector.sqlserver.SqlServerConnection" level="ERROR"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

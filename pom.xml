@@ -155,6 +155,12 @@
             <artifactId>debezium-storage-jdbc</artifactId>
             <version>${debezium.version}</version>
         </dependency>
+        <!-- storage-jdbc 가 provided 로만 선언한 공통 클래스(DefaultOffsetStorageReader 등). 없으면 엔진 시작 때 NoClassDefFoundError -->
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-storage-common</artifactId>
+            <version>${debezium.version}</version>
+        </dependency>
 
         <!-- 시험 전용 -->
         <dependency>

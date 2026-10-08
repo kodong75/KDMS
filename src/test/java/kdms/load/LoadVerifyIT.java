@@ -39,7 +39,7 @@ class LoadVerifyIT {
     static final String NAME = "kdms_it_load";
 
     private final KdmsConfig base = ItSupport.config();
-    private final KdmsConfig cfg = new KdmsConfig(NAME, base.source(), base.target(), base.load(), base.tables(), base.rules(), base.web());
+    private final KdmsConfig cfg = new KdmsConfig(NAME, base.source(), base.target(), base.load(), base.sync(), base.tables(), base.rules(), base.web());
     private final Connections db = Connections.of(cfg);
     private Rules rules;
     private SchemaPlan plan;
@@ -78,12 +78,12 @@ class LoadVerifyIT {
                 throw new SQLException("시험: 구간 중단");
             }
         };
-        Loader.Result first = loader.run(new Loader.Options(Set.of(), false, true, 0));
+        Loader.Result first = loader.run(new Loader.Options(Set.of(), false, true, 0, true));
         assertThat(first.allLoaded()).as(log.toString()).isFalse();
         assertThat(first.tables()).filteredOn(t -> t.status().equals("FAILED")).extracting(Loader.TableResult::srcTable).containsExactly("dbo.rating");
         assertThat(first.postLoad()).isNull(); // 실패가 있으면 적재 뒤 DDL 을 하지 않는다
 
-        Loader.Result second = loader.run(new Loader.Options(Set.of(), false, true, 0));
+        Loader.Result second = loader.run(new Loader.Options(Set.of(), false, true, 0, true));
         assertThat(second.allLoaded()).as(log.toString()).isTrue();
         Loader.TableResult rating = second.tables().stream().filter(t -> t.srcTable().equals("dbo.rating")).findFirst().orElseThrow();
         assertThat(rating.chunksSkipped()).isEqualTo(rating.chunks() - 1); // 끝난 구간은 건너뛰었다

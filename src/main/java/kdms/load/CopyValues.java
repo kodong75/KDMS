@@ -107,57 +107,94 @@ public final class CopyValues {
 
     /** 원천 값 → 대상 입력 문자열(이스케이프 전). NULL 이면 null */
     static String read(ResultSet rs, int i, Column c) throws SQLException {
-        switch (c.type) {
-            case "char", "varchar", "nchar", "nvarchar", "sysname", "text", "ntext" -> {
-                String s = rs.getString(i);
-                return s == null ? null : text(s, c);
-            }
+        return value(c, fetch(rs, i, c.type));
+    }
+
+    /**
+     * 원천 JDBC 값을 정규 값으로 읽는다. 4단계 CDC 는 Debezium 값을 같은 정규 값으로 바꿔({@code kdms.cdc.CdcValues}) {@link #value} 를 지난다.
+     * <p>정규 값: 문자·uniqueidentifier·xml = String, 정수 = Long, bit = Boolean, decimal·money = BigDecimal, float = Double, real = Float,
+     * date = LocalDate, datetime·datetime2·smalldatetime = LocalDateTime, datetimeoffset = OffsetDateTime, time = LocalTime, 바이너리 = byte[]
+     */
+    static Object fetch(ResultSet rs, int i, String type) throws SQLException {
+        return switch (type) {
+            case "char", "varchar", "nchar", "nvarchar", "sysname", "text", "ntext", "uniqueidentifier", "xml" -> rs.getString(i);
             case "bigint", "int", "smallint", "tinyint" -> {
                 long v = rs.getLong(i);
-                return rs.wasNull() ? null : Long.toString(v);
+                yield rs.wasNull() ? null : v;
             }
             case "bit" -> {
                 boolean v = rs.getBoolean(i);
-                return rs.wasNull() ? null : c.targetBoolean ? (v ? "t" : "f") : (v ? "1" : "0");
+                yield rs.wasNull() ? null : v;
             }
-            case "decimal", "numeric", "money", "smallmoney" -> {
-                BigDecimal v = rs.getBigDecimal(i);
-                return v == null ? null : v.toPlainString();
-            }
+            case "decimal", "numeric", "money", "smallmoney" -> rs.getBigDecimal(i);
             case "float" -> {
                 double v = rs.getDouble(i);
-                return rs.wasNull() ? null : Double.toString(v);
+                yield rs.wasNull() ? null : v;
             }
             case "real" -> {
                 float v = rs.getFloat(i);
-                return rs.wasNull() ? null : Float.toString(v);
+                yield rs.wasNull() ? null : v;
+            }
+            case "date" -> rs.getObject(i, LocalDate.class);
+            case "datetime", "smalldatetime", "datetime2" -> rs.getObject(i, LocalDateTime.class);
+            case "datetimeoffset" -> rs.getObject(i, OffsetDateTime.class);
+            case "time" -> rs.getObject(i, LocalTime.class);
+            case "binary", "varbinary", "image", "rowversion" -> rs.getBytes(i);
+            default -> throw new IllegalStateException("적재할 수 없는 원천 타입: " + type);
+        };
+    }
+
+    /**
+     * 정규 값({@link #fetch}) → 대상 입력 문자열(이스케이프 전). 값 규칙을 여기서 적용한다. NULL 이면 null.
+     * nul_char: fail 인데 NUL 이 있으면 {@link Column#nulRows()} 를 늘리고 값은 그대로 돌려준다(부른 쪽이 멈춘다).
+     */
+    public static String value(Column c, Object v) {
+        if (v == null) {
+            return null;
+        }
+        switch (c.type) {
+            case "char", "varchar", "nchar", "nvarchar", "sysname", "text", "ntext" -> {
+                return text((String) v, c);
+            }
+            case "bigint", "int", "smallint", "tinyint" -> {
+                return Long.toString(((Number) v).longValue());
+            }
+            case "bit" -> {
+                boolean b = (Boolean) v;
+                return c.targetBoolean ? (b ? "t" : "f") : (b ? "1" : "0");
+            }
+            case "decimal", "numeric", "money", "smallmoney" -> {
+                return ((BigDecimal) v).toPlainString();
+            }
+            case "float" -> {
+                return Double.toString(((Number) v).doubleValue());
+            }
+            case "real" -> {
+                return Float.toString(((Number) v).floatValue());
             }
             case "date" -> {
-                LocalDate v = rs.getObject(i, LocalDate.class);
-                return v == null ? null : sentinel(v, c, () -> DATE.format(v));
+                LocalDate d = (LocalDate) v;
+                return sentinel(d, c, () -> DATE.format(d));
             }
             case "datetime", "smalldatetime", "datetime2" -> {
-                LocalDateTime v = rs.getObject(i, LocalDateTime.class);
-                return v == null ? null : sentinel(v.toLocalDate(), c, () -> TS.format(round(v, c.rule.round())));
+                LocalDateTime t = (LocalDateTime) v;
+                return sentinel(t.toLocalDate(), c, () -> TS.format(round(t, c.rule.round())));
             }
             case "datetimeoffset" -> {
-                OffsetDateTime v = rs.getObject(i, OffsetDateTime.class);
-                return v == null ? null : sentinel(v.toLocalDate(), c, () -> TSTZ.format(roundOffset(v, c.rule.round())));
+                OffsetDateTime t = (OffsetDateTime) v;
+                return sentinel(t.toLocalDate(), c, () -> TSTZ.format(roundOffset(t, c.rule.round())));
             }
             case "time" -> {
-                LocalTime v = rs.getObject(i, LocalTime.class);
-                return v == null ? null : time(v, c.rule.round());
+                return time((LocalTime) v, c.rule.round());
             }
             case "uniqueidentifier" -> {
-                String v = rs.getString(i);
-                return v == null ? null : v.toLowerCase(Locale.ROOT); // PG uuid 는 소문자(normalization §1)
+                return ((String) v).toLowerCase(Locale.ROOT); // PG uuid 는 소문자(normalization §1)
             }
             case "binary", "varbinary", "image", "rowversion" -> {
-                byte[] v = rs.getBytes(i);
-                return v == null ? null : "\\x" + HexFormat.of().formatHex(v);
+                return "\\x" + HexFormat.of().formatHex((byte[]) v);
             }
             case "xml" -> {
-                return rs.getString(i);
+                return (String) v;
             }
             default -> throw new IllegalStateException("적재할 수 없는 원천 타입: " + c.type);
         }

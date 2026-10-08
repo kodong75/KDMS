@@ -2,7 +2,7 @@
 
 [plan.md](plan.md) §6 3단계: 구간 분할 → COPY 적재 → 재시작 → 건수·합계·해시 검증 → 행 단위 차이.
 값 정규화 규칙은 [normalization.md](normalization.md)(KIS:docs/normalization.md 를 옮기고 구현 위치를 적은 것).
-3단계는 **원천에 쓰기가 없는 상태**를 전제한다. 쓰기가 계속 들어오는 동안의 적재(워터마크 먼저 기록 → 적재 → CDC 반영)는 4단계에서 이 적재기 위에 붙인다.
+원천에 쓰기가 있는 동안의 적재(워터마크 먼저 기록 → 적재 → CDC 반영)는 [cdc.md](cdc.md)(4단계). 4단계부터 `kdms load` 는 `kdms sync` 가 기록한 워터마크가 있어야 시작하고, 원천 쓰기가 없는 3단계 방식은 `kdms load --no-cdc` 다.
 
 ## 1. 명령
 
@@ -13,11 +13,12 @@
 | `kdms load --reset` | 고른 대상 테이블을 TRUNCATE 하고 구간 기록을 지운 뒤 처음부터. 전부 고르면 작업의 설정 해시도 지금 것으로 바꾼다 | 위와 같음 |
 | `kdms load -t dbo.rating` | 그 테이블만(여러 번 쓸 수 있다). 원천 이름 | |
 | `kdms load --throttle-ms 100` | 구간마다 1,000행 읽을 때마다 쉰다(원천 부하 조절, 중단·재시작 시험) | |
+| `kdms load --no-cdc` | 워터마크 없이 적재(원천 쓰기가 없을 때만). 워터마크가 있으면(CDC 모드) 적재 뒤 DDL 은 미룬다(cdc.md §4) | |
 | `kdms load --no-post-load` | 적재 뒤 DDL 을 적용하지 않는다(나중에 `kdms schema --phase post-load`) | |
 | `kdms verify` | 건수·수치 합계·행 해시 비교, 다르면 PK 로 차이 행을 찾는다 | `kdms.verify_run·verify_result·verify_row_diff·event_log` 만. 원천·대상 데이터는 읽기만 |
 | `kdms verify -t dbo.rating` | 그 테이블만 | |
 
-종료 코드: 0 성공·모두 일치, 1 설정 오류, 2 접속 실패(적재 뒤 DDL 실패 포함), 3 계획에 오류, 4 거부(작업 없음·다른 `kdms load` 실행 중·상태가 SYNCING 이후), **5 실패한 테이블 있음(load) / 불일치 있음(verify)**.
+종료 코드: 0 성공·모두 일치, 1 설정 오류, 2 접속 실패(적재 뒤 DDL 실패 포함), 3 계획에 오류, 4 거부(작업 없음·다른 `kdms load` 실행 중·워터마크 없음(`--no-cdc` 없이)·상태가 CUTOVER 이후), **5 실패한 테이블 있음(load) / 불일치 있음(verify)**.
 
 설정(`config/kdms.yml` 의 `load:`): `table_parallelism`(기본 4), `chunks_per_table`(기본 2), `isolation`(기본 `snapshot`, 원천 DB 에 `ALLOW_SNAPSHOT_ISOLATION ON` 필요. 쓰기가 없을 때만 `read_committed`).
 

@@ -11,11 +11,14 @@ import org.junit.jupiter.api.Test;
 class SchemaScriptTest {
 
     private final String sql = SchemaInstaller.readScript(SchemaInstaller.SCRIPTS.get(0));
+    private final String all = SchemaInstaller.SCRIPTS.stream().map(SchemaInstaller::readScript).collect(java.util.stream.Collectors.joining("\n"));
 
     @Test
     void 모든_CREATE_는_재실행_안전() {
-        Matcher m = Pattern.compile("(?im)^\\s*CREATE\\s+(SCHEMA|TABLE|INDEX|UNIQUE INDEX)\\s+(?!IF NOT EXISTS)").matcher(sql);
+        Matcher m = Pattern.compile("(?im)^\\s*CREATE\\s+(SCHEMA|TABLE|INDEX|UNIQUE INDEX)\\s+(?!IF NOT EXISTS)").matcher(all);
         assertThat(m.find()).as("IF NOT EXISTS 없는 CREATE").isFalse();
+        Matcher add = Pattern.compile("(?im)ADD\\s+COLUMN\\s+(?!IF NOT EXISTS)").matcher(all);
+        assertThat(add.find()).as("IF NOT EXISTS 없는 ADD COLUMN").isFalse();
     }
 
     @Test
@@ -27,8 +30,11 @@ class SchemaScriptTest {
     }
 
     @Test
-    void 버전_행을_넣는다() {
-        assertThat(sql).contains("INSERT INTO kdms.schema_version").contains("VALUES (" + SchemaInstaller.CURRENT_VERSION + ",");
+    void 버전마다_자기_버전_행을_넣는다() {
+        for (int v = 1; v <= SchemaInstaller.CURRENT_VERSION; v++) {
+            assertThat(SchemaInstaller.readScript(SchemaInstaller.SCRIPTS.get(v - 1)))
+                    .contains("INSERT INTO kdms.schema_version").contains("VALUES (" + v + ",");
+        }
     }
 
     @Test

@@ -62,6 +62,10 @@ public final class SchemaApplier {
                 ps.execute();
             }
             String status = jobStatus(c, job.jobName());
+            String running = phase == Phase.PRE_LOAD ? kdms.cdc.CaptureStore.running(c, job.jobName()) : null;
+            if (running != null) {
+                throw new Refused(running + " 이 작업 " + job.jobName() + " 을 실행하고 있다. 멈춘 뒤 다시 한다");
+            }
             if (phase == Phase.PRE_LOAD && status != null && STARTED.contains(status)) {
                 throw new Refused("작업 " + job.jobName() + " 은 이미 " + status + " 단계다. 테이블을 다시 만들지 않는다");
             }
@@ -212,6 +216,8 @@ public final class SchemaApplier {
                 jobId = rs.getLong(1);
             }
         }
+        // 같은 job_id 를 다시 쓰므로 이전 워터마크·변경·Debezium 오프셋도 지운다(테이블을 새로 만들면 그 위치는 의미가 없다)
+        kdms.cdc.CaptureStore.clear(c, jobId);
         // 적재 전이므로 테이블 목록을 새로 쓴다(load_chunk 도 함께 지워진다)
         try (PreparedStatement ps = c.prepareStatement("DELETE FROM kdms.job_table WHERE job_id = ?")) {
             ps.setLong(1, jobId);
