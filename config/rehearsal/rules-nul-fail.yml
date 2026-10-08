@@ -1,0 +1,32 @@
+# 6단계 리허설 T-L09 전용(docs/rehearsal.md): config/kdms-rules.yml 에서 dbo.issuer.issuer_nm 의 nul_char: replace 만 뺐다.
+# 기본 text.nul_char: fail 이 그대로 적용돼 kdms plan --scan 은 "막힘", kdms load 는 issuer 의 NUL 행이 든 구간에서 멈춰야 한다.
+# scripts/rehearsal.sh 가 config/kdms.yml 의 rules: 줄만 이 파일로 바꾼 임시 설정으로 쓴다. 운영에 쓰지 않는다.
+# 작업별 변환 규칙. jar 안의 기본 규칙(src/main/resources/kdms-rules.yml) 위에 여기 적은 키만 덮어쓴다.
+# 쓰려면 config/kdms.yml 에 rules: config/kdms-rules.yml (config/kdms.example.yml 은 이미 그렇게 되어 있다)
+# 키와 허용 값은 기본 규칙 파일의 주석을 본다. 알 수 없는 키·값은 실행 전에 오류로 멈춘다.
+#
+# 이 파일은 시험 원천 KDMS_MOCK(KIS MIG_MOCK 사본)용이다. 근거: docs/schema-conversion.md
+version: 1
+
+tables:
+  # 계산 컬럼(B12): T-SQL 식을 PG 식으로 직접 옮긴다. GENERATED ALWAYS AS (…) STORED, 적재·반영에서 뺀다.
+  # 원문 (CASE RTRIM(rating_cd) WHEN 'AAA' THEN 1 … ELSE 99 END) 은 CI 콜레이션 비교라 'aa+' 도 2 → upper() 로 맞춘다
+  dbo.rating:
+    columns:
+      rating_rank:
+        generated: >-
+          CASE upper(rtrim(rating_cd)) WHEN 'AAA' THEN 1 WHEN 'AA+' THEN 2 WHEN 'AA' THEN 3 WHEN 'AA-' THEN 4
+          WHEN 'A+' THEN 5 WHEN 'A' THEN 6 WHEN 'A-' THEN 7 WHEN 'BBB+' THEN 8 WHEN 'BBB' THEN 9 WHEN 'BBB-' THEN 10
+          ELSE 99 END
+  # 원문: CASE WHEN CHARINDEX('.', file_nm) > 0 THEN LOWER(RIGHT(file_nm, CHARINDEX('.', REVERSE(file_nm)) - 1)) END
+  # (마지막 '.' 뒤 문자열 소문자). KIS sql/40_appcompat/20_pg_objects.sql 과 같은 식
+  dbo.research_doc:
+    columns:
+      file_ext:
+        generated: >-
+          CASE WHEN strpos(file_nm, '.') > 0 THEN lower(substring(file_nm FROM '\.([^.]*)$')) END
+
+# 예: 코드성 컬럼만 끝 공백 제거(B02·B04)
+#   dbo.rating:
+#     columns:
+#       rating_cd: { trailing_space: rtrim }
