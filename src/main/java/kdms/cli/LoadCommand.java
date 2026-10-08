@@ -41,6 +41,9 @@ public class LoadCommand implements Callable<Integer> {
     @Option(names = "--no-post-load", description = "모두 적재돼도 적재 뒤 DDL(UNIQUE·인덱스)을 적용하지 않는다")
     boolean noPostLoad;
 
+    @Option(names = "--no-cdc", description = "워터마크(kdms sync) 없이 적재한다. 원천 쓰기가 없는 시험에서만 쓴다")
+    boolean noCdc;
+
     @Option(names = "--throttle-ms", paramLabel = "ms", defaultValue = "0",
             description = "구간마다 1,000행 읽을 때마다 쉬는 시간. 원천 부하를 줄이거나 중단·재시작 시험에 쓴다 (기본값: ${DEFAULT-VALUE})")
     long throttleMs;
@@ -70,7 +73,7 @@ public class LoadCommand implements Callable<Integer> {
         Loader.Result r;
         try {
             r = new Loader(cfg, rules, plan, Connections.of(cfg), out, options.configSha256(cfg))
-                    .run(new Loader.Options(names(tables), reset, !noPostLoad, throttleMs));
+                    .run(new Loader.Options(names(tables), reset, !noPostLoad, throttleMs, noCdc));
         } catch (Loader.Refused e) {
             err.println("적재하지 않음: " + e.getMessage());
             return SchemaCommand.REFUSED;

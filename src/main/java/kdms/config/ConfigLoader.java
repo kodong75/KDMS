@@ -23,7 +23,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
  */
 public final class ConfigLoader {
 
-    private static final Set<String> TOP_KEYS = Set.of("job_name", "source", "target", "load", "tables", "rules", "web");
+    private static final Set<String> TOP_KEYS = Set.of("job_name", "source", "target", "load", "sync", "tables", "rules", "web");
     private static final Set<String> ENDPOINT_KEYS = Set.of("host", "port", "database", "user", "password", "properties");
 
     /** 자리표시 ${이름} / ${이름:기본값} 의 이름 */
@@ -53,9 +53,11 @@ public final class ConfigLoader {
     KdmsConfig bind(Map<String, Object> root) {
         checkKeys(root, TOP_KEYS, "(최상위)");
         Map<String, Object> load = optMap(root.get("load"), "load");
+        Map<String, Object> sync = optMap(root.get("sync"), "sync");
         Map<String, Object> tables = optMap(root.get("tables"), "tables");
         Map<String, Object> web = optMap(root.get("web"), "web");
         checkKeys(load, Set.of("table_parallelism", "chunks_per_table", "isolation"), "load");
+        checkKeys(sync, Set.of("batch_size", "poll_ms", "status_seconds"), "sync");
         checkKeys(tables, Set.of("include", "exclude"), "tables");
         checkKeys(web, Set.of("address", "port"), "web");
 
@@ -67,6 +69,10 @@ public final class ConfigLoader {
                         positiveInt(load.get("table_parallelism"), "load.table_parallelism", 4),
                         positiveInt(load.get("chunks_per_table"), "load.chunks_per_table", 2),
                         oneOf(load.get("isolation"), "load.isolation", "snapshot", "snapshot", "read_committed")),
+                new KdmsConfig.SyncSettings(
+                        positiveInt(sync.get("batch_size"), "sync.batch_size", 1000),
+                        positiveInt(sync.get("poll_ms"), "sync.poll_ms", 500),
+                        positiveInt(sync.get("status_seconds"), "sync.status_seconds", 10)),
                 new KdmsConfig.TableSelection(
                         strList(tables.get("include"), "tables.include", List.of("dbo.*")),
                         strList(tables.get("exclude"), "tables.exclude", List.of())),

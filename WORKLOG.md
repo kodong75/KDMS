@@ -50,3 +50,36 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 원인 → 해결 → 재실행: 2단계 `schema` 를 노트북 PG 에 아직 적용하지 않았음 → `schema` 실행 → `load` 정상.
   ③ 의 `종료 코드` 가 빈 값: 문서 명령이 bash 의 `PIPESTATUS` 를 써서 zsh 에서 빈 값 → zsh `pipestatus[1]` 로 문서 수정.
 - 클라우드(48,047행)와 행 수가 6 다른 것은 노트북 원천 건수 차이로 추정(검증은 원천=대상 일치).
+
+## 2026-10-08 02:57 · 4단계 · 변경분 수집·반영(CDC) 확인 · 클라우드
+- 목적: plan.md §6 4단계 완료 기준(원천 쓰기를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치)과 T-C 시험을 실제 MS-SQL CDC·PG 로 확인.
+- 환경: **클라우드 컨테이너**(노트북 아님). SQL Server 2019 Developer CU32(Linux 컨테이너, SQL Agent 켬), KDMS_MOCK(DB 콜레이션 Korean_Wansung_CI_AS) CDC 7개 테이블, 로그인 kodong_ms(`20_grant_kdms_login.sql` 권한 + 서버 VIEW SERVER STATE). 대상 PostgreSQL 16.15. OpenJDK 21. Debezium 3.7.0.Final.
+  **서버 콜레이션은 기본값(SQL_Latin1_General_CP1_CI_AS)**: 서버 콜레이션을 Korean_Wansung_CI_AS 로 설치한 Linux 컨테이너는 CDC 캡처 Job 이 `msdb.dbo.cdc_jobs` 없음 → 만든 뒤에도 `Could not load the DLL replcmds` 로 실패해서 다시 만들었다(Linux 컨테이너 문제로 보이며 노트북 Windows 설치와는 다르다).
+- 원천 쓰기: `test/sql/mssql/30_writes.sql` 을 sa 로 실행(시험 환경).
+- 실행 명령·결과 원문: `runs/20261008_0257_p4_cloud_e2e.txt`(reset → sync → 쓰기 300초 → 쓰기 중 load → sync kill -9 → 재시작 → 쓰기 끝 → SIGTERM → sync --drain → verify → 관리 테이블 → post-load DDL),
+  `runs/20261008_0250_p4_cloud_tc10.txt`(보존 기간 초과), `runs/20261008_0256_p4_cloud_drain_writes.txt`(쓰기 도중 drain), `runs/20261008_0306_p4_cloud_tc09.txt`(캡처 Job 중지).
+- 결과: 쓰기 8,000회(입력·수정·삭제·PK 변경 234·LOB 미변경 수정 407·입력 직후 삭제 394·여러 테이블 트랜잭션 312·3초 트랜잭션 16) 동안 적재 65,269행, 수집·반영 13,109건, 반영 대기 0, change_log 0행.
+  `kill -9` 뒤 다시 시작해 오프셋 다음부터 이어 받음. `--drain` 6초, **검증 항목 30개 중 일치 30**(run_id 7). post-load DDL 8개 적용.
+  앞선 두 번의 같은 시험(쓰기 150·180초, 적재 전 수집 중·적재 뒤 반영 중 kill -9)도 30/30. 기록용 시험의 kill -9 는 적재(1초)가 끝난 직후 반영 중이었다(적재 도중 kill 은 3단계에서 확인).
+  보존 기간 초과: 캡처 인스턴스를 오프셋 뒤 LSN 까지 `sp_cdc_cleanup_change_table` → `kdms sync` 종료 코드 5 와 "kdms reset --yes 뒤 … 전체 적재부터" 안내 → `reset --yes` → 처음부터 다시 30/30.
+  캡처 Job 60초 중지(T-C09, 쓰기 중): 지연이 19초 → 59초로 늘고 "원천 캡처 Job 이 N초째 로그를 읽지 않음", 39초부터 "원천 로그 REPLICATION 대기" 표시 → 다시 시작 10초 안에 지연 0 → drain → 30/30.
+  단위 시험 90개 통과.
+- 오류 원문 → 원인 → 해결 → 재실행:
+  1. `NoClassDefFoundError: io/debezium/spi/storage/DefaultOffsetStorageReader` → `debezium-storage-jdbc` 가 `debezium-storage-common` 을 provided 로만 선언 → 의존성 추가(Apache-2.0, licenses.md) → 엔진 시작.
+  2. 재시작 때 `ClassCastException: class java.lang.Integer cannot be cast to class java.lang.Long` (SqlServerOffsetContext$Loader) → storage-jdbc 3.7.0 이 저장한 오프셋의 event_serial_no 를 Integer 로 읽음 → `JdbcOffsetBackingStore` 를 상속해 읽은 Integer 를 Long 으로 바꾸는 `KdmsOffsetStore` 를 ServiceLoader(`kdms-jdbc`)로 등록(포크 없음, cdc.md §6) → 재시작 정상.
+  3. 처음 쓴 `--drain` 이 쓰기 도중에도 끝나 검증 불일치(27/30) → "캡처 Job 이 마지막 커밋 뒤 시작한 훑기" 를 기준으로 삼아 그 훑기가 잡은 커밋에 스스로 만족함 → 따라잡은 순간의 원천 시각 뒤에 시작한 훑기를 기준으로 바꾸고 확인 뒤 다시 조회 → 쓰기 도중 시작한 drain 이 쓰기 끝 7초 뒤 끝나고 30/30.
+  4. SIGTERM 뒤 프로세스가 90초 남음 → 종료 훅이 System.exit 에서 멈춘 main 스레드를 join → 작업 끝 latch 로 기다리게 바꿈 → 1초 안에 끝남.
+  5. 캡처 Job 을 멈춰도 지연이 0.0초로 표시 → 지연 계산이 캡처된 커밋(`lsn_time_mapping`)만 봄 → 캡처 Job 의 마지막 로그 훑기가 15초보다 오래되면 그 시간을 지연으로 쓰고 경고 → 위 T-C09 결과.
+- 통합 시험(같은 클라우드 DB): TargetDdlIT·TargetSchemaIT 통과. SourceCatalogIT(NUL 행)·LoadVerifyIT(rating_id 5 변조 검출) 는 실패 — 쓰기 시험이 원천 KDMS_MOCK 의 해당 행을 바꾸거나 지웠기 때문(원천에서 rating_id 5 없음, NUL 행 0 확인). 코드 문제가 아니라 시험 데이터가 바뀐 것이라 test-env.md §10 에 "쓰기 시험 뒤에는 00_restore REPLACE=1 로 되돌린다" 를 적었다.
+- 노트북 원천·PG 에서의 확인은 Mac 에서 해야 한다(docs/test-env.md §10). 실행 결과를 지어내지 않는다.
+
+## 2026-10-08 12:26 · 4단계 · 변경분 수집·반영(CDC) 확인 · Mac(노트북 DB)
+- 목적: plan.md §6 4단계 완료 기준(원천 쓰기를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치)을 노트북 원천 MS-SQL·대상 PG 로 확인.
+- 환경: Mac(Java 21, 브랜치 claude/stage4-cdc-fxm28p 3117b14) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK, 로그인 kodong_ms, SQL Agent 실행 중 / PG 5432 kdms, kdms_app). 원천 쓰기는 노트북 PowerShell 7 `Invoke-KdmsSql.ps1 -File test/sql/mssql/30_writes.sql -Var @{ DURATION_SEC = '300' }`.
+- 실행: docs/test-env.md §10 순서. 결과 원문 `runs/20261008_1226_p4_*.txt`(Mac 에서 올림, 노트북 쓰기 기록은 노트북에만 있음).
+  build → `reset --yes` → `schema --replace`(문장 11개, job_id 10) → `sync`(워터마크 00000060:00001f68:0003) → 노트북 쓰기 300초 시작 → `load --throttle-ms 2000` → 적재 중 `pkill -9 -f 'kdms.jar sync'` → `sync` 다시 시작 → 쓰기 끝 → Ctrl+C → `sync --drain` → `verify` → `schema --phase post-load`.
+- 결과: 적재 7개 테이블 48,535행, 실패 0, 적재 뒤 DDL 은 미룸. kill -9 전 수집 1,132·반영 288(적재 전 테이블 변경은 대기), 다시 시작 때 "저장된 오프셋 다음부터 이어 받는다" → 수집·반영 9,688건, 반영 대기 0.
+  `--drain` 7초, 종료 코드 0. **검증 항목 30개 중 일치 30**, 테이블 7개 일치(run_id 6), 종료 코드 0. post-load DDL 8개 적용.
+- 오류: 없음. 손 실수 하나: 다시 시작한 sync 를 다른 창에서 돌려 `S` 가 없어 `runs/_p4_sync2.txt` 로 저장 → 이름만 바꿈(내용 영향 없음).
+- 관찰(고치지 않음, 5단계 전환 화면에서 다룬다): 적재 전 첫 수집 때 지연이 348~369초로 표시 → 아직 반영한 변경이 없으면 워터마크 LSN 의 커밋 시각부터 재는데, 그 LSN 은 스트리밍 시작 전 마지막 커밋이라 원천이 조용했던 시간까지 지연에 들어간다. 반영이 시작되자 0.6초로 정상.
+- 고침: `sync` 시작 줄의 워터마크 기록 시각이 UTC(03:30)로 찍혀 다른 줄(지역 시각 12:30)과 달라 보임 → 지역 시각대로 바꿔 찍는다(SyncRunner, 단위 시험 통과, DB 재실행은 하지 않음).

@@ -178,7 +178,7 @@ Debezium Embedded (SQL Server 커넥터)
 ```
 
 - `net_changes` 가 아니라 모든 변경을 순서대로 적용한다. 그래야 "적재 중 입력 후 삭제된 행"이 유령으로 남지 않는다(KIS:docs/zero-downtime.md §4-3).
-- 대상 세션은 `session_replication_role = replica` 로 트리거·FK 를 끈 채 적용한다(KIS:docs/issues.md G13: 이관 행에 트리거가 또 돌면 이력 중복).
+- ~~대상 세션은 `session_replication_role = replica` 로 트리거·FK 를 끈 채 적용한다~~ (4단계 변경: 그 설정은 PG superuser 만 바꿀 수 있어, 대상 테이블에 트리거·FK 가 있으면 `kdms sync` 가 시작하지 않는 방식으로 바꿨다. KIS:docs/issues.md G13 이력 중복은 같은 이유로 막힌다. [cdc.md](cdc.md) §4)
 - 원천 트리거가 쓴 행(예: 이력 테이블)도 CDC 로 그대로 들어오므로 대상 트리거는 전환 뒤에만 켠다.
 - 계산 컬럼은 CDC 가 캡처하지 않는다(KIS:docs/zero-downtime.md §4-11) → 대상은 `GENERATED ALWAYS AS … STORED` 로 만들고 반영기는 그 컬럼을 쓰지 않는다. 식을 옮길 수 없는 컬럼은 변환 규칙에서 "값 컬럼 + 경고"로 명시해야 통과.
 - 보존 기간: 수집이 계속 돌기 때문에 원천 CDC 보존(기본 3일)은 "수집이 멈춰 있는 최대 시간"만 넘지 않으면 된다. 수집이 멈춘 채 보존 기간이 지나면 Debezium 이 오류로 멈추게 두고(조용히 틀리지 않게), 화면에 "전체 적재부터 다시"를 띄운다.
@@ -278,7 +278,7 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 | **1. 골격** | Maven 프로젝트, Spring Boot 4.1, 패키지 구조, 설정 파일·`.env.example`·`.gitignore`, 관리 테이블 DDL, CLI 뼈대(`kdms status`), 웹 첫 화면, 라이선스 보고서 자동 생성(`license-maven-plugin`, SBOM(Software Bill of Materials, 구성 요소 명세) `cyclonedx-maven-plugin`), 의존성 버전 고정(Kafka 버전 정렬), 시험 준비 SQL | `mvn -o package`(오프라인) 성공, 네트워크를 끊고 `java -jar kdms.jar status` 가 두 DB 버전을 출력, 라이선스 보고서에 미확인 라이선스 0 |
 | **2. 스키마 변환** | 원천 카탈로그 읽기, 규칙 엔진, DDL 생성·적용, `kdms plan` 보고서 (구현: [schema-conversion.md](schema-conversion.md)) | `KDMS_MOCK` 의 대상 DDL 이 KIS `sql/20_pg/gen/mock.sql` 의 테이블 정의와 같은 타입(차이는 규칙 파일 결정으로 설명) |
 | **3. 전체 적재 + 검증** | 구간 분할, COPY 적재, 재시작, 건수·합계·해시 검증, 행 단위 차이 (구현: [load-verify.md](load-verify.md), [normalization.md](normalization.md)) | 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치(KIS 76/76 처럼 항목 수로 보고). 적재 도중 프로세스를 죽였다 다시 실행해 이어서 끝나고 검증 일치 |
-| **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 |
+| **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 (구현: [cdc.md](cdc.md)) | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 |
 | **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | §8 시나리오 S1~S4 통과, 전환 소요 시간 보고 |
 | **6. MVP 리허설** | §8 전체를 처음부터 2회. 문서(운영 절차서) | 두 번 모두 합격, 절차서만 보고 다시 할 수 있음 |
 | 7. 설치본 | jlink 로 JRE 포함 압축본(Windows·Linux), 시작 스크립트 | 자바가 없는 PC 에서 실행 |
@@ -290,13 +290,13 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 
 | ID | 위험 | 대응 |
 |---|---|---|
-| R1 | Debezium 이 요구하는 원천 권한이 금융권 DBA 승인 범위를 넘을 수 있다 | 1단계에서 최소 권한 목록을 문서화. CDC 켜기는 DBA 가 하고 KDMS 로그인은 읽기만 |
+| R1 | Debezium 이 요구하는 원천 권한이 금융권 DBA 승인 범위를 넘을 수 있다 | 1단계에서 최소 권한 목록을 문서화. CDC 켜기는 DBA 가 하고 KDMS 로그인은 읽기만. 4단계 실측으로 확인한 목록: [cdc.md](cdc.md) §7 |
 | R2 | CDC 캡처가 멈추면 원천 로그가 잘리지 않아 디스크가 찬다(`log_reuse_wait_desc = REPLICATION`) | 화면에 원천 로그 사용률·`log_reuse_wait_desc`·캡처 지연 표시, 임계값 경고 |
 | R3 | Spring Boot 와 Debezium 이 서로 다른 Kafka·Jackson 버전을 끌어온다. Kafka Connect 런타임이 Jetty·Jersey 를 함께 끌어온다 | `kafka.version` 을 Debezium 기준으로 고정, `mvn dependency:tree` 를 1단계 결과에 남김. 쓰지 않는 Jetty·Jersey 는 제외를 시도하고 엔진이 뜨는지 시험 |
 | R4 | 전체 적재 경로와 CDC 경로의 값 표현 차이(datetime 시간대, datetime2 나노초, uniqueidentifier 대소문자, money 스케일) | 같은 행을 두 경로로 넣어 해시가 같은지 확인하는 시험(T-C05) |
-| R5 | LOB 컬럼(nvarchar(max) 등)이 UPDATE 에서 바뀌지 않았을 때 CDC 이벤트 값이 어떻게 오는지 미확인 | 4단계 시험 T-C06 으로 확인. NULL 로 덮어쓸 위험이면 해당 컬럼만 원천 재조회 |
+| R5 | LOB 컬럼(nvarchar(max) 등)이 UPDATE 에서 바뀌지 않았을 때 CDC 이벤트 값이 어떻게 오는지 미확인 | 4단계 실측: 값 대신 `__debezium_unavailable_value` 가 온다. 그 컬럼만 빼고 UPDATE 한다(원천 재조회 불필요, [cdc.md](cdc.md) §2) |
 | R6 | 원천 DDL 변경(컬럼 추가)이 동기화 중에 일어남 | MVP 는 스키마 동결 전제. 감지하면 반영을 멈추고 알림 |
-| R7 | `change_log` 가 크게 늘어난다 | 반영 끝난 행은 주기적으로 삭제, 크기 표시 |
+| R7 | `change_log` 가 크게 늘어난다 | 반영 끝난 행은 반영 트랜잭션에서 바로 삭제(4단계), 반영 대기 건수 표시 |
 | R8 | 이관 중 로그·임시 데이터에 개인정보 평문 | 로그에 행 값을 쓰지 않는다(PK 만, 설정으로도 못 켜게). `change_log` 는 반영 후 삭제 |
 | R9 | 시험 환경 1대(노트북)라 부하·시간 수치가 운영과 다르다 | 수치는 "건수 대비 비율"로만 보고. KIS 처럼 AC 전원·절전 해제에서 측정 |
 

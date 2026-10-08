@@ -38,7 +38,7 @@ git config core.autocrlf false
 
 - `Invoke-KdmsSql.ps1` 는 Windows 인증(관리자 계정의 `-E`)으로 붙는다. 노트북 로그인 사용자가 SQL Server sysadmin 이어야 한다(KIS 설치 때와 같음).
 - 시험 데이터를 처음 상태로 되돌리려면 ② 를 `REPLACE = '1'` 로 다시 실행하고 ③·④ 를 다시 한다. 다 지우려면 `test/sql/mssql/90_cleanup.sql`.
-- 원천 로그인에 필요한 최소 권한은 4단계(CDC)에서 Debezium 실측으로 확정한다(plan.md R1). 지금 스크립트는 Debezium 문서 기준의 초안이다.
+- 원천 로그인 권한은 ④ 스크립트 그대로 4단계 CDC(스트리밍·재시작·drain)까지 된다(2026-10-08 클라우드 실측, [cdc.md](cdc.md) §7). 서버 수준 `VIEW SERVER STATE` 는 KIS `00_login_mig.sql` 이 이미 준다.
 
 ## 3. 노트북: 대상 PG 준비
 
@@ -188,6 +188,78 @@ java -jar target/kdms.jar verify 2>&1 | tee -a runs/${S}_p3_kill.txt        # �
 ④ 에서 8초 안에 적재가 다 끝나면(건너뜀 7) `sleep 8` 을 `sleep 4` 로 줄여 다시 한다.
 ③ 이 불일치면 보고서의 `차이 행` 줄(PK 만 나온다)과 `runs/…_p3_verify.txt` 를 그대로 보내 준다. 클라우드에서 노트북 원천을 확인하지 못했기 때문이다.
 
+## 10. Mac + 노트북: 4단계(변경분 수집·반영) 확인
+
+§9 까지 끝난 상태에서 한다. 원천에 **쓰기를 넣는 동안** 적재·반영하고, 쓰기를 멈춘 뒤 검증이 일치하는지 본다. 명령의 뜻은 [cdc.md](cdc.md) §1.
+창이 셋 필요하다: Mac 터미널 A(`kdms sync`), Mac 터미널 B(적재·검증), 노트북 PowerShell 7(원천 쓰기).
+
+**준비(노트북 PowerShell 7)**
+
+```powershell
+cd C:\Projects\KDMS
+git fetch origin; git checkout claude/stage4-cdc-fxm28p     # 쓰기 스크립트 test/sql/mssql/30_writes.sql 을 받는다(머지 뒤에는 git checkout main; git pull)
+Get-Service SQLSERVERAGENT                                  # Running 이어야 한다. 아니면 [관리자] Start-Service SQLSERVERAGENT (재부팅 뒤 매번)
+```
+
+**① 터미널 A (Mac): 빌드, 3단계 데이터 지우기, 동기화 시작**
+
+```bash
+cd /Users/kodong/Projects/KDMS
+git fetch origin && git checkout claude/stage4-cdc-fxm28p   # PR 브랜치(머지 뒤에는 git checkout main && git pull)
+S=$(date +%Y%m%d_%H%M); echo $S                             # 이 값을 터미널 B 에서도 쓴다(화면에 나온 값을 적어 둔다)
+./mvnw -B package 2>&1 | tee runs/${S}_p4_build.txt          # 빌드 + 단위 시험. 끝에 BUILD SUCCESS
+java -jar target/kdms.jar reset --yes 2>&1 | tee runs/${S}_p4_reset.txt   # 3단계에서 적재한 대상 테이블을 비우고 작업을 적재 전으로
+java -jar target/kdms.jar sync 2>&1 | tee runs/${S}_p4_sync1.txt          # 띄워 둔다. "워터마크 기록: …" 줄이 나올 때까지 기다린다
+```
+
+**② 노트북: 원천 쓰기 5분** (① 의 "워터마크 기록" 이 나온 뒤)
+
+```powershell
+./scripts/Invoke-KdmsSql.ps1 -File test/sql/mssql/30_writes.sql -Stage p4_writes -Var @{ DURATION_SEC = '300' }
+# 끝나면 "결과: runs\…_p4_writes.txt (exit 0, 300…s)". 이 파일의 writes_stopped_at 이 쓰기 중지 시각이다
+```
+
+**③ 터미널 B (Mac): 쓰기 도중 적재, 동기화 강제 종료** (② 를 시작하고 20초쯤 뒤)
+
+```bash
+cd /Users/kodong/Projects/KDMS
+S=여기에_①의_값                                               # 예: S=20261009_1030
+java -jar target/kdms.jar load --throttle-ms 2000 2>&1 | tee runs/${S}_p4_load.txt
+# 첫 줄 근처 "워터마크 … 뒤 시점을 적재한다", 끝에 "실패 0개" 와 "적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다"
+pkill -9 -f 'kdms.jar sync'                                  # 터미널 A 의 sync 를 강제 종료(T-C08). A 에 "killed" 가 보인다
+```
+
+**④ 터미널 A: 동기화 다시 시작** (③ 의 강제 종료 직후)
+
+```bash
+java -jar target/kdms.jar sync 2>&1 | tee runs/${S}_p4_sync2.txt
+# "저장된 오프셋 다음부터 이어 받는다" 뒤 10초마다 "[시:분:초] 수집 … · 반영 … · 대기 0 · 지연 …초"
+```
+
+**⑤ 터미널 A: 쓰기가 끝난 뒤(② 의 결과 줄이 나온 뒤) 마무리**
+
+```bash
+# 먼저 Ctrl+C 로 ④ 를 멈춘다("중지 요청: 진행 중 배치를 마치고 멈춘다")
+java -jar target/kdms.jar sync --drain 2>&1 | tee runs/${S}_p4_drain.txt; echo "종료 코드 ${pipestatus[1]}" | tee -a runs/${S}_p4_drain.txt
+# "따라잡음(--drain): … 반영 대기 0건" 과 종료 코드 0
+java -jar target/kdms.jar verify 2>&1 | tee runs/${S}_p4_verify.txt; echo "종료 코드 ${pipestatus[1]}" | tee -a runs/${S}_p4_verify.txt
+# "결과: 검증 항목 30개 중 일치 30 · 불일치 0" 과 종료 코드 0
+java -jar target/kdms.jar schema --phase post-load 2>&1 | tee runs/${S}_p4_postload.txt   # 반영 중 미뤄 둔 UNIQUE·인덱스
+```
+
+`${pipestatus[1]}` 은 Mac 기본 셸 zsh 용이다(bash 라면 `${PIPESTATUS[0]}`). `tee` 를 거치면 `$?` 는 늘 0 이라 이렇게 본다.
+
+| 기준(plan.md §6 4단계) | 어디서 보나 |
+|---|---|
+| 쓰기를 넣는 동안 적재 → 반영 | ③ `load` 가 `실패 0개`, ④ 의 진행 줄에서 `반영` 이 늘고 `대기` 가 0 근처 |
+| 쓰기 중지 후 검증 일치 | ⑤ `verify` 30/30, 종료 코드 0 |
+| 강제 종료 뒤 이어 받기(T-C08) | ④ 가 오류 없이 시작하고 ⑤ 가 일치 |
+
+- ③ 의 `load` 가 ② 보다 먼저 끝나도 된다(쓰기는 계속 반영된다). 적재가 너무 빨리 끝나 쓰기와 겹치지 않으면 `--throttle-ms` 를 5000 으로 올려 처음부터(`reset --yes` → ①) 다시 한다.
+- ⑤ `--drain` 을 쓰기 도중에 시작하면 "원천 쓰기가 아직 있다" 를 찍고 쓰기가 끝날 때까지 기다린다(정상).
+- ⑤ 가 불일치면 `runs/${S}_p4_*.txt` 전부와 노트북 `runs\…_p4_writes.txt` 를 보내 준다.
+- `30_writes.sql` 은 `KDMS_MOCK` 데이터를 바꾼다(KIS 가 심은 NUL 행 이름 변경, rating_id 5 삭제 등). 그 뒤에는 §8 ④·§9 ⑤ 통합 시험(SourceCatalogIT·LoadVerifyIT)이 고정값과 달라 실패한다. 다시 하려면 노트북 §2 ② 를 `REPLACE = '1'` 로 → ③ → ④ 로 되돌리고, Mac 에서 `schema --replace` 부터 한다.
+
 ## 7. 자주 막히는 곳
 
 | 증상 | 원인 → 해결 |
@@ -204,6 +276,12 @@ java -jar target/kdms.jar verify 2>&1 | tee -a runs/${S}_p3_kill.txt        # �
 | `schema` 가 `적용하지 않음: 대상에 이미 있다` | 이미 만든 테이블이다. 다시 만들려면 `--replace`(안의 데이터도 지워진다) |
 | `SQL Server Agent 가 실행 중이 아니다` 인데 `Get-Service SQLSERVERAGENT` 는 Running | 한국어 Windows 는 서비스 이름이 'SQL Server 에이전트'라 옛 검사가 못 찾았다. 2026-10-01 에 실행 파일 이름(SQLAGENT)으로 찾도록 고쳤다. 저장소를 `git pull` 한 뒤 다시 실행 |
 | ② 오프라인 빌드 `PluginResolutionException` | ① 을 `clean` 없이 돌려 clean 플러그인이 `~/.m2` 에 없다. 인터넷이 될 때 `./mvnw -B clean package` 한 번 → ② 다시 |
+| `sync` 가 `원천 CDC 캡처 인스턴스가 없는 테이블` | §2 ③ 이 안 됐거나 `kodong_ms` 에 `cdc` 읽기 권한이 없다(§2 ④). 노트북에서 ③·④ 다시 |
+| `sync` 가 "워터마크 기록" 을 안 찍고 멈춘 듯함 | SQL Agent 가 꺼져 있으면 CDC 가 안 쌓여도 엔진은 뜬다. 노트북 `Get-Service SQLSERVERAGENT` → Running. 그래도 1분 넘게 없으면 `runs/…_p4_sync1.txt` 를 보내 준다 |
+| `load` 가 `워터마크가 없다` | 터미널 A 의 `sync` 가 "워터마크 기록" 을 찍기 전에 적재했다. 기다렸다 다시. 원천 쓰기가 없는 3단계 방식이면 `--no-cdc` |
+| `sync` 가 `보존 기간이 지나 …(T-C10)` | 동기화를 멈춘 채 CDC 보존 기간(기본 3일)이 지났다. `reset --yes` → §10 ① 부터 |
+| `sync` 가 `워터마크는 있는데 Debezium 오프셋이 비어 있다` | 관리 표를 손으로 지웠거나 `kdms.debezium_offset_<번호>` 가 없어졌다. `reset --yes` → §10 ① 부터 |
+| `reset` 이 `kdms sync 이 작업 … 을 실행하고 있다` | 다른 터미널의 `sync` 를 Ctrl+C 로 멈춘다(`pgrep -fl kdms.jar`) |
 | `nc` 는 되는데 Java 만 안 됨 | macOS 로컬 네트워크 권한: 시스템 설정 → 개인정보 보호 및 보안 → 로컬 네트워크 → 터미널 켜기 |
 
 원천 로그인 실패 원인 보기(노트북 PowerShell 7, Windows 인증):

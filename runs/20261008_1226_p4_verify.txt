@@ -1,0 +1,18 @@
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 2026-10-08 12:42:08 +09:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,084 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.3초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 7 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.issuer → dbo.issuer: 건수 2,670 · 해시 같음 · 합계 1개 같음 (0.3초)
+[일치]   dbo.rating → dbo.rating: 건수 21,045 · 해시 같음 · 합계 5개 같음 (1.1초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 23,533 · 해시 같음 · 합계 2개 같음 (0.7초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,251 · 해시 같음 · 합계 4개 같음 (0.5초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 6)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+종료 코드 0

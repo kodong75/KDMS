@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.postgresql.PGConnection;
 import org.postgresql.copy.CopyIn;
 
+import kdms.cdc.CaptureStore;
 import kdms.config.Connections;
 import kdms.config.KdmsConfig;
 import kdms.ddl.DdlWriter;
@@ -40,12 +41,13 @@ import kdms.state.SchemaInstaller;
  * 같은 대상 트랜잭션에서 구간 상태를 DONE 으로 바꿔 커밋한다. 그래서 어디서 죽어도 다시 실행하면 끝난 구간은 건너뛰고
  * 커밋되지 않은 구간만 처음부터 다시 넣는다(중복·누락 없음, T-L16).
  * <p>
- * 3단계는 원천 쓰기가 없는 상태를 전제한다. 워터마크(CDC 시작 LSN)를 적재 전에 기록하는 것은 4단계에서 붙인다.
+ * 원천 쓰기가 있는 동안 적재하려면(4단계) 먼저 kdms sync 가 워터마크를 기록해야 한다. 적재는 워터마크보다 뒤 시점을 읽고,
+ * 그 사이 변경은 kdms sync 가 다시 적용한다(멱등, docs/cdc.md). 원천 쓰기가 없는 시험은 --no-cdc 로 워터마크 없이 적재한다.
  */
 public final class Loader {
 
-    /** 이 상태의 작업에만 적재한다(SYNCING 부터는 4단계 이후) */
-    static final Set<String> LOADABLE = Set.of("SCHEMA_DONE", "LOADING", "FAILED");
+    /** 이 상태의 작업에만 적재한다(SYNCING: 동기화 중 일부 테이블을 --reset 으로 다시 적재) */
+    static final Set<String> LOADABLE = Set.of("SCHEMA_DONE", "LOADING", "SYNCING", "FAILED");
 
     /** COPY 로 보내는 묶음 크기(바이트) */
     private static final int COPY_BUFFER = 1 << 20;
@@ -55,8 +57,9 @@ public final class Loader {
      * @param reset      대상 테이블을 비우고(TRUNCATE) 구간 기록을 지운 뒤 처음부터
      * @param postLoad   작업의 테이블이 모두 적재되면 적재 뒤 DDL(UNIQUE·인덱스)을 적용한다
      * @param throttleMs 1,000행마다 쉬는 시간(원천 부하 조절·중단 시험). 0 이면 쉬지 않음
+     * @param noCdc      워터마크 없이 적재한다(원천 쓰기가 없을 때만 맞다)
      */
-    public record Options(Set<String> tables, boolean reset, boolean postLoad, long throttleMs) {
+    public record Options(Set<String> tables, boolean reset, boolean postLoad, long throttleMs, boolean noCdc) {
     }
 
     /** @param status LOADED | FAILED | SKIPPED(이미 적재됨) */
@@ -131,7 +134,16 @@ public final class Loader {
                 throw new Refused("작업 " + cfg.jobName() + " 이 없다. 먼저 kdms schema 로 대상 테이블을 만든다");
             }
             if (!LOADABLE.contains(job.status())) {
-                throw new Refused("작업 " + cfg.jobName() + " 은 " + job.status() + " 단계다. 전체 적재는 SCHEMA_DONE·LOADING·FAILED 에서만 한다");
+                throw new Refused("작업 " + cfg.jobName() + " 은 " + job.status() + " 단계다. 전체 적재는 SCHEMA_DONE·LOADING·SYNCING·FAILED 에서만 한다");
+            }
+            CaptureStore.Watermark wm = CaptureStore.watermark(state, job.id());
+            boolean cdc = wm != null;
+            if (!cdc && !o.noCdc()) {
+                throw new Refused("워터마크가 없다. 원천 쓰기가 있으면 먼저 다른 터미널에서 kdms sync 를 실행해 \"워터마크 기록\" 이 나온 뒤 적재한다"
+                        + "(그래야 적재 중 변경을 놓치지 않는다, docs/cdc.md). 원천 쓰기가 없는 시험이면 --no-cdc");
+            }
+            if (cdc) {
+                out.println("워터마크 " + wm.startLsn() + " 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다");
             }
             if (job.configSha256() != null && !job.configSha256().equals(configSha256)) {
                 out.println("주의: kdms schema 때와 설정·규칙 파일 내용이 다르다. 값 규칙이 바뀌었으면 --reset 으로 처음부터 적재한다");
@@ -172,6 +184,9 @@ public final class Loader {
             if (failed) {
                 LoadState.setJobStatus(state, job.id(), "LOADING", "적재 실패 테이블 "
                         + results.stream().filter(r -> "FAILED".equals(r.status())).map(TableResult::srcTable).collect(Collectors.joining(", ")));
+            } else if (allLoaded && cdc) {
+                // 반영 중 일시적 UNIQUE 위반을 피하려고 UNIQUE·인덱스는 전환 때(5단계) 만든다
+                postLoad = "적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load";
             } else if (allLoaded && o.postLoad()) {
                 try {
                     SchemaApplier.Result r = SchemaApplier.apply(state, plan, DdlWriter.Phase.POST_LOAD, false,

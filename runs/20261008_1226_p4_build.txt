@@ -1,0 +1,154 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------------< kdms:kdms >------------------------------
+[INFO] Building KDMS 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/io/debezium/debezium-storage-common/3.7.0.Final/debezium-storage-common-3.7.0.Final.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/io/debezium/debezium-storage-common/3.7.0.Final/debezium-storage-common-3.7.0.Final.pom (1.1 kB at 2.2 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/io/debezium/debezium-storage-common/3.7.0.Final/debezium-storage-common-3.7.0.Final.jar
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/io/debezium/debezium-storage-common/3.7.0.Final/debezium-storage-common-3.7.0.Final.jar (8.7 kB at 13 kB/s)
+[INFO] 
+[INFO] --- cyclonedx:2.9.3:makeAggregateBom (default) @ kdms ---
+[INFO] CycloneDX: Resolving Dependencies
+[INFO] CycloneDX: Creating BOM version 1.6 with 78 component(s)
+[INFO] CycloneDX: Writing and validating BOM (JSON): /Users/kodong/Projects/KDMS/target/classes/META-INF/sbom/application.cdx.json
+[WARNING] Unknown keyword meta:enum - you should define your own Meta Schema. If the keyword is irrelevant for validation, just use a NonValidationKeyword or if it should generate annotations AnnotationKeyword
+[WARNING] Unknown keyword deprecated - you should define your own Meta Schema. If the keyword is irrelevant for validation, just use a NonValidationKeyword or if it should generate annotations AnnotationKeyword
+[INFO]            attaching as kdms-0.1.0-SNAPSHOT-cyclonedx.json
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ kdms ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 8 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ kdms ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 69 source files with javac [debug parameters release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ kdms ---
+[INFO] skip non existing resourceDirectory /Users/kodong/Projects/KDMS/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ kdms ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 25 source files with javac [debug parameters release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ kdms ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running kdms.apply.ApplySqlTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.076 s -- in kdms.apply.ApplySqlTest
+[INFO] Running kdms.cdc.CdcValuesTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in kdms.cdc.CdcValuesTest
+[INFO] Running kdms.cdc.LsnAndOffsetTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.056 s -- in kdms.cdc.LsnAndOffsetTest
+[INFO] Running kdms.cdc.DebeziumClasspathTest
+2026-10-08 12:26:08.596 ERROR [debezium-sqlserverconnector-kdms-connection-validation] i.d.c.sqlserver.SqlServerConnector - Failed testing connection for {connector.class=io.debezium.connector.sqlserver.SqlServerConnector, record.processing.shutdown.timeout.ms=1000, bootstrap.servers=localhost:9092, record.processing.order=ORDERED, topic.prefix=kdms, offset.storage.file.filename=, record.processing.threads=, errors.retry.delay.initial.ms=300, value.converter=org.apache.kafka.connect.json.JsonConverter, key.converter=org.apache.kafka.connect.json.JsonConverter, database.encrypt=false, database.user=u, database.names=KDMS_MOCK, offset.storage=org.apache.kafka.connect.storage.MemoryOffsetBackingStore, offset.flush.timeout.ms=5000, errors.retry.delay.max.ms=10000, database.port=1, offset.flush.interval.ms=60000, internal.task.management.timeout.ms=40000, schema.history.internal=io.debezium.relational.history.MemorySchemaHistory, record.processing.with.serial.consumer=false, errors.max.retries=0, database.hostname=127.0.0.1, database.password=********, name=kdms-classpath-smoke, snapshot.mode=no_data} with user '[database.user,null,[],[],true]'
+com.microsoft.sqlserver.jdbc.SQLServerException: 호스트 127.0.0.1, 포트 1에 대한 TCP/IP 연결에 실패했습니다. 오류: "Connection refused. 연결 속성을 확인하세요. SQL Server의 인스턴스가 호스트에서 실행되고 있고 포트에서 TCP/IP 연결을 허용하고 있는지 확인하세요. 또한 방화벽에서 포트로의 TCP 연결을 차단하지 않는지 확인하세요.".
+	at com.microsoft.sqlserver.jdbc.SQLServerException.makeFromDriverError(SQLServerException.java:308)
+	at com.microsoft.sqlserver.jdbc.SQLServerException.convertConnectExceptionToSQLServerException(SQLServerException.java:399)
+	at com.microsoft.sqlserver.jdbc.SocketFinder.findSocket(IOBuffer.java:2618)
+	at com.microsoft.sqlserver.jdbc.TDSChannel.open(IOBuffer.java:743)
+	at com.microsoft.sqlserver.jdbc.SQLServerConnection.connectHelper(SQLServerConnection.java:4352)
+	at com.microsoft.sqlserver.jdbc.SQLServerConnection.login(SQLServerConnection.java:3937)
+	at com.microsoft.sqlserver.jdbc.SQLServerConnection.connectInternal(SQLServerConnection.java:3700)
+	at com.microsoft.sqlserver.jdbc.SQLServerConnection.connect(SQLServerConnection.java:2385)
+	at com.microsoft.sqlserver.jdbc.SQLServerDriver.connect(SQLServerDriver.java:1453)
+	at io.debezium.jdbc.JdbcConnection.lambda$patternBasedFactory$1(JdbcConnection.java:252)
+	at io.debezium.jdbc.JdbcConnection$ConnectionFactoryDecorator.connect(JdbcConnection.java:138)
+	at io.debezium.jdbc.JdbcConnection.establishConnection(JdbcConnection.java:942)
+	at io.debezium.jdbc.JdbcConnection.connection(JdbcConnection.java:926)
+	at io.debezium.connector.sqlserver.SqlServerConnection.connection(SqlServerConnection.java:336)
+	at io.debezium.jdbc.JdbcConnection.connection(JdbcConnection.java:920)
+	at io.debezium.jdbc.JdbcConnection.createStatement(JdbcConnection.java:1591)
+	at io.debezium.jdbc.JdbcConnection.execute(JdbcConnection.java:476)
+	at io.debezium.jdbc.JdbcConnection.execute(JdbcConnection.java:455)
+	at io.debezium.connector.sqlserver.SqlServerConnector.lambda$validateConnection$0(SqlServerConnector.java:138)
+	at io.debezium.util.Threads.lambda$runWithTimeout$2(Threads.java:363)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at io.debezium.util.Threads$3.lambda$newThread$0(Threads.java:316)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-10-08 12:26:08.601 ERROR [pool-4-thread-1] i.d.e.async.AsyncEmbeddedEngine - Engine has failed with 
+io.debezium.DebeziumException: Connector configuration is not valid. Unable to connect. Check this and other connection properties. Error: 호스트 127.0.0.1, 포트 1에 대한 TCP/IP 연결에 실패했습니다. 오류: "Connection refused. 연결 속성을 확인하세요. SQL Server의 인스턴스가 호스트에서 실행되고 있고 포트에서 TCP/IP 연결을 허용하고 있는지 확인하세요. 또한 방화벽에서 포트로의 TCP 연결을 차단하지 않는지 확인하세요.".
+	at io.debezium.util.KafkaConnectUtil.validateAndGetConnectorConfig(KafkaConnectUtil.java:59)
+	at io.debezium.embedded.async.AsyncEmbeddedEngine.initializeConnector(AsyncEmbeddedEngine.java:365)
+	at io.debezium.embedded.async.AsyncEmbeddedEngine.run(AsyncEmbeddedEngine.java:201)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.197 s -- in kdms.cdc.DebeziumClasspathTest
+[INFO] Running kdms.verify.NormalizerTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in kdms.verify.NormalizerTest
+[INFO] Running kdms.config.EnvResolverTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in kdms.config.EnvResolverTest
+[INFO] Running kdms.config.ConfigLoaderTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.026 s -- in kdms.config.ConfigLoaderTest
+[INFO] Running kdms.web.WebSmokeTest
+2026-10-08 12:26:08.836 INFO  [main] o.a.m.surefire.booter.ForkedBooter - Starting ForkedBooter v3.5.6 using Java 21.0.12.1 with PID 42096 (started by kodong in /Users/kodong/Projects/KDMS)
+2026-10-08 12:26:08.837 INFO  [main] o.a.m.surefire.booter.ForkedBooter - No active profile set, falling back to 1 default profile: "default"
+2026-10-08 12:26:09.070 INFO  [main] o.s.boot.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-10-08 12:26:09.075 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-127.0.0.1-8080"]
+2026-10-08 12:26:09.076 INFO  [main] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-10-08 12:26:09.076 INFO  [main] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-08 12:26:09.088 INFO  [main] o.s.b.w.c.s.WebApplicationContextInitializer - Root WebApplicationContext: initialization completed in 241 ms
+2026-10-08 12:26:09.122 INFO  [main] o.s.b.w.a.WelcomePageHandlerMapping - Adding welcome page template: index
+2026-10-08 12:26:09.190 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-127.0.0.1-8080"]
+2026-10-08 12:26:09.194 INFO  [main] o.s.boot.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-10-08 12:26:09.196 INFO  [main] o.a.m.surefire.booter.ForkedBooter - Started ForkedBooter in 0.463 seconds (process running for 1.207)
+2026-10-08 12:26:09.207 WARN  [main] kdms.web.KdmsWebApplication - 관리 스키마를 확인하지 못했다(u@127.0.0.1:1/db): 127.0.0.1:1 에 대한 연결이 거부되었습니다. 호스트 이름과 포트가 올바른지, 그리고 postmaster가 TCP/IP 연결을 수락하고 있는지 확인하십시오.
+2026-10-08 12:26:09.239 INFO  [http-nio-127.0.0.1-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-08 12:26:09.239 INFO  [http-nio-127.0.0.1-8080-exec-1] o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-10-08 12:26:09.240 INFO  [http-nio-127.0.0.1-8080-exec-1] o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-10-08 12:26:09.395 INFO  [main] o.s.boot.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-08 12:26:09.395 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-127.0.0.1-8080"]
+2026-10-08 12:26:09.396 INFO  [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-10-08 12:26:09.396 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-127.0.0.1-8080"]
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.769 s -- in kdms.web.WebSmokeTest
+[INFO] Running kdms.web.StaticAssetsTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in kdms.web.StaticAssetsTest
+[INFO] Running kdms.ddl.DefaultTranslatorTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in kdms.ddl.DefaultTranslatorTest
+[INFO] Running kdms.ddl.SchemaPlannerTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.044 s -- in kdms.ddl.SchemaPlannerTest
+[INFO] Running kdms.cli.CliTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.093 s -- in kdms.cli.CliTest
+[INFO] Running kdms.state.SchemaScriptTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in kdms.state.SchemaScriptTest
+[INFO] Running kdms.load.CopyValuesTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in kdms.load.CopyValuesTest
+[INFO] Running kdms.load.ChunksTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in kdms.load.ChunksTest
+[INFO] Running kdms.load.SafeMessageTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in kdms.load.SafeMessageTest
+[INFO] Running kdms.rules.RulesLoaderTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in kdms.rules.RulesLoaderTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 90, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- license:2.7.1:add-third-party (third-party-report) @ kdms ---
+[INFO] Included licenses (whitelist): [Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, 0BSD, EPL-2.0]
+[INFO] License: 'GPL-2.0-with-classpath-exception' for 'MavenProject: jakarta.annotation:jakarta.annotation-api:3.0.0 @ ' is OK since it is also licensed under 'EPL-2.0'
+[INFO] License: 'LGPL-2.1-only' for 'MavenProject: ch.qos.logback:logback-classic:1.5.38 @ ' is OK since it is also licensed under 'EPL-2.0'
+[INFO] License: 'LGPL-2.1-only' for 'MavenProject: ch.qos.logback:logback-core:1.5.38 @ ' is OK since it is also licensed under 'EPL-2.0'
+[INFO] Writing third-party file to /Users/kodong/Projects/KDMS/target/classes/META-INF/THIRD-PARTY.txt
+[INFO] 
+[INFO] --- jar:3.5.1:jar (default-jar) @ kdms ---
+[INFO] Building jar: /Users/kodong/Projects/KDMS/target/kdms.jar
+[INFO] 
+[INFO] --- spring-boot:4.1.1:repackage (repackage) @ kdms ---
+[INFO] Replacing main artifact /Users/kodong/Projects/KDMS/target/kdms.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /Users/kodong/Projects/KDMS/target/kdms.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.688 s
+[INFO] Finished at: 2026-10-08T12:26:10+09:00
+[INFO] ------------------------------------------------------------------------

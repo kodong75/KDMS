@@ -13,6 +13,7 @@ public record KdmsConfig(
         Endpoint source,
         Endpoint target,
         LoadSettings load,
+        SyncSettings sync,
         TableSelection tables,
         String rules,
         WebSettings web) {
@@ -45,6 +46,16 @@ public record KdmsConfig(
      * @param isolation        원천 읽기 격리 수준: snapshot(기본, 원천 DB 에 ALLOW_SNAPSHOT_ISOLATION ON 필요) | read_committed
      */
     public record LoadSettings(int tableParallelism, int chunksPerTable, String isolation) {
+    }
+
+    /**
+     * 변경분 수집·반영(4단계, docs/cdc.md).
+     *
+     * @param batchSize     반영기가 한 트랜잭션에 적용하는 변경 수
+     * @param pollMs        반영할 변경이 없을 때 다시 볼 때까지 쉬는 시간
+     * @param statusSeconds 진행·지연을 화면에 찍는 간격(초)
+     */
+    public record SyncSettings(int batchSize, int pollMs, int statusSeconds) {
     }
 
     /** 이관 대상 테이블. {@code schema.table} 형식, {@code *} 와일드카드. */
