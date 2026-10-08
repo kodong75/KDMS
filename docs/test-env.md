@@ -162,11 +162,12 @@ S=$(date +%Y%m%d_%H%M)
 # ① 빌드 + 단위 시험
 ./mvnw -B package 2>&1 | tee runs/${S}_p3_build.txt
 
-# ② 전체 적재. 마지막 "결과: 테이블 7개 중 적재 7개 … 대상 행 48,047" 과 "적재 뒤 DDL" 줄을 본다
+# ② 전체 적재. 마지막 "결과: 테이블 7개 중 적재 7개 … 실패 0개" (대상 행 수는 노트북 원천 건수와 같으면 된다. 2026-10-08 노트북 48,053) 과 "적재 뒤 DDL" 줄을 본다
 java -jar target/kdms.jar load 2>&1 | tee runs/${S}_p3_load.txt
 
 # ③ 검증. "결과: 검증 항목 30개 중 일치 30 · 불일치 0" 이 기준. 종료 코드 0
-java -jar target/kdms.jar verify 2>&1 | tee runs/${S}_p3_verify.txt; echo "종료 코드 ${PIPESTATUS[0]}" | tee -a runs/${S}_p3_verify.txt
+java -jar target/kdms.jar verify 2>&1 | tee runs/${S}_p3_verify.txt; echo "종료 코드 ${pipestatus[1]}" | tee -a runs/${S}_p3_verify.txt
+# 위 echo 의 pipestatus 는 Mac 기본 셸 zsh 용이다(bash 라면 ${PIPESTATUS[0]})
 
 # ④ 중단·재시작: 처음부터 천천히 적재하다가 8초 뒤 강제 종료 → 다시 실행 → 검증
 java -jar target/kdms.jar load --reset --throttle-ms 1000 > runs/${S}_p3_kill.txt 2>&1 &
