@@ -1,0 +1,29 @@
+KDMS 0.1.0-SNAPSHOT  작업 kdms_mock  2026-10-08 16:01:22 +09:00
+변환 규칙: 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[원천] kodong_ms@192.168.0.12:1433/KDMS_MOCK
+  접속                OK (251 ms)
+  버전                Microsoft SQL Server 2019 (RTM-CU32-GDR) (KB5122772) - 15.0.4490.9 (X64)
+  제품 버전           15.0.4490.9 RTM CU32 / Developer Edition (64-bit)
+  DB                  KDMS_MOCK
+  콜레이션            Korean_Wansung_CI_AS
+  로그인              kodong_ms
+  CDC                 켜짐 (캡처 테이블 7개)
+  스냅숏 격리         ON
+  복구 모델           SIMPLE
+  SQL Agent           Running
+
+[대상] kdms_app@192.168.0.12:5432/kdms
+  접속                OK (189 ms)
+  버전                PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+  DB                  kdms
+  로그인              kdms_app
+  인코딩 / 콜레이션   UTF8 / C.UTF-8
+  관리 스키마 kdms    버전 3 (2026-10-08T06:49:08.847092Z)
+
+[작업] kdms_mock (job_id 10)
+  상태                DONE
+  전체 적재           테이블 7개 중 7개 끝, 적재한 행 48,576
+  변경분 반영         수집 9,572 · 반영 9,572 · 대기 0 · 지연 0.0초 (2026-10-08T16:01:11 기준)
+  검증                run 7: 항목 30개 중 일치 30 · 불일치 0
+  전환                cutover 1: DONE · 소요 13.0초

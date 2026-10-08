@@ -1,0 +1,53 @@
+KDMS 전환 · 작업 kdms_mock (job_id 10, cutover_id 1) · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T16:01:03 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 10) · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 캡처 테이블 7개 · --drain
+워터마크 0000002a:00004c78:0003 (2026-10-08T15:53:38 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T16:01:05 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[16:01:07] 수집 9,572 · 반영 9,572 · 대기 0 · 지연 - · 원천 마지막 변경 16:00:09 · 스트리밍 시작 전
+[16:01:11] 수집 9,572 · 반영 9,572 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 16:00:09
+따라잡음(--drain): 원천 마지막 변경 00000030:00003710:0009 까지 반영, 반영 대기 0건 · 6초
+  → 완료 (8.1초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.6초): 문장 8개 적용
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,049 · 해시 같음 · 합계 2개 같음 (0.3초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 48 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.issuer → dbo.issuer: 건수 2,688 · 해시 같음 · 합계 1개 같음 (0.3초)
+  [일치]   dbo.rating → dbo.rating: 건수 21,050 · 해시 같음 · 합계 5개 같음 (0.8초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 23,495 · 해시 같음 · 합계 2개 같음 (0.6초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,225 · 해시 같음 · 합계 4개 같음 (0.5초)
+  → 완료 (3.1초): 검증 항목 30개 중 일치 30 · 불일치 0 (run_id 7)
+
+[5/6] IDENTITY·SEQUENCE
+  IDENTITY "dbo"."app_user"."user_id": 원천 1161 → 대상 다음 값 1162
+  IDENTITY "dbo"."issuer"."issuer_id": 원천 2693 → 대상 다음 값 2694
+  IDENTITY "dbo"."rating"."rating_id": 원천 21739 → 대상 다음 값 21740
+  IDENTITY "dbo"."rating_hist"."hist_id": 원천 23495 → 대상 다음 값 23496
+  IDENTITY "dbo"."research_doc"."doc_id": 원천 10220 → 대상 다음 값 10221
+  SEQUENCE "dbo"."seq_doc_no": 원천 202605225 → 대상 다음 값 202605226
+  → 완료 (0.5초): "dbo"."app_user"."user_id" 다음 1162, "dbo"."issuer"."issuer_id" 다음 2694, "dbo"."rating"."rating_id" 다음 21740, "dbo"."rating_hist"."hist_id" 다음 23496, "dbo"."research_doc"."doc_id" 다음 10221, "dbo"."seq_doc_no" 다음 202605226
+
+[6/6] FK
+  → 완료 (0.3초): 문장 2개 적용
+
+전환 끝
+  1 마지막 반영         완료        8.1초  반영 대기 0, 원천 마지막 커밋까지 반영
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.6초  문장 8개 적용
+  4 검증                완료        3.1초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 7)
+  5 IDENTITY·SEQUENCE   완료        0.5초  "dbo"."app_user"."user_id" 다음 1162, "dbo"."issuer"."issuer_id" 다음 2694, "dbo"."rating"."rating_id" 다음 21740, "dbo"."rating_hist"."hist_id" 다음 23496, "dbo"."research_doc"."doc_id" 다음 10221, "dbo"."seq_doc_no" 다음 202605226
+  6 FK                  완료        0.3초  문장 2개 적용
+소요 시간(예상 다운타임) 13.0초
+
+전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+  - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+종료 코드 0
