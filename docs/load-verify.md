@@ -115,4 +115,6 @@ PG 문자 타입은 NUL(`U+0000`)을 저장하지 못한다. KIS 는 `dbo.issuer
 
 통합 시험 `LoadVerifyIT`(구간 하나를 커밋 직전에 실패시켜 재실행), `SourceCatalogIT`·`TargetDdlIT`·`SourceProbeIT`·`TargetSchemaIT` 도 같은 환경에서 통과(9개). 단위 시험 79개 통과.
 
+노트북(2026-10-08, Mac 에서 실행, WORKLOG.md): 48,053행 검증 30/30, `kill -9` 뒤 재실행해 이어서 끝나고 30/30, 통합 시험 6개 통과. 두 완료 기준 모두 충족.
+
 노트북 원천·PG 에서의 확인 명령은 [test-env.md](test-env.md) §9.

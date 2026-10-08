@@ -38,3 +38,15 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 원인 → 해결: KIS 가 심은 NUL → `config/kdms-rules.yml` 에 `issuer_nm: { nul_char: replace }` (docs/load-verify.md §4) → 그 구간만 다시 적재, 검증 일치.
   검증에서 issuer 해시가 전부 다름 → NUL REPLACE 에 cp1252 이진 콜레이션을 써서 한글이 `?` 로 바뀜 → `Latin1_General_100_BIN2_UTF8` 로 바꿈 → 일치.
 - 노트북 원천·PG 에서의 확인은 Mac 에서 해야 한다(docs/test-env.md §9).
+
+## 2026-10-08 11:00 · 3단계 · 전체 적재·검증 확인 · Mac(노트북 DB)
+- 목적: plan.md §6 3단계 완료 기준을 노트북 원천 MS-SQL·대상 PG 로 확인.
+- 환경: Mac(Java 21) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK, 로그인 kodong_ms / PG 5432 kdms, kdms_app). 원천 쓰기 없음.
+- 실행: docs/test-env.md §9 ①~⑤. 결과 원문 `runs/*_p3_*.txt`(Mac 에서 올림).
+- 결과: `schema` 문장 11개·테이블 7개(job_id 10) → `load` 7개 테이블 48,053행, 실패 0, 적재 뒤 DDL 8개 → `verify` 검증 항목 30개 중 일치 30(run_id 1).
+  `load --reset --throttle-ms 1000` 을 8초 뒤 `kill -9` → 다시 `load`: 이미 적재된 테이블 4개 건너뜀, research_doc 끝난 구간 1개 건너뜀, 실패 0 → `verify` 30/30(run_id 3).
+  통합 시험 LoadVerifyIT·SourceCatalogIT·TargetDdlIT 6개 통과.
+- 오류 원문: `적재하지 않음: 작업 kdms_mock 이 없다. 먼저 kdms schema 로 대상 테이블을 만든다`
+- 원인 → 해결 → 재실행: 2단계 `schema` 를 노트북 PG 에 아직 적용하지 않았음 → `schema` 실행 → `load` 정상.
+  ③ 의 `종료 코드` 가 빈 값: 문서 명령이 bash 의 `PIPESTATUS` 를 써서 zsh 에서 빈 값 → zsh `pipestatus[1]` 로 문서 수정.
+- 클라우드(48,047행)와 행 수가 6 다른 것은 노트북 원천 건수 차이로 추정(검증은 원천=대상 일치).
