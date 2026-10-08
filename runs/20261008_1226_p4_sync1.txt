@@ -1,0 +1,16 @@
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 10) · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+[12:29:59] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초 · 스트리밍 시작 전
+2026-10-08 12:29:59.655 WARN  [debezium-sqlserverconnector-kdms-change-event-source-coordinator] io.debezium.jdbc.JdbcConnection - Configured SQL Server Agent status query "SELECT CASE WHEN dss.[status]=4 THEN 1 ELSE 0 END AS isRunning FROM [KDMS_MOCK].sys.dm_server_services dss WHERE dss.[servicename] LIKE N'SQL Server Agent (%';" did not return the expected single row indicating whether the SQL Server Agent is running. If this query is not applicable to your SQL Server deployment, override 'database.sqlserver.agent.status.query' with a query appropriate for your deployment.
+워터마크 기록: 00000060:00001f68:0003 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+[12:30:09] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초
+[12:30:20] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초
+[12:30:30] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초
+[12:30:40] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초
+[12:30:51] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초
+[12:31:01] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초
+[12:31:11] 수집 111 · 반영 0 · 대기 111(적재 전 테이블 7개, 그 변경 111) · 지연 348.5초 · 원천 마지막 변경 12:31:09
+[12:31:22] 수집 428 · 반영 0 · 대기 428(적재 전 테이블 7개, 그 변경 428) · 지연 358.7초 · 원천 마지막 변경 12:31:19
+[12:31:32] 수집 777 · 반영 0 · 대기 777(적재 전 테이블 7개, 그 변경 777) · 지연 369.0초 · 원천 마지막 변경 12:31:30
+[12:31:42] 수집 971 · 반영 169 · 대기 802(적재 전 테이블 3개, 그 변경 802) · 지연 0.6초 · 원천 마지막 변경 12:31:40
+[12:31:53] 수집 1,132 · 반영 288 · 대기 844(적재 전 테이블 2개, 그 변경 844) · 지연 6.9초 · 원천 마지막 변경 12:31:52
