@@ -149,6 +149,45 @@ java -jar target/kdms.jar schema 2>&1 | tee runs/${S}_p2_schema.txt
 
 `SourceCatalogIT` 가 실패하면 실패 메시지(어느 테이블·컬럼 값이 다른지)를 그대로 보내 준다. 클라우드에서 원천 MS-SQL 을 확인하지 못했기 때문에 카탈로그 조회 SQL 이나 시험 고정값을 고친다.
 
+## 9. Mac: 3단계(전체 적재·검증) 확인
+
+§8 ⑤ `schema` 까지 끝난 상태에서 한다. 원천 `KDMS_MOCK` 은 `ALLOW_SNAPSHOT_ISOLATION ON` 이어야 한다(§2 의 `00_restore_kdms_mock.sql` 이 켠다). 이 단계는 원천에 쓰기가 없어야 한다.
+`config/kdms.yml` 에 `load:` 절이 없으면 기본값(테이블 4개 병렬 × 구간 2개, snapshot)으로 돈다.
+
+```bash
+cd /Users/kodong/Projects/KDMS
+git fetch origin && git checkout claude/project-thread-2stohv   # PR 브랜치(머지 뒤에는 git checkout main && git pull)
+S=$(date +%Y%m%d_%H%M)
+
+# ① 빌드 + 단위 시험
+./mvnw -B package 2>&1 | tee runs/${S}_p3_build.txt
+
+# ② 전체 적재. 마지막 "결과: 테이블 7개 중 적재 7개 … 실패 0개" (대상 행 수는 노트북 원천 건수와 같으면 된다. 2026-10-08 노트북 48,053) 과 "적재 뒤 DDL" 줄을 본다
+java -jar target/kdms.jar load 2>&1 | tee runs/${S}_p3_load.txt
+
+# ③ 검증. "결과: 검증 항목 30개 중 일치 30 · 불일치 0" 이 기준. 종료 코드 0
+java -jar target/kdms.jar verify 2>&1 | tee runs/${S}_p3_verify.txt; echo "종료 코드 ${pipestatus[1]}" | tee -a runs/${S}_p3_verify.txt
+# 위 echo 의 pipestatus 는 Mac 기본 셸 zsh 용이다(bash 라면 ${PIPESTATUS[0]})
+
+# ④ 중단·재시작: 처음부터 천천히 적재하다가 8초 뒤 강제 종료 → 다시 실행 → 검증
+java -jar target/kdms.jar load --reset --throttle-ms 1000 > runs/${S}_p3_kill.txt 2>&1 &
+sleep 8; kill -9 $!; echo "강제 종료" >> runs/${S}_p3_kill.txt
+java -jar target/kdms.jar load 2>&1 | tee -a runs/${S}_p3_kill.txt          # "이미 적재돼 건너뜀 N" 과 남은 구간만 적재
+java -jar target/kdms.jar verify 2>&1 | tee -a runs/${S}_p3_kill.txt        # 다시 30/30
+
+# ⑤ 통합 시험: LoadVerifyIT(대상 시험 스키마 kdms_it_load 만 쓰고 지움) + 2단계 것
+./mvnw -B -o test -Pintegration -Dtest='LoadVerifyIT,SourceCatalogIT,TargetDdlIT' 2>&1 | tee runs/${S}_p3_integration.txt
+```
+
+| 기준(plan.md §6 3단계) | 어디서 보나 |
+|---|---|
+| 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치 | ③ `검증 항목 30개 중 일치 30 · 불일치 0`, 종료 코드 0 |
+| 적재 도중 죽였다 다시 실행해 이어서 끝나고 검증 일치 | ④ 두 번째 `load` 의 `이미 적재돼 건너뜀` 이 0 보다 크고 `실패 0개`, 마지막 `verify` 30/30 |
+| 통합 시험 | ⑤ `Tests run: …, Failures: 0, Errors: 0` |
+
+④ 에서 8초 안에 적재가 다 끝나면(건너뜀 7) `sleep 8` 을 `sleep 4` 로 줄여 다시 한다.
+③ 이 불일치면 보고서의 `차이 행` 줄(PK 만 나온다)과 `runs/…_p3_verify.txt` 를 그대로 보내 준다. 클라우드에서 노트북 원천을 확인하지 못했기 때문이다.
+
 ## 7. 자주 막히는 곳
 
 | 증상 | 원인 → 해결 |
@@ -158,6 +197,9 @@ java -jar target/kdms.jar schema 2>&1 | tee runs/${S}_p2_schema.txt
 | 원천 `PKIX path building failed` | 노트북 자체 서명 인증서. `.env` `KDMS_SRC_TRUST_CERT=true`(시험 환경만) |
 | 원천 `Login failed for user 'kodong_ms'` | 노트북 SQL Server 오류 로그의 원인 문구로 가른다(표 아래 명령). 흔한 것은 `.env` `KDMS_SRC_PASSWORD` 불일치, 혼합 인증 꺼짐, `KDMS_MOCK` 접근 권한 없음. `.env` 값은 따옴표 없이 쓴다(텍스트 편집기가 `"` 를 둥근 따옴표로 바꾸면 따옴표까지 암호가 된다) |
 | 대상 `password authentication failed for user "kdms_app"` | §3 에서 정한 암호와 `.env` `KDMS_TGT_PASSWORD` 가 다르다. §3 을 다시 실행하면 암호를 다시 맞춘다 |
+| `load` 가 `Snapshot isolation transaction failed … 3952` | 원천 DB 에 스냅샷 격리가 꺼져 있다. 노트북에서 `ALTER DATABASE KDMS_MOCK SET ALLOW_SNAPSHOT_ISOLATION ON;`(§2 의 00 스크립트) |
+| `load` 가 `다른 kdms load 가 작업 … 을 적재하고 있다` | 다른 터미널의 `load` 가 아직 돈다(§9 ④ 의 백그라운드 포함). `pgrep -fl kdms.jar` 로 확인 |
+| `load` 가 issuer 에서 `NUL 문자` 로 실패 | `config/kdms.yml` 의 `rules:` 가 `config/kdms-rules.yml` 이 아니다(load-verify.md §4) |
 | `plan` 이 `결과: 막힘` · `계산 컬럼 식을 PG 로 옮겨야 한다` | `config/kdms.yml` 의 `rules:` 가 비어 있다. `rules: config/kdms-rules.yml` |
 | `schema` 가 `적용하지 않음: 대상에 이미 있다` | 이미 만든 테이블이다. 다시 만들려면 `--replace`(안의 데이터도 지워진다) |
 | `SQL Server Agent 가 실행 중이 아니다` 인데 `Get-Service SQLSERVERAGENT` 는 Running | 한국어 Windows 는 서비스 이름이 'SQL Server 에이전트'라 옛 검사가 못 찾았다. 2026-10-01 에 실행 파일 이름(SQLAGENT)으로 찾도록 고쳤다. 저장소를 `git pull` 한 뒤 다시 실행 |

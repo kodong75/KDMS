@@ -20,14 +20,14 @@ import kdms.catalog.SourceCatalog.Table;
  * IDENTITY·SEQUENCE 현재값은 KIS sql/20_pg/gen/mock.sql(2026-09-30 생성)의 setval 값.
  * 노트북 실측(2026-10-01, 복원·CDC 결과)도 이 7개 테이블이다. KIS sql/10_mssql/19_file_name_data.sql 의 dbo.file_attach 는 노트북 MIG_MOCK 에 없다.
  */
-final class KdmsMockCatalog {
+public final class KdmsMockCatalog {
 
     static final String CI = "Korean_Wansung_CI_AS";
 
     private KdmsMockCatalog() {
     }
 
-    static SourceCatalog catalog() {
+    public static SourceCatalog catalog() {
         List<Table> t = new ArrayList<>();
         t.add(table("app_user", 1002,
                 List.of(

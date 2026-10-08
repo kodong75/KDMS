@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -23,6 +25,9 @@ public final class ConfigLoader {
 
     private static final Set<String> TOP_KEYS = Set.of("job_name", "source", "target", "load", "tables", "rules", "web");
     private static final Set<String> ENDPOINT_KEYS = Set.of("host", "port", "database", "user", "password", "properties");
+
+    /** 자리표시 ${이름} / ${이름:기본값} 의 이름 */
+    private static final Pattern PLACEHOLDER_NAME = Pattern.compile("\\$\\{([A-Za-z_][A-Za-z0-9_]*)");
 
     private final EnvResolver env;
 
@@ -50,7 +55,7 @@ public final class ConfigLoader {
         Map<String, Object> load = optMap(root.get("load"), "load");
         Map<String, Object> tables = optMap(root.get("tables"), "tables");
         Map<String, Object> web = optMap(root.get("web"), "web");
-        checkKeys(load, Set.of("table_parallelism", "chunks_per_table"), "load");
+        checkKeys(load, Set.of("table_parallelism", "chunks_per_table", "isolation"), "load");
         checkKeys(tables, Set.of("include", "exclude"), "tables");
         checkKeys(web, Set.of("address", "port"), "web");
 
@@ -60,7 +65,8 @@ public final class ConfigLoader {
                 endpoint(root.get("target"), "target", 5432),
                 new KdmsConfig.LoadSettings(
                         positiveInt(load.get("table_parallelism"), "load.table_parallelism", 4),
-                        positiveInt(load.get("chunks_per_table"), "load.chunks_per_table", 2)),
+                        positiveInt(load.get("chunks_per_table"), "load.chunks_per_table", 2),
+                        oneOf(load.get("isolation"), "load.isolation", "snapshot", "snapshot", "read_committed")),
                 new KdmsConfig.TableSelection(
                         strList(tables.get("include"), "tables.include", List.of("dbo.*")),
                         strList(tables.get("exclude"), "tables.exclude", List.of())),
@@ -85,8 +91,35 @@ public final class ConfigLoader {
                 positiveInt(m.get("port"), where + ".port", defaultPort),
                 required(m.get("database"), where + ".database"),
                 required(m.get("user"), where + ".user"),
-                str(m.get("password"), where + ".password", ""),
+                password(m.get("password"), where + ".password"),
                 Map.copyOf(props));
+    }
+
+    /**
+     * 비밀번호가 비어 있으면 접속을 시도하기 전에 설정 오류로 멈춘다(빈 값으로 붙으면 "Login failed" 만 보여 원인을 찾기 어렵다).
+     * 메시지에는 값 대신 채울 곳(환경 변수 이름)만 쓴다.
+     */
+    private String password(Object v, String where) {
+        String s = str(v, where, "");
+        if (s.isEmpty()) {
+            Matcher m = v == null ? null : PLACEHOLDER_NAME.matcher(String.valueOf(v));
+            String fill = m != null && m.find() ? ".env(또는 환경 변수)의 " + m.group(1) + "=" : "설정 파일의 " + where;
+            throw new ConfigException(where + ": 비밀번호가 비어 있습니다. " + fill + " 에 비밀번호를 넣는다");
+        }
+        return s;
+    }
+
+    private String oneOf(Object v, String where, String def, String... allowed) {
+        String s = str(v, where, null);
+        if (s == null || s.isBlank()) {
+            return def;
+        }
+        for (String a : allowed) {
+            if (a.equals(s.strip())) {
+                return a;
+            }
+        }
+        throw new ConfigException(where + ": " + String.join(" | ", allowed) + " 중 하나여야 합니다 (값: " + s + ")");
     }
 
     private String required(Object v, String where) {

@@ -23,6 +23,13 @@ tables:
         generated: >-
           CASE WHEN strpos(file_nm, '.') > 0 THEN lower(substring(file_nm FROM '\.([^.]*)$')) END
 
+  # NUL 문자(A02, T-L09): KIS 가 NUL 을 심은 행이 1건 있다(issuer_cd 900005). 기본 text.nul_char: fail 이면 적재가 그 구간에서 멈춘다.
+  # 값을 조용히 잃지 않도록 strip(지움) 대신 replace(U+FFFD '�' 로 바꿈)로 정한다: 대상에서 바뀐 자리를 찾을 수 있다(docs/load-verify.md §4).
+  # 검증은 원천 쪽에도 같은 치환을 적용해 비교한다. 다른 컬럼은 기본값 fail 그대로(새 NUL 이 생기면 멈춰서 알린다).
+  dbo.issuer:
+    columns:
+      issuer_nm: { nul_char: replace }
+
 # 예: 코드성 컬럼만 끝 공백 제거(B02·B04)
 #   dbo.rating:
 #     columns:

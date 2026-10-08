@@ -70,7 +70,7 @@
 
 예상 경고 9건(트리거 `trg_rating_audit`, uniqueidentifier·rowversion 타입, `getdate()`·`sysdatetime()`·`newsequentialid()`·`suser_sname()` 기본값, 자동 변환 안 하는 객체 6개)과
 주의 3건(CI 비교 B01·B03·B06, 끝 공백 B02·B04, CP949 바이트 B05·A03).
-`--scan` 을 붙이면 KIS 가 심은 NUL(`dbo.issuer.issuer_nm`) 때문에 오류 1건으로 막힌다. NUL 을 어떻게 처리할지(`text.nul_char: fail | strip | replace`)는 3단계 적재 전에 정한다.
+`--scan` 을 붙이면 KIS 가 심은 NUL(`dbo.issuer.issuer_nm`) 때문에 오류 1건으로 막힌다. 3단계에서 `config/kdms-rules.yml` 에 이 컬럼만 `nul_char: replace`(U+FFFD) 로 정했다(2026-10-06, [load-verify.md](load-verify.md) §4). 기본 규칙 그대로면 여전히 막힌다.
 
 ## 5. 원천 권한
 

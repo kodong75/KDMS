@@ -1,0 +1,52 @@
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+--reset: 대상 테이블 7개를 비우고 구간 기록을 지웠다
+dbo.code_master 구간 1/2: 14행, 0.3초
+dbo.daily_count 구간 1/2: 3행, 0.3초
+dbo.code_master 구간 2/2: 13행, 0.3초
+dbo.daily_count 구간 2/2: 3행, 0.3초
+dbo.app_user 구간 2/2: 501행, 0.3초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 1.1초
+dbo.app_user 구간 1/2: 500행, 0.3초
+dbo.daily_count → dbo.daily_count: 완료 6행, 구간 2개, 1.1초
+dbo.app_user → dbo.app_user: 완료 1,001행, 구간 2개, 1.1초
+dbo.issuer 구간 1/2: 1,002행, 1.4초
+dbo.issuer 구간 2/2: 1,003행, 1.4초
+dbo.issuer → dbo.issuer: 완료 2,005행, 구간 2개, 2.3초
+dbo.research_doc 구간 2/2: 6행, 1.0초
+강제 종료
+zsh: command not found: ava
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+dbo.app_user: 이미 적재됨(1,001행). 다시 하려면 --reset
+dbo.code_master: 이미 적재됨(27행). 다시 하려면 --reset
+dbo.issuer: 이미 적재됨(2,005행). 다시 하려면 --reset
+dbo.daily_count: 이미 적재됨(6행). 다시 하려면 --reset
+dbo.research_doc: 끝난 구간 1개는 건너뛰고 1개를 적재한다
+dbo.rating_hist 구간 1/2: 10,002행, 0.9초
+dbo.rating_hist 구간 2/2: 10,002행, 0.9초
+dbo.rating 구간 2/2: 10,002행, 1.0초
+dbo.rating 구간 1/2: 10,002행, 1.0초
+dbo.rating_hist → dbo.rating_hist: 완료 20,004행, 구간 2개, 1.1초
+dbo.rating → dbo.rating: 완료 20,004행, 구간 2개, 1.1초
+dbo.research_doc 구간 1/2: 5,000행, 1.3초
+dbo.research_doc → dbo.research_doc: 완료 5,006행, 구간 2개(건너뜀 1), 1.4초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 4), 실패 0개, 대상 행 48,053
+적재 뒤 DDL(UNIQUE·인덱스) 적용: 문장 0개, 이미 있어 건너뜀 8개
+다음: kdms verify
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 2026-10-08 11:02:52 +09:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,001 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 6 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.issuer → dbo.issuer: 건수 2,005 · 해시 같음 · 합계 1개 같음 (0.2초)
+[일치]   dbo.rating → dbo.rating: 건수 20,004 · 해시 같음 · 합계 5개 같음 (1.1초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 20,004 · 해시 같음 · 합계 2개 같음 (0.6초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,006 · 해시 같음 · 합계 4개 같음 (0.4초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 3)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
