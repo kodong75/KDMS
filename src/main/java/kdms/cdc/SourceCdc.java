@@ -74,12 +74,17 @@ public final class SourceCdc {
         }
     }
 
-    /** LSN 의 커밋 시각(원천 시계). 정리 Job 이 지운 오래된 LSN 이면 null */
-    public static LocalDateTime timeOf(Connection c, String lsn) throws SQLException {
+    /**
+     * LSN 이하에서 마지막으로 커밋된 트랜잭션의 시각(원천 시계). Debezium 이 읽은 위치(하트비트 오프셋)는 트랜잭션 LSN 과 꼭 같지 않아
+     * 정확히 같은 행 대신 그 위치까지 커밋된 마지막 것을 쓴다. 없으면 null
+     */
+    public static LocalDateTime timeAtOrBefore(Connection c, String lsn) throws SQLException {
         if (lsn == null) {
             return null;
         }
-        try (PreparedStatement ps = c.prepareStatement("SELECT tran_end_time FROM cdc.lsn_time_mapping WHERE start_lsn = ?")) {
+        try (PreparedStatement ps = c.prepareStatement("""
+                SELECT TOP (1) tran_end_time FROM cdc.lsn_time_mapping
+                WHERE start_lsn <= ? AND tran_id <> 0x00 ORDER BY start_lsn DESC""")) {
             ps.setBytes(1, java.util.HexFormat.of().parseHex(lsn.replace(":", "")));
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getObject(1, LocalDateTime.class) : null;

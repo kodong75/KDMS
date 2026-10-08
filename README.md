@@ -1,7 +1,7 @@
 # KDMS
 MS-SQL 2019 → PostgreSQL 16 미니 DMS(Database Migration Service, 데이터 이관 서비스). 폐쇄망 금융권용 단일 실행 jar.
 
-- 계획: [docs/plan.md](docs/plan.md) (현재 4단계: 변경분 수집·반영, [docs/cdc.md](docs/cdc.md). 3단계: [docs/load-verify.md](docs/load-verify.md). 2단계: [docs/schema-conversion.md](docs/schema-conversion.md))
+- 계획: [docs/plan.md](docs/plan.md) (현재 5단계: 전환·화면, [docs/cutover.md](docs/cutover.md). 4단계: 변경분 수집·반영, [docs/cdc.md](docs/cdc.md). 3단계: [docs/load-verify.md](docs/load-verify.md). 2단계: [docs/schema-conversion.md](docs/schema-conversion.md))
 - 오픈소스 라이선스: [docs/licenses.md](docs/licenses.md)
 - 시험 환경 준비·실행 방법: [docs/test-env.md](docs/test-env.md)
 - 실행 기록: [WORKLOG.md](WORKLOG.md), 결과 원문 `runs/`
@@ -19,8 +19,9 @@ java -jar target/kdms.jar schema        # 위 DDL(적재 전 단계)을 대상 P
 java -jar target/kdms.jar sync          # (다른 터미널) 변경분 수집·반영. "워터마크 기록" 뒤에 load. 쓰기를 멈춘 뒤 sync --drain (docs/cdc.md)
 java -jar target/kdms.jar load          # 전체 적재(COPY, 구간 병렬). 다시 실행하면 끝난 구간은 건너뛰고 이어서. 원천 쓰기가 없으면 --no-cdc
 java -jar target/kdms.jar verify        # 건수·합계·해시 검증, 다르면 차이 행 PK. 불일치면 종료 코드 5
+java -jar target/kdms.jar cutover --yes # 원천 쓰기를 멈춘 뒤 전환: 마지막 반영 → 검증 → setval → FK, 소요 시간 = 예상 다운타임(docs/cutover.md)
 java -jar target/kdms.jar reset --yes   # 대상 테이블을 비우고 적재·동기화 기록을 지워 적재 전으로(처음부터 다시)
-java -jar target/kdms.jar web           # 웹 화면 http://127.0.0.1:8080
+java -jar target/kdms.jar web           # 웹 화면 http://127.0.0.1:8080: 단계·지연·적재·검증·전환과 실행 버튼
 ```
 
 ## 구조
@@ -28,7 +29,7 @@ java -jar target/kdms.jar web           # 웹 화면 http://127.0.0.1:8080
 | 경로 | 내용 |
 |---|---|
 | `src/main/java/kdms/` | 패키지별 책임은 plan.md §4.1 (`config`, `catalog`, `rules`, `ddl`, `load`, `cdc`, `apply`, `verify`, `cutover`, `state`, `web`, `cli`) |
-| `src/main/resources/db/kdms-schema*.sql` | 관리 테이블(대상 PG `kdms` 스키마). 버전마다 파일 하나(v2 = 4단계 반영 위치·상태 컬럼) |
+| `src/main/resources/db/kdms-schema*.sql` | 관리 테이블(대상 PG `kdms` 스키마). 버전마다 파일 하나(v2 = 4단계 반영 위치·상태 컬럼, v3 = 5단계 전환 기록) |
 | `src/main/resources/kdms-rules.yml` | 변환 규칙 기본값(plan.md §5) |
 | `config/` | 작업 설정 예시, 작업별 규칙 예시, 라이선스 허용 목록 |
 | `test/sql/` | 노트북에서 사람이 실행하는 시험 준비 SQL(MS-SQL 복원·CDC·권한, PG DB·역할) |

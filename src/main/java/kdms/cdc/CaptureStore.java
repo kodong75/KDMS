@@ -133,12 +133,43 @@ public final class CaptureStore {
         }
     }
 
+    private static final java.util.regex.Pattern COMMIT_LSN = java.util.regex.Pattern.compile("\"commit_lsn\"\\s*:\\s*\"([^\"]*)\"");
+    private static final java.util.regex.Pattern CHANGE_LSN = java.util.regex.Pattern.compile("\"change_lsn\"\\s*:\\s*\"([^\"]*)\"");
+
     /**
-     * 그 작업을 돌리는 kdms sync·load 가 없음을 확인한다(세션 advisory lock 을 잠깐 잡아 본다).
+     * 저장된 Debezium 오프셋이 트랜잭션 경계(change_lsn 없음 = 하트비트·트랜잭션 끝)에 있으면 그 commit_lsn.
+     * 오프셋은 change_log 커밋 뒤에만 저장하므로 이 위치까지의 변경은 모두 change_log 에 있거나 반영됐다.
+     * 재시작 뒤 원천에 새 커밋이 없으면 SQL Server 커넥터는 하트비트를 보내지 않아(2026-10-08 클라우드 실측) 엔진이 처리한 위치를
+     * 알 수 없으므로 이 값으로 시작한다. 트랜잭션 중간이거나 없으면 null
+     */
+    public static String storedCommitLsn(Connection c, long jobId) throws SQLException {
+        try (Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery("SELECT offset_val FROM kdms." + DebeziumProps.offsetTable(jobId))) {
+            String best = null;
+            while (rs.next()) {
+                String v = rs.getString(1);
+                if (v == null) {
+                    continue;
+                }
+                java.util.regex.Matcher change = CHANGE_LSN.matcher(v);
+                if (change.find() && Lsn.normalize(change.group(1)) != null) {
+                    return null;
+                }
+                java.util.regex.Matcher commit = COMMIT_LSN.matcher(v);
+                if (commit.find()) {
+                    best = Lsn.max(best, Lsn.normalize(commit.group(1)));
+                }
+            }
+            return best;
+        }
+    }
+
+    /**
+     * 그 작업을 돌리는 kdms sync·load·cutover 가 없음을 확인한다(세션 advisory lock 을 잠깐 잡아 본다).
      * @return 실행 중인 명령 이름, 없으면 null
      */
     public static String running(Connection c, String jobName) throws SQLException {
-        for (String what : new String[] {"sync", "load"}) {
+        for (String what : new String[] {"sync", "load", "cutover"}) {
             try (PreparedStatement ps = c.prepareStatement("SELECT pg_try_advisory_lock(hashtext('kdms." + what + ":' || ?))")) {
                 ps.setString(1, jobName);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -154,6 +185,27 @@ public final class CaptureStore {
             }
         }
         return null;
+    }
+
+    /**
+     * 지금 그 작업을 돌리고 있는 명령(sync·load·cutover). {@link #running} 과 달리 잠금을 잡아 보지 않고 pg_locks 만 본다
+     * (화면이 몇 초마다 불러도 막 시작하는 명령과 부딪히지 않게). 64비트 advisory 키 = classid(상위 32비트) · objid(하위 32비트)
+     */
+    public static List<String> runningNow(Connection c, String jobName) throws SQLException {
+        List<String> out = new java.util.ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement("""
+                SELECT w FROM unnest(ARRAY['sync', 'load', 'cutover']) w
+                WHERE EXISTS (SELECT 1 FROM pg_locks l WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 1
+                                AND l.database = (SELECT oid FROM pg_database WHERE datname = current_database())
+                                AND ((l.classid::bigint << 32) | l.objid::bigint) = hashtext('kdms.' || w || ':' || ?)::bigint)""")) {
+            ps.setString(1, jobName);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(rs.getString(1));
+                }
+            }
+        }
+        return out;
     }
 
     /** kdms reset·schema --replace: 작업의 CDC 상태를 모두 지운다(워터마크·변경·반영 위치·Debezium 표) */

@@ -35,9 +35,9 @@ CDC(Change Data Capture, 변경 데이터 캡처)는 원천 MS-SQL 의 CDC 기�
 ```
 
 - **수집**: 이 작업이 `change_log` 에 넣은 변경 수(누적), **반영**: 대상에 적용한 수(누적), **대기**: 아직 반영하지 않은 수(그중 적재가 안 끝난 테이블의 것은 괄호).
-- **지연**: 원천의 마지막 커밋 시각 − 대상에 반영한 마지막 변경의 원천 커밋 시각(둘 다 원천 시계, `cdc.lsn_time_mapping`). 반영 대기가 0 이고 Debezium 이 원천 마지막 커밋 LSN 까지 읽었으면 0. 적재 전에는 워터마크 시각 기준이라 크게 나온다.
+- **지연**: 원천의 마지막 커밋 시각 − 반영할 수 있는(적재가 끝난 테이블의) 가장 오래된 미반영 변경의 원천 커밋 시각. 그런 변경이 없으면 Debezium 이 읽은 위치의 커밋 시각(둘 다 원천 시계, `cdc.lsn_time_mapping`). 반영 대기가 0 이고 Debezium 이 원천 마지막 커밋 LSN 까지 읽었으면 0. 적재 전 테이블의 변경은 지연에 넣지 않고 `대기` 괄호로 센다(5단계에서 고침, [cutover.md](cutover.md) §5).
 - 캡처 Job 이 멈추면(SQL Agent 중지 등) `lsn_time_mapping` 도 멈춰 위 지연이 0 으로 보인다. 그래서 캡처 Job 의 마지막 로그 훑기(`sys.dm_cdc_log_scan_sessions`, 빈 훑기 포함)가 15초보다 오래됐으면 그 시간을 지연으로 쓰고 `원천 캡처 Job 이 N초째 로그를 읽지 않음(SQL Agent 확인)` 을 붙인다. 원천 DB 의 `log_reuse_wait_desc` 가 `REPLICATION` 이면 `원천 로그 REPLICATION 대기` 도 붙는다(plan.md R2, T-C09).
-- 같은 값이 `kdms.watermark`(`stream_lsn·src_max_lsn·src_max_lsn_at·pending_changes·lag_seconds·sync_status_at`)에 남는다. 웹 화면 표시는 6단계.
+- 같은 값이 `kdms.watermark`(`stream_lsn·src_max_lsn·src_max_lsn_at·pending_changes·lag_seconds·sync_status_at`)에 남는다. `kdms status` 와 웹 화면이 이 값을 보여 준다([cutover.md](cutover.md) §3·§4).
 
 설정(`config/kdms.yml` 의 `sync:`): `batch_size`(반영 트랜잭션 하나의 변경 수, 기본 1000), `poll_ms`(반영할 것이 없을 때 쉬는 시간, 기본 500), `status_seconds`(기본 10).
 
@@ -150,6 +150,6 @@ RDS for SQL Server 에서도 같은 권한으로 되는지는 2차(RDS) 때 확�
 | T-C10 보존 기간 초과 | `sp_cdc_cleanup_change_table` 로 위치 뒤를 지운 뒤 `kdms sync` | 종료 코드 5, reset 안내 |
 | T-C02 워터마크를 적재 뒤에 기록 | 실험 빌드 대신 거부로 막았다(`kdms load` 는 워터마크 없으면 거부) | — |
 | T-C09 SQL Agent 중지·재시작 | 캡처 Job 을 60초 멈췄다 다시 시작(`msdb.dbo.sp_stop_job`/`sp_start_job`, 쓰기 중) | `runs/…_p4_cloud_tc09.txt`. 노트북에서 SQL Agent 서비스로도 한 번 |
-| T-C11 전환 | 5단계 | — |
+| T-C11 전환 | 5단계 [cutover.md](cutover.md) §6 S1·S4 | — |
 
 원천 쓰기 스크립트: `test/sql/mssql/30_writes.sql`(KIS `sql/50_cdc/11_mssql_writes.sql` 방식, `DURATION_SEC` 초 동안 rating·issuer·research_doc·app_user·code_master·daily_count 에 입력·수정·삭제·PK 변경·LOB 미변경 수정·입력 직후 삭제·여러 테이블 트랜잭션·MERGE, 500 번째마다 3초 트랜잭션). 노트북 절차는 [test-env.md](test-env.md) §10.

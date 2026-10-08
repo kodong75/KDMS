@@ -83,3 +83,39 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 오류: 없음. 손 실수 하나: 다시 시작한 sync 를 다른 창에서 돌려 `S` 가 없어 `runs/_p4_sync2.txt` 로 저장 → 이름만 바꿈(내용 영향 없음).
 - 관찰(고치지 않음, 5단계 전환 화면에서 다룬다): 적재 전 첫 수집 때 지연이 348~369초로 표시 → 아직 반영한 변경이 없으면 워터마크 LSN 의 커밋 시각부터 재는데, 그 LSN 은 스트리밍 시작 전 마지막 커밋이라 원천이 조용했던 시간까지 지연에 들어간다. 반영이 시작되자 0.6초로 정상.
 - 고침: `sync` 시작 줄의 워터마크 기록 시각이 UTC(03:30)로 찍혀 다른 줄(지역 시각 12:30)과 달라 보임 → 지역 시각대로 바꿔 찍는다(SyncRunner, 단위 시험 통과, DB 재실행은 하지 않음).
+
+## 2026-10-08 04:10 · 5단계 · 전환·화면·CLI 확인 · 클라우드
+- 목적: plan.md §6 5단계 완료 기준(시나리오 S1~S4 통과 + 전환 소요 시간 보고)을 실제 MS-SQL CDC·PG 로 확인. 시나리오 정의는 docs/cutover.md §6.
+- 환경: **클라우드 컨테이너**(노트북 아님). 4단계 클라우드 기록과 같은 구성(SQL Server 2019 CU32 Linux 컨테이너, KDMS_MOCK CDC 7개 테이블, 로그인 kodong_ms / PostgreSQL 16.15 kdms_app / OpenJDK 21). KIS 00_login_mig 가 sa 를 끄므로 시험용 sysadmin 로그인을 따로 만들어 원천 쓰기(`test/sql/mssql/30_writes.sql`, sqlcmd `-I`)에 썼다.
+- 실행 명령·결과 원문:
+  `runs/20261008_0410_p5_cloud_scenarios.txt` (S1·S2·S3: 매번 reset → schema --replace → sync → 쓰기 → 쓰기 중 load → 쓰기 끝 → sync 중지 → cutover --yes),
+  `runs/20261008_0424_p5_cloud_s4.txt` (S4, 전환 뒤 대상에 새 행), `runs/20261008_0425_p5_cloud_web.txt` (웹 화면 버튼으로 sync → load → cutover).
+- 결과:
+  - S1 정상 전환(쓰기 120초): 마지막 반영 7.1초 · UNIQUE·인덱스 8개 · 검증 30/30(run_id 2) · IDENTITY 5개·SEQUENCE 1개 setval · FK 2개 · **소요 시간(예상 다운타임) 8.8초**, 작업 DONE.
+  - S2 대상 issuer 한 행 변조 → [4/6] 검증 29/30, 차이 행 diff 1(PK 1) → **exit 5, FK 0개(전환하지 않음)**, 작업 FAILED → `load --reset -t dbo.issuer` → cutover 다시 30/30, 8.6초, DONE.
+  - S3 쓰기가 남은 채 `cutover --max-wait 15` → **exit 6**(17.3초, 따라잡지 못함) → 쓰기 끝 → cutover 를 [4/6] 검증 중 `kill -9` → status 는 CUTOVER·cutover RUNNING → cutover 다시 처음 단계부터 30/30, 8.9초, DONE(UNIQUE·인덱스는 "이미 있어 건너뜀 8개").
+  - S4(S3 뒤): 새 user_id 1172 · hist_id 23413 · seq_doc_no 202605224 = 원천 IDENT_CURRENT/current_value(1171·23412·202605223) 다음 값, 5개 IDENTITY 모두 MAX < 다음 값, 없는 issuer_id 입력은 `fk_rating_issuer` 위반으로 막힘(입력은 ROLLBACK).
+  - 웹 버튼: 토큰 없는 POST 403, 같은 버튼 두 번 409, sync·load·cutover 종료 코드 0, 화면에서 띄운 sync 를 전환이 먼저 멈춤, 검증 30/30, 7.7초, DONE.
+  - 4단계 이월(적재 전 지연 과대): 적재 전 첫 줄 지연 0.0초(S1 04:19:49, S2 04:22:06). 반영할 변경이 있는 테이블의 가장 오래된 대기 변경 시각부터 잰다(cdc.md 지연 정의).
+  - 단위 시험 102개 통과.
+- 오류 원문 → 원인 → 해결 → 재실행:
+  1. sync 를 다시 시작한 뒤 cutover 의 마지막 반영이 "스트리밍 시작 전" 에서 끝나지 않음 → 원천에 새 커밋이 없으면 Debezium 이 첫 이벤트를 주지 않아 스트리밍 위치가 비어 있음 → 시작 때 저장된 오프셋의 커밋 LSN 으로 위치를 채우고 drain 조건을 그 위치로 봄 → 반영 대기 0 으로 끝남.
+  2. `kdms cutover`(--yes 없음)가 설정 파일 오류 1 로 끝남(CliTest) → --yes 확인을 설정 읽기보다 먼저 → 4.
+  3. `kdms web --port` 가 무시돼 시험이 8080 충돌(`PortInUseException`) → SpringApplicationBuilder.properties 가 application.yml 보다 우선순위가 낮음 → 실행 인자 `--server.port=` 로 넘김 → 통과.
+  4. 전환 요약 표의 열이 한글 단계 이름에서 어긋남 → 한글을 2칸으로 세는 pad → 정렬됨. "원천 마지막 변경" 이 초 없이 찍힘 → HH:mm:ss 형식.
+  5. 시험 스크립트의 S4 SQL `syntax error at or near "INTO"`(FROM 안의 INSERT … RETURNING) → CTE 로 고쳐 S3 뒤에 다시 실행(코드 문제 아님).
+- 노트북 원천·PG 에서의 확인은 Mac 에서 해야 한다(docs/test-env.md §11, 먼저 00_restore REPLACE=1 로 원천 되돌리기). 실행 결과를 지어내지 않는다.
+
+## 2026-10-08 15:44 · 5단계 · 전환·화면·CLI 확인 · Mac(노트북 DB)
+- 목적: plan.md §6 5단계 완료 기준(S1 정상 전환 + 전환 소요 시간, S4 전환 뒤 새 입력, 화면)을 노트북 원천 MS-SQL·대상 PG 로 확인. S2·S3 은 클라우드 기록(위)으로 갈음.
+- 환경: Mac(Java 21, 브랜치 claude/stage5-cutover-jdq5mm e863278) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK Korean_Wansung_CI_AS, 로그인 kodong_ms, SQL Agent Running / PG 16.15 5432 kdms, kdms_app). Mac 창 main(빌드·load·cutover·status), sync(kdms sync), sub(kdms web).
+- 실행: docs/test-env.md §11 순서. 노트북 `00_restore`(REPLACE=1)·`10_enable_cdc`·`20_grant` 모두 exit 0 → Mac build(단위 시험 102 통과) → `reset --yes` → `schema --replace`(job_id 10) → `web` → `sync`(워터마크 0000002a:00004c78:0003) → 노트북 `30_writes.sql` 300초 → 쓰기 중 `load --throttle-ms 2000` → 쓰기 끝 → sync Ctrl+C → `cutover --yes` → `status` → 노트북 S4 psql.
+  결과 원문: Mac `runs/20261008_1547_p5_*.txt`(build·reset·schema·sync·load·cutover·status, Mac 에서 올림), `runs/20261008_1603_p5_s4.txt`(노트북 출력을 채팅으로 받아 옮김). 노트북 원문 `runs\20261008_154[45]_p5_*.txt`, `runs\20261008_1555_p5_writes.txt`, `runs\p5_s4.txt` 는 노트북에만 있다.
+- 결과:
+  - 적재 전 첫 진행 줄 `지연 0.0초`(원천 마지막 변경 8분 전) → 4단계 이월(348초 과대 표시) 해결 확인.
+  - 적재 7개 테이블 48,576행, 실패 0(쓰기와 겹침). 수집·반영 9,572건.
+  - **S1 cutover 종료 코드 0**: 마지막 반영 8.1초 · UNIQUE·인덱스 8개 0.6초 · **검증 30/30(run_id 7)** 3.1초 · IDENTITY 5개·SEQUENCE 1개 setval 0.5초 · FK 2개 0.3초 · **소요 시간(예상 다운타임) 13.0초**. status 작업 DONE, cutover 1 DONE.
+  - **S4**: 새 user_id 1162(원천 1161 다음), nextval 202605226(원천 202605225 다음), issuer_id -1 입력은 `fk_rating_issuer` 위반. ROLLBACK.
+  - 화면(sub): 원천·대상 접속됨, 관리 스키마 버전 3, CDC 캡처 테이블 7개, 테이블 대기 → 적재 → 전환 단계 표시.
+- 오류: 없음. 관찰: `load` 끝 안내가 4단계 방식(`schema --phase post-load`, `다음: kdms verify`)이라 혼동 → CDC 모드면 "kdms cutover 가 마지막 반영 뒤 적용", "다음: … kdms cutover --yes" 로 고침(437d1dd, 단위 시험 102 통과, DB 재실행 안 함).
+- 다운타임 13.0초가 클라우드(8.8초)보다 긴 것은 Mac↔노트북 네트워크 왕복 때문으로 추정(측정 안 함).

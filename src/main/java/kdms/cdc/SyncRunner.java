@@ -56,13 +56,23 @@ public final class SyncRunner {
     /** 반영·수집 실패, 원천 DDL 변경, CDC 보존 기간 초과 */
     public static final int FAILED = 5;
 
+    /** --drain 이 정한 시간 안에 따라잡지 못함(원천 쓰기가 멈추지 않음 등) */
+    public static final int DRAIN_TIMEOUT = 6;
+
     /** 동기화할 수 있는 작업 상태 */
     static final Set<String> SYNCABLE = Set.of("SCHEMA_DONE", "LOADING", "SYNCING", "FAILED");
 
     private static final DateTimeFormatter HMS = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    /** @param drain 원천 쓰기가 멈췄다고 보고, 마지막 변경까지 반영하면 끝낸다 */
-    public record Options(boolean drain) {
+    /**
+     * @param drain          원천 쓰기가 멈췄다고 보고, 마지막 변경까지 반영하면 끝낸다
+     * @param cutover        kdms cutover 가 부른다(작업 상태 CUTOVER 에서만 돈다)
+     * @param maxWaitSeconds drain 이 이 시간 안에 따라잡지 못하면 {@link #DRAIN_TIMEOUT}. 0 이면 기다린다
+     */
+    public record Options(boolean drain, boolean cutover, long maxWaitSeconds) {
+        public Options(boolean drain) {
+            this(drain, false, 0);
+        }
     }
 
     /** 사람이 고칠 수 있는 이유로 시작하지 않음 */
@@ -108,16 +118,20 @@ public final class SyncRunner {
         try (Connection state = db.target()) {
             SchemaInstaller.install(state);
             lock(state);
-            long jobId = jobId(state);
+            long jobId = jobId(state, o);
             checkTables(state, jobId);
             checkCaptured(cdcTables);
-            checkTargetTriggersAndForeignKeys(state, cdcTables);
+            // 전환을 다시 실행할 때는 앞선 전환이 FK 를 이미 만들었을 수 있다(그때는 반영할 것이 남아 있지 않다)
+            checkTargetTriggersAndForeignKeys(state, cdcTables, !o.cutover());
 
             CaptureStore.createDebeziumTables(state, jobId);
             CaptureStore.Watermark wm = CaptureStore.watermark(state, jobId);
             if (wm != null && CaptureStore.offsetRows(state, jobId) == 0) {
                 throw new Refused("워터마크(" + wm.startLsn() + ")는 있는데 Debezium 오프셋(kdms." + DebeziumProps.offsetTable(jobId)
                         + ")이 비어 있다. 이어 받을 위치를 몰라 변경이 빠질 수 있으므로 시작하지 않는다. kdms reset --yes 뒤 전체 적재부터 다시 한다");
+            }
+            if (wm != null) {
+                streamLsn.set(CaptureStore.storedCommitLsn(state, jobId));
             }
             out.println("KDMS 변경분 동기화 · 작업 " + cfg.jobName() + " (job_id " + jobId + ") · " + cfg.source() + " → " + cfg.target()
                     + " · 캡처 테이블 " + cdcTables.size() + "개" + (o.drain() ? " · --drain" : ""));
@@ -217,11 +231,20 @@ public final class SyncRunner {
                         print(s, applied);
                         nextStatus = now + statusEvery;
                     }
+                    if (drain != null && o.maxWaitSeconds() > 0 && now - drain.started > o.maxWaitSeconds() * 1000) {
+                        print(s, applied);
+                        out.println("따라잡지 못함(--drain): " + o.maxWaitSeconds() + "초 안에 끝나지 않았다. 원천 쓰기가 멈췄는지 본다"
+                                + (s.notLoaded > 0 ? "(적재가 안 끝난 테이블 " + s.notLoaded + "개)" : ""));
+                        log(state, jobId, "WARN", "sync --drain 시간 초과: " + o.maxWaitSeconds() + "초");
+                        return DRAIN_TIMEOUT;
+                    }
                     if (drain != null && drain.check(s, src, now)) {
                         print(s, applied);
                         out.println("따라잡음(--drain): 원천 마지막 변경 " + (s.src == null ? "-" : s.src.maxTxLsn())
                                 + " 까지 반영, 반영 대기 0건 · " + Duration.ofMillis(now - drain.started).toSeconds() + "초");
-                        out.println("다음: kdms verify");
+                        if (!o.cutover()) {
+                            out.println("다음: kdms verify");
+                        }
                         log(state, jobId, "INFO", "sync --drain 따라잡음: " + (s.src == null ? "-" : s.src.maxTxLsn()));
                         return 0;
                     }
@@ -263,18 +286,23 @@ public final class SyncRunner {
         String applied;
         long capturedTotal;
         long appliedTotal;
+        String oldestApplicable;
         try (PreparedStatement ps = state.prepareStatement("""
                 SELECT (SELECT count(*) FROM kdms.change_log WHERE job_id = ?),
                        (SELECT count(*) FROM kdms.change_log c WHERE c.job_id = ? AND NOT EXISTS (
                            SELECT 1 FROM kdms.job_table t WHERE t.job_id = c.job_id AND t.status = 'LOADED'
                              AND lower(t.src_schema) = lower(c.src_schema) AND lower(t.src_table) = lower(c.src_table))),
                        (SELECT count(*) FROM kdms.job_table WHERE job_id = ? AND has_pk AND status NOT IN ('LOADED', 'EXCLUDED')),
-                       w.applied_commit_lsn, coalesce(w.changes_captured, 0), coalesce(w.changes_applied, 0)
+                       w.applied_commit_lsn, coalesce(w.changes_captured, 0), coalesce(w.changes_applied, 0),
+                       (SELECT min(c.commit_lsn COLLATE "C") FROM kdms.change_log c WHERE c.job_id = ? AND EXISTS (
+                           SELECT 1 FROM kdms.job_table t WHERE t.job_id = c.job_id AND t.status = 'LOADED'
+                             AND lower(t.src_schema) = lower(c.src_schema) AND lower(t.src_table) = lower(c.src_table)))
                 FROM (SELECT 1) d LEFT JOIN kdms.watermark w ON w.job_id = ?""")) {
             ps.setLong(1, jobId);
             ps.setLong(2, jobId);
             ps.setLong(3, jobId);
             ps.setLong(4, jobId);
+            ps.setLong(5, jobId);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 pending = rs.getLong(1);
@@ -283,6 +311,7 @@ public final class SyncRunner {
                 applied = rs.getString(4);
                 capturedTotal = rs.getLong(5);
                 appliedTotal = rs.getLong(6);
+                oldestApplicable = rs.getString(7);
             }
         }
         SourceCdc.Snapshot snap = null;
@@ -295,16 +324,11 @@ public final class SyncRunner {
                 if (probe.caughtUp()) {
                     lag = BigDecimal.ZERO;
                 } else if (snap.maxTxAt() != null) {
-                    // 지연 = 원천 마지막 변경 커밋 시각 − 대상에 반영한 마지막 변경의 커밋 시각(둘 다 원천 시계, plan.md §4.4)
-                    LocalDateTime appliedAt = SourceCdc.timeOf(src, applied);
-                    if (appliedAt == null) {
-                        CaptureStore.Watermark wm = CaptureStore.watermark(state, jobId);
-                        appliedAt = wm == null ? null : SourceCdc.timeOf(src, wm.startLsn());
-                    }
-                    if (appliedAt != null) {
-                        lag = BigDecimal.valueOf(Math.max(0, Duration.between(appliedAt, snap.maxTxAt()).toMillis()))
-                                .movePointLeft(3).setScale(3, RoundingMode.UNNECESSARY);
-                    }
+                    // 지연 = 원천 마지막 변경 커밋 시각 − 아직 반영하지 않은 가장 오래된 변경의 커밋 시각(둘 다 원천 시계, plan.md §4.4).
+                    // 적재가 안 끝난 테이블의 변경은 지연이 아니라 "적재 대기"로 따로 센다(4단계에서는 워터마크 시각부터 재 적재 전 지연이 크게 보였다).
+                    // 반영할 변경이 없으면 Debezium 이 읽은 위치의 시각(수집 지연)
+                    String behind = oldestApplicable != null ? oldestApplicable : stream;
+                    lag = lagSeconds(snap.maxTxAt(), SourceCdc.timeAtOrBefore(src, behind));
                 }
                 if (snap.captureStale()) {
                     // 캡처 Job 이 멈추면 lsn_time_mapping 도 멈춰 위 지연이 0 으로 보인다. 마지막 훑기 뒤 지난 시간을 지연으로 본다(T-C09)
@@ -343,6 +367,15 @@ public final class SyncRunner {
         return new Status(snap, stream, pending, waiting, notLoaded, applied, lag, capturedTotal, appliedTotal);
     }
 
+    /** 원천 마지막 커밋 시각 − 뒤처진 위치의 커밋 시각(초, 소수 셋째 자리). 하나라도 모르면 null, 음수는 0 */
+    static BigDecimal lagSeconds(LocalDateTime srcMaxAt, LocalDateTime behindAt) {
+        if (srcMaxAt == null || behindAt == null) {
+            return null;
+        }
+        return BigDecimal.valueOf(Math.max(0, Duration.between(behindAt, srcMaxAt).toMillis())).movePointLeft(3)
+                .setScale(3, RoundingMode.UNNECESSARY);
+    }
+
     private void print(Status s, long appliedThisRun) {
         StringBuilder b = new StringBuilder();
         b.append('[').append(LocalTime.now().format(HMS)).append("] ");
@@ -353,7 +386,7 @@ public final class SyncRunner {
         }
         b.append(" · 지연 ").append(s.lagSeconds == null ? "-" : s.lagSeconds.setScale(1, RoundingMode.HALF_UP) + "초");
         if (s.src != null && s.src.maxTxAt() != null) {
-            b.append(" · 원천 마지막 변경 ").append(s.src.maxTxAt().toLocalTime().withNano(0));
+            b.append(" · 원천 마지막 변경 ").append(s.src.maxTxAt().format(HMS));
         }
         if (s.src != null && s.src.captureStale()) {
             b.append(" · 원천 캡처 Job 이 ").append(s.src.sinceLastScanSeconds()).append("초째 로그를 읽지 않음(SQL Agent 확인)");
@@ -361,7 +394,7 @@ public final class SyncRunner {
                 b.append(" · 원천 로그 REPLICATION 대기(로그가 쌓이는 중)");
             }
         }
-        if (!streaming.get()) {
+        if (streamLsn.get() == null) {
             b.append(" · 스트리밍 시작 전");
         }
         out.println(b);
@@ -408,7 +441,7 @@ public final class SyncRunner {
                 out.println("원천 쓰기가 아직 있다(drain 시작 뒤 커밋 " + s.src.maxTxAt().withNano(0) + "). 쓰기를 멈출 때까지 반영을 계속한다");
                 announcedWrites = true;
             }
-            if (!streaming.get() || !s.caughtUp()) {
+            if (streamLsn.get() == null || !s.caughtUp()) {
                 mark = null;
                 return false;
             }
@@ -546,15 +579,16 @@ public final class SyncRunner {
         }
     }
 
-    private long jobId(Connection state) throws SQLException {
+    private long jobId(Connection state, Options o) throws SQLException {
         try (PreparedStatement ps = state.prepareStatement("SELECT job_id, status FROM kdms.job WHERE job_name = ?")) {
             ps.setString(1, cfg.jobName());
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
                     throw new Refused("작업 " + cfg.jobName() + " 이 없다. 먼저 kdms schema 로 대상 테이블을 만든다");
                 }
-                if (!SYNCABLE.contains(rs.getString(2))) {
-                    throw new Refused("작업 " + cfg.jobName() + " 은 " + rs.getString(2) + " 단계다. 동기화는 SCHEMA_DONE·LOADING·SYNCING·FAILED 에서만 한다");
+                if (o.cutover() ? !"CUTOVER".equals(rs.getString(2)) : !SYNCABLE.contains(rs.getString(2))) {
+                    throw new Refused("작업 " + cfg.jobName() + " 은 " + rs.getString(2) + " 단계다. 동기화는 SCHEMA_DONE·LOADING·SYNCING·FAILED 에서만 한다"
+                            + ("CUTOVER".equals(rs.getString(2)) || "VERIFIED".equals(rs.getString(2)) ? "(전환 중: kdms cutover 를 다시 실행한다)" : ""));
                 }
                 return rs.getLong(1);
             }
@@ -596,17 +630,18 @@ public final class SyncRunner {
     }
 
     /** 반영 중에는 대상에 트리거·FK 가 없어야 한다(G13 이력 중복, 테이블끼리 순서를 맞추지 않는다). 둘 다 전환 때 켠다 */
-    private void checkTargetTriggersAndForeignKeys(Connection state, List<TablePlan> tables) throws SQLException {
+    private void checkTargetTriggersAndForeignKeys(Connection state, List<TablePlan> tables, boolean foreignKeys) throws SQLException {
         List<String> names = tables.stream().map(TablePlan::tgtQualified).toList();
         try (PreparedStatement ps = state.prepareStatement("""
                 SELECT 'trigger ' || tgname || ' ON ' || tgrelid::regclass FROM pg_trigger
                 WHERE NOT tgisinternal AND tgenabled <> 'D' AND tgrelid = ANY (SELECT to_regclass(x) FROM unnest(?::text[]) x)
                 UNION ALL
                 SELECT 'FK ' || conname || ' ON ' || conrelid::regclass FROM pg_constraint
-                WHERE contype = 'f' AND conrelid = ANY (SELECT to_regclass(x) FROM unnest(?::text[]) x)""")) {
+                WHERE ? AND contype = 'f' AND conrelid = ANY (SELECT to_regclass(x) FROM unnest(?::text[]) x)""")) {
             java.sql.Array a = state.createArrayOf("text", names.toArray());
             ps.setArray(1, a);
-            ps.setArray(2, a);
+            ps.setBoolean(2, foreignKeys);
+            ps.setArray(3, a);
             List<String> found = new ArrayList<>();
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

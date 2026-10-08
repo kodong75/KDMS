@@ -1,0 +1,2 @@
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load

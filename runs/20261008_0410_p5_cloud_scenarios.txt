@@ -1,0 +1,431 @@
+# 5단계 전환 시나리오 · 클라우드 컨테이너(노트북 아님)
+# 원천 SQL Server 2019 CU32(Linux 컨테이너) KDMS_MOCK · 대상 PostgreSQL 16.15 · OpenJDK 21
+# 명령: java -jar target/kdms.jar <명령> -c kdms.yml --env-file e2e.env (비밀번호는 env 파일에만, 여기에 남기지 않음)
+# 원천 쓰기: test/sql/mssql/30_writes.sql (시험용 sysadmin 로그인)
+# S1 정상 전환 · S2 검증 불일치면 전환하지 않음 · S3 시간 초과(exit 6)·검증 중 kill -9 뒤 다시 실행. 시각은 UTC
+
+===== 2026-10-08 04:19:44 [S1] kdms reset --yes
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 04:19:45 [S1] kdms schema --replace
+파일: ./out/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+대상 kdms_app@127.0.0.1:55432/kdms 에 pre-load 적용: 문장 11개, 테이블 7개, 지우고 다시 만든 것: "dbo"."app_user", "dbo"."code_master", "dbo"."daily_count", "dbo"."issuer", "dbo"."rating", "dbo"."rating_hist", "dbo"."research_doc", "dbo"."seq_doc_no"
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+exit 0
+
+===== 2026-10-08 04:19:46 [S1] kdms sync (백그라운드)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+워터마크 기록: 0000002d:00004ad8:0074 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+
+===== 2026-10-08 04:19:49 [S1] 원천 쓰기 120초 시작(30_writes.sql)
+
+===== 2026-10-08 04:19:54 [S1] kdms load --throttle-ms 20 (쓰기 중)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 0000002d:00004ad8:0074 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+dbo.daily_count → dbo.daily_count: 완료 1행, 구간 1개, 0.4초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.4초
+dbo.app_user → dbo.app_user: 완료 1,000행, 구간 2개, 0.4초
+dbo.issuer → dbo.issuer: 완료 2,031행, 구간 2개, 0.6초
+dbo.rating_hist → dbo.rating_hist: 완료 20,141행, 구간 2개, 0.8초
+dbo.rating → dbo.rating: 완료 20,036행, 구간 2개, 0.9초
+dbo.research_doc → dbo.research_doc: 완료 5,018행, 구간 2개, 1.0초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 48,254
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load
+다음: kdms verify
+exit 0
+
+===== 2026-10-08 04:19:57 [S1] 원천 쓰기 끝 기다림
+writes exit 0
+loops       rating_ins  rating_upd  rating_del  issuer_ins  issuer_upd  doc_viewcnt_only doc_body    doc_ins     app_user_rows pk_changes  insert_then_delete multi_table_tx daily_merge long_tx     writes_stopped_at      
+
+===== 2026-10-08 04:21:49 [S1] kdms sync 마지막 진행 줄
+[04:21:21] 수집 4,114 · 반영 4,114 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:21:16
+[04:21:31] 수집 4,480 · 반영 4,480 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:21:26
+[04:21:42] 수집 5,005 · 반영 5,005 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 04:21:42
+
+===== 2026-10-08 04:21:49 [S1] kdms sync 중지(SIGTERM)
+sync exit 143
+
+===== 2026-10-08 04:21:49 [S1] kdms cutover --yes
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 3) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T04:21:51 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 0000002d:00004ad8:0074 (2026-10-08T04:19:48 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T04:21:51 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[04:21:53] 수집 5,471 · 반영 5,471 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:21:49
+[04:21:57] 수집 5,471 · 반영 5,471 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:21:49
+따라잡음(--drain): 원천 마지막 변경 00000032:000033b8:0015 까지 반영, 반영 대기 0건 · 6초
+  → 완료 (7.1초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.1초): 문장 8개 적용
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,033 · 해시 같음 · 합계 2개 같음 (0.1초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.issuer → dbo.issuer: 건수 2,420 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.rating → dbo.rating: 건수 20,596 · 해시 같음 · 합계 5개 같음 (0.5초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 22,010 · 해시 같음 · 합계 2개 같음 (0.5초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,120 · 해시 같음 · 합계 4개 같음 (0.3초)
+  → 완료 (1.5초): 검증 항목 30개 중 일치 30 · 불일치 0 (run_id 2)
+
+[5/6] IDENTITY·SEQUENCE
+  IDENTITY "dbo"."app_user"."user_id": 원천 1097 → 대상 다음 값 1098
+  IDENTITY "dbo"."issuer"."issuer_id": 원천 2425 → 대상 다음 값 2426
+  IDENTITY "dbo"."rating"."rating_id": 원천 21010 → 대상 다음 값 21011
+  IDENTITY "dbo"."rating_hist"."hist_id": 원천 22010 → 대상 다음 값 22011
+  IDENTITY "dbo"."research_doc"."doc_id": 원천 10115 → 대상 다음 값 10116
+  SEQUENCE "dbo"."seq_doc_no": 원천 202605120 → 대상 다음 값 202605121
+  → 완료 (0.1초): "dbo"."app_user"."user_id" 다음 1098, "dbo"."issuer"."issuer_id" 다음 2426, "dbo"."rating"."rating_id" 다음 21011, "dbo"."rating_hist"."hist_id" 다음 22011, "dbo"."research_doc"."doc_id" 다음 10116, "dbo"."seq_doc_no" 다음 202605121
+
+[6/6] FK
+  → 완료 (0.0초): 문장 2개 적용
+
+전환 끝
+  1 마지막 반영         완료        7.1초  반영 대기 0, 원천 마지막 커밋까지 반영
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.1초  문장 8개 적용
+  4 검증                완료        1.5초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 2)
+  5 IDENTITY·SEQUENCE   완료        0.1초  "dbo"."app_user"."user_id" 다음 1098, "dbo"."issuer"."issuer_id" 다음 2426, "dbo"."rating"."rating_id" 다음 21011, "dbo"."rating_hist"."hist_id" 다음 22011, "dbo"."research_doc"."doc_id" 다음 10116, "dbo"."seq_doc_no" 다음 202605121
+  6 FK                  완료        0.0초  문장 2개 적용
+소요 시간(예상 다운타임) 8.8초
+
+전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+  - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+exit 0
+
+===== 2026-10-08 04:21:59 [S1] kdms status (작업 부분)
+[작업] kdms_mock (job_id 1)
+  상태                DONE
+  전체 적재           테이블 7개 중 7개 끝, 적재한 행 48,254
+  변경분 반영         수집 5,471 · 반영 5,471 · 대기 0 · 지연 0.0초 (2026-10-08T04:21:57 기준)
+  검증                run 2: 항목 30개 중 일치 30 · 불일치 0
+  전환                cutover 3: DONE · 소요 8.8초
+exit 0
+
+===== 2026-10-08 04:22:00 [S4] 전환 뒤 대상에 새 행 입력(IDENTITY·SEQUENCE·FK, T-C11·T-L05·T-L06)
+ERROR:  syntax error at or near "INTO"
+LINE 1: ... user_id' AS what, user_id AS value FROM (INSERT INTO dbo.a...
+                                                            ^
+(위 입력은 ROLLBACK 했다)
+[기록 주] 시험 스크립트의 SQL 문법 오류(FROM 안의 INSERT … RETURNING). CTE 로 고쳐 S3 뒤에 다시 실행: 20261008_0424_p5_cloud_s4.txt
+IDENT_CURRENT app_user 1097
+IDENT_CURRENT rating_hist 22010
+seq_doc_no current_value 202605120
+
+===== 2026-10-08 04:22:01 [S2] kdms reset --yes
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 04:22:01 [S2] kdms schema --replace
+파일: ./out/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+대상 kdms_app@127.0.0.1:55432/kdms 에 pre-load 적용: 문장 11개, 테이블 7개, 지우고 다시 만든 것: "dbo"."app_user", "dbo"."code_master", "dbo"."daily_count", "dbo"."issuer", "dbo"."rating", "dbo"."rating_hist", "dbo"."research_doc", "dbo"."seq_doc_no"
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+exit 0
+
+===== 2026-10-08 04:22:03 [S2] kdms sync (백그라운드)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+워터마크 기록: 00000032:000033b8:0015 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+
+===== 2026-10-08 04:22:06 [S2] 원천 쓰기 30초 시작(30_writes.sql)
+
+===== 2026-10-08 04:22:11 [S2] kdms load --throttle-ms 20 (쓰기 중)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 00000032:000033b8:0015 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.3초
+dbo.daily_count → dbo.daily_count: 완료 1행, 구간 1개, 0.3초
+dbo.app_user → dbo.app_user: 완료 1,037행, 구간 2개, 0.4초
+dbo.issuer → dbo.issuer: 완료 2,438행, 구간 2개, 0.6초
+dbo.rating → dbo.rating: 완료 20,625행, 구간 2개, 0.8초
+dbo.rating_hist → dbo.rating_hist: 완료 22,114행, 구간 2개, 0.8초
+dbo.research_doc → dbo.research_doc: 완료 5,129행, 구간 2개, 0.8초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 51,371
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load
+다음: kdms verify
+exit 0
+
+===== 2026-10-08 04:22:13 [S2] 원천 쓰기 끝 기다림
+writes exit 0
+loops       rating_ins  rating_upd  rating_del  issuer_ins  issuer_upd  doc_viewcnt_only doc_body    doc_ins     app_user_rows pk_changes  insert_then_delete multi_table_tx daily_merge long_tx     writes_stopped_at      
+
+===== 2026-10-08 04:22:36 [S2] kdms sync 마지막 진행 줄
+[04:22:06] 수집 0 · 반영 0 · 대기 0(적재 전 테이블 7개, 그 변경 0) · 지연 0.0초 · 원천 마지막 변경 04:21:49
+[04:22:17] 수집 254 · 반영 254 · 대기 0 · 지연 5.1초 · 원천 마지막 변경 04:22:17
+[04:22:27] 수집 736 · 반영 736 · 대기 0 · 지연 2.4초 · 원천 마지막 변경 04:22:24
+
+===== 2026-10-08 04:22:36 [S2] kdms sync 중지(SIGTERM)
+sync exit 143
+
+===== 2026-10-08 04:22:37 [S2] 대상 issuer 한 행을 바꾼다(이관 오류 흉내)
+
+===== 2026-10-08 04:22:37 [S2] kdms cutover --yes (불일치로 멈춰야 한다)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 4) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T04:22:38 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 00000032:000033b8:0015 (2026-10-08T04:22:05 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T04:22:38 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[04:22:40] 수집 1,323 · 반영 1,323 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:22:36
+[04:22:42] 수집 1,323 · 반영 1,323 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:22:36
+따라잡음(--drain): 원천 마지막 변경 00000032:00005b80:0007 까지 반영, 반영 대기 0건 · 4초
+  → 완료 (4.8초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.1초): 문장 8개 적용
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,049 · 해시 같음 · 합계 2개 같음 (0.0초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [불일치] dbo.issuer → dbo.issuer: 건수 2,513 · 해시 다름 · 합계 1개 같음 (0.2초)
+      차이 행 1건: missing(원천에만) 0 · extra(대상에만) 0 · diff(값 다름) 1
+        diff PK [1]
+  [일치]   dbo.rating → dbo.rating: 건수 20,744 · 해시 같음 · 합계 5개 같음 (0.5초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 22,492 · 해시 같음 · 합계 2개 같음 (0.4초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,155 · 해시 같음 · 합계 4개 같음 (0.3초)
+  → 실패 (1.5초): 검증 항목 30개 중 일치 29 · 불일치 1 (run_id 3). 전환하지 않는다. 차이 행은 kdms.verify_row_diff(run_id 3)
+
+전환 멈춤: 검증 항목 30개 중 일치 29 · 불일치 1 (run_id 3). 전환하지 않는다. 차이 행은 kdms.verify_row_diff(run_id 3)
+  1 마지막 반영         완료        4.8초  반영 대기 0, 원천 마지막 커밋까지 반영
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.1초  문장 8개 적용
+소요 시간(예상 다운타임) 6.4초
+작업 상태 FAILED. 원인을 고친 뒤 kdms cutover 를 다시 실행한다(처음 단계부터 다시, 결과는 같다). 원천 쓰기를 다시 열어야 하면 kdms sync 로 동기화를 이어 간다
+exit 5
+
+===== 2026-10-08 04:22:44 [S2] 대상에 FK 가 없는지(전환하지 않음)
+ fk 
+----
+  0
+(1 row)
+
+
+===== 2026-10-08 04:22:44 [S2] kdms load --reset -t dbo.issuer (그 테이블만 다시 적재)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 00000032:000033b8:0015 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+--reset: 대상 테이블 1개를 비우고 구간 기록을 지웠다
+dbo.issuer → dbo.issuer: 완료 2,513행, 구간 2개, 0.2초
+
+결과: 테이블 1개 중 적재 1개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 2,513
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load
+다음: kdms verify
+exit 0
+
+===== 2026-10-08 04:22:46 [S2] kdms cutover --yes (다시)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 5) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T04:22:46 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 00000032:000033b8:0015 (2026-10-08T04:22:05 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T04:22:47 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[04:22:49] 수집 1,323 · 반영 1,323 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:22:36
+[04:22:53] 수집 1,323 · 반영 1,323 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:22:36
+따라잡음(--drain): 원천 마지막 변경 00000032:00005b80:0007 까지 반영, 반영 대기 0건 · 6초
+  → 완료 (6.8초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.0초): 문장 0개 적용, 이미 있어 건너뜀 8개
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,049 · 해시 같음 · 합계 2개 같음 (0.0초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.issuer → dbo.issuer: 건수 2,513 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.rating → dbo.rating: 건수 20,744 · 해시 같음 · 합계 5개 같음 (0.5초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 22,492 · 해시 같음 · 합계 2개 같음 (0.4초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,155 · 해시 같음 · 합계 4개 같음 (0.4초)
+  → 완료 (1.6초): 검증 항목 30개 중 일치 30 · 불일치 0 (run_id 4)
+
+[5/6] IDENTITY·SEQUENCE
+  IDENTITY "dbo"."app_user"."user_id": 원천 1123 → 대상 다음 값 1124
+  IDENTITY "dbo"."issuer"."issuer_id": 원천 2518 → 대상 다음 값 2519
+  IDENTITY "dbo"."rating"."rating_id": 원천 21257 → 대상 다음 값 21258
+  IDENTITY "dbo"."rating_hist"."hist_id": 원천 22492 → 대상 다음 값 22493
+  IDENTITY "dbo"."research_doc"."doc_id": 원천 10150 → 대상 다음 값 10151
+  SEQUENCE "dbo"."seq_doc_no": 원천 202605155 → 대상 다음 값 202605156
+  → 완료 (0.1초): "dbo"."app_user"."user_id" 다음 1124, "dbo"."issuer"."issuer_id" 다음 2519, "dbo"."rating"."rating_id" 다음 21258, "dbo"."rating_hist"."hist_id" 다음 22493, "dbo"."research_doc"."doc_id" 다음 10151, "dbo"."seq_doc_no" 다음 202605156
+
+[6/6] FK
+  → 완료 (0.0초): 문장 2개 적용
+
+전환 끝
+  1 마지막 반영         완료        6.8초  반영 대기 0, 원천 마지막 커밋까지 반영
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.0초  문장 0개 적용, 이미 있어 건너뜀 8개
+  4 검증                완료        1.6초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 4)
+  5 IDENTITY·SEQUENCE   완료        0.1초  "dbo"."app_user"."user_id" 다음 1124, "dbo"."issuer"."issuer_id" 다음 2519, "dbo"."rating"."rating_id" 다음 21258, "dbo"."rating_hist"."hist_id" 다음 22493, "dbo"."research_doc"."doc_id" 다음 10151, "dbo"."seq_doc_no" 다음 202605156
+  6 FK                  완료        0.0초  문장 2개 적용
+소요 시간(예상 다운타임) 8.6초
+
+전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+  - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+exit 0
+
+===== 2026-10-08 04:22:55 [S3] kdms reset --yes
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 04:22:56 [S3] kdms schema --replace
+파일: ./out/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+대상 kdms_app@127.0.0.1:55432/kdms 에 pre-load 적용: 문장 11개, 테이블 7개, 지우고 다시 만든 것: "dbo"."app_user", "dbo"."code_master", "dbo"."daily_count", "dbo"."issuer", "dbo"."rating", "dbo"."rating_hist", "dbo"."research_doc", "dbo"."seq_doc_no"
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+exit 0
+
+===== 2026-10-08 04:22:57 [S3] kdms sync (백그라운드)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+워터마크 기록: 00000032:00005b80:0007 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+
+===== 2026-10-08 04:23:00 [S3] 원천 쓰기 60초 시작(30_writes.sql)
+
+===== 2026-10-08 04:23:05 [S3] kdms load --throttle-ms 20 (쓰기 중)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 00000032:00005b80:0007 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.4초
+dbo.daily_count → dbo.daily_count: 완료 1행, 구간 1개, 0.4초
+dbo.app_user → dbo.app_user: 완료 1,054행, 구간 2개, 0.5초
+dbo.issuer → dbo.issuer: 완료 2,530행, 구간 2개, 0.7초
+dbo.rating → dbo.rating: 완료 20,774행, 구간 2개, 0.8초
+dbo.rating_hist → dbo.rating_hist: 완료 22,609행, 구간 2개, 0.8초
+dbo.research_doc → dbo.research_doc: 완료 5,161행, 구간 2개, 0.9초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 52,156
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load
+다음: kdms verify
+exit 0
+
+===== 2026-10-08 04:23:08 [S3] kdms sync 중지(SIGTERM, 쓰기는 아직 계속)
+sync exit 143
+
+===== 2026-10-08 04:23:09 [S3] kdms cutover --yes --max-wait 15 (쓰기가 남아 있어 시간 초과여야 한다)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 6) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T04:23:09 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 00000032:00005b80:0007 (2026-10-08T04:23 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T04:23:10 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[04:23:12] 수집 309 · 반영 309 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:23:07
+원천 쓰기가 아직 있다(drain 시작 뒤 커밋 2026-10-08T04:23:12). 쓰기를 멈출 때까지 반영을 계속한다
+[04:23:22] 수집 772 · 반영 772 · 대기 0 · 지연 5.0초 · 원천 마지막 변경 04:23:22
+[04:23:26] 수집 881 · 반영 881 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:23:22
+따라잡지 못함(--drain): 15초 안에 끝나지 않았다. 원천 쓰기가 멈췄는지 본다
+  → 실패 (17.3초): 15초 안에 따라잡지 못했다. 원천 쓰기를 멈췄는지 확인한다(--max-wait 로 늘릴 수 있다)
+
+전환 멈춤: 15초 안에 따라잡지 못했다. 원천 쓰기를 멈췄는지 확인한다(--max-wait 로 늘릴 수 있다)
+소요 시간(예상 다운타임) 17.3초
+작업 상태 FAILED. 원인을 고친 뒤 kdms cutover 를 다시 실행한다(처음 단계부터 다시, 결과는 같다). 원천 쓰기를 다시 열어야 하면 kdms sync 로 동기화를 이어 간다
+exit 6
+
+===== 2026-10-08 04:23:27 [S3] 원천 쓰기 끝 기다림
+writes exit 0
+
+===== 2026-10-08 04:24:01 [S3] kdms cutover --yes (백그라운드) → 검증 단계에서 kill -9
+killed (kill -9)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 7) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T04:24:02 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 00000032:00005b80:0007 (2026-10-08T04:23 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T04:24:03 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[04:24:05] 수집 2,510 · 반영 2,510 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:24:00
+[04:24:09] 수집 2,510 · 반영 2,510 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:24:00
+따라잡음(--drain): 원천 마지막 변경 00000033:00002970:0004 까지 반영, 반영 대기 0건 · 6초
+  → 완료 (6.9초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.1초): 문장 8개 적용
+
+[4/6] 검증
+
+===== 2026-10-08 04:24:09 [S3] 강제 종료 뒤 상태
+[작업] kdms_mock (job_id 1)
+  상태                CUTOVER
+  전체 적재           테이블 7개 중 7개 끝, 적재한 행 52,156
+  변경분 반영         수집 2,510 · 반영 2,510 · 대기 0 · 지연 0.0초 (2026-10-08T04:24:09 기준)
+  검증                run 5: 진행 중
+  전환                cutover 7: RUNNING
+exit 0
+
+===== 2026-10-08 04:24:10 [S3] kdms cutover --yes (다시)
+KDMS 전환 · 작업 kdms_mock (job_id 1, cutover_id 8) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms
+원천 쓰기를 멈춘 상태여야 한다. 시작 시각(원천) 2026-10-08T04:24:11 · 여기서부터 끝까지가 예상 다운타임이다
+
+[1/6] 마지막 반영
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:55432/kdms · 캡처 테이블 7개 · --drain
+워터마크 00000032:00005b80:0007 (2026-10-08T04:23 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T04:24:11 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[04:24:13] 수집 2,510 · 반영 2,510 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:24:00
+[04:24:18] 수집 2,510 · 반영 2,510 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 04:24:00
+따라잡음(--drain): 원천 마지막 변경 00000033:00002970:0004 까지 반영, 반영 대기 0건 · 6초
+  → 완료 (6.9초): 반영 대기 0, 원천 마지막 커밋까지 반영
+
+[2/6] PK 없는 테이블 재적재
+  → 건너뜀 (0.0초): PK 없는 테이블 없음
+
+[3/6] UNIQUE·인덱스
+  → 완료 (0.1초): 문장 0개 적용, 이미 있어 건너뜀 8개
+
+[4/6] 검증
+  [일치]   dbo.app_user → dbo.app_user: 건수 1,075 · 해시 같음 · 합계 2개 같음 (0.1초)
+  [일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+  [일치]   dbo.issuer → dbo.issuer: 건수 2,676 · 해시 같음 · 합계 1개 같음 (0.1초)
+  [일치]   dbo.rating → dbo.rating: 건수 21,001 · 해시 같음 · 합계 5개 같음 (0.5초)
+  [일치]   dbo.rating_hist → dbo.rating_hist: 건수 23,412 · 해시 같음 · 합계 2개 같음 (0.5초)
+  [일치]   dbo.research_doc → dbo.research_doc: 건수 5,223 · 해시 같음 · 합계 4개 같음 (0.5초)
+  → 완료 (1.8초): 검증 항목 30개 중 일치 30 · 불일치 0 (run_id 6)
+
+[5/6] IDENTITY·SEQUENCE
+  IDENTITY "dbo"."app_user"."user_id": 원천 1171 → 대상 다음 값 1172
+  IDENTITY "dbo"."issuer"."issuer_id": 원천 2681 → 대상 다음 값 2682
+  IDENTITY "dbo"."rating"."rating_id": 원천 21714 → 대상 다음 값 21715
+  IDENTITY "dbo"."rating_hist"."hist_id": 원천 23412 → 대상 다음 값 23413
+  IDENTITY "dbo"."research_doc"."doc_id": 원천 10218 → 대상 다음 값 10219
+  SEQUENCE "dbo"."seq_doc_no": 원천 202605223 → 대상 다음 값 202605224
+  → 완료 (0.0초): "dbo"."app_user"."user_id" 다음 1172, "dbo"."issuer"."issuer_id" 다음 2682, "dbo"."rating"."rating_id" 다음 21715, "dbo"."rating_hist"."hist_id" 다음 23413, "dbo"."research_doc"."doc_id" 다음 10219, "dbo"."seq_doc_no" 다음 202605224
+
+[6/6] FK
+  → 완료 (0.0초): 문장 2개 적용
+
+전환 끝
+  1 마지막 반영         완료        6.9초  반영 대기 0, 원천 마지막 커밋까지 반영
+  2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+  3 UNIQUE·인덱스       완료        0.1초  문장 0개 적용, 이미 있어 건너뜀 8개
+  4 검증                완료        1.8초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 6)
+  5 IDENTITY·SEQUENCE   완료        0.0초  "dbo"."app_user"."user_id" 다음 1172, "dbo"."issuer"."issuer_id" 다음 2682, "dbo"."rating"."rating_id" 다음 21715, "dbo"."rating_hist"."hist_id" 다음 23413, "dbo"."research_doc"."doc_id" 다음 10219, "dbo"."seq_doc_no" 다음 202605224
+  6 FK                  완료        0.0초  문장 2개 적용
+소요 시간(예상 다운타임) 8.9초
+
+전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+  - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+  - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+exit 0

@@ -34,6 +34,16 @@ public class SyncCommand implements Callable<Integer> {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
+    private volatile SyncRunner runner;
+
+    /** 웹 화면의 "동기화 중지": Ctrl+C 와 같다 */
+    public void requestStop() {
+        SyncRunner r = runner;
+        if (r != null) {
+            r.requestStop();
+        }
+    }
+
     @Override
     public Integer call() throws Exception {
         KdmsConfig cfg = options.loadConfig();
@@ -52,6 +62,7 @@ public class SyncCommand implements Callable<Integer> {
             return PlanSupport.BLOCKED;
         }
         SyncRunner runner = new SyncRunner(cfg, rules, plan, Connections.of(cfg), out);
+        this.runner = runner;
         // Ctrl+C(SIGINT)·SIGTERM: 진행 중 배치를 마치고 엔진을 닫을 때까지 기다린다(main 스레드는 System.exit 에서 멈추므로 latch 로 기다린다)
         CountDownLatch done = new CountDownLatch(1);
         Thread hook = new Thread(() -> {
