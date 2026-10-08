@@ -105,3 +105,17 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
   4. 전환 요약 표의 열이 한글 단계 이름에서 어긋남 → 한글을 2칸으로 세는 pad → 정렬됨. "원천 마지막 변경" 이 초 없이 찍힘 → HH:mm:ss 형식.
   5. 시험 스크립트의 S4 SQL `syntax error at or near "INTO"`(FROM 안의 INSERT … RETURNING) → CTE 로 고쳐 S3 뒤에 다시 실행(코드 문제 아님).
 - 노트북 원천·PG 에서의 확인은 Mac 에서 해야 한다(docs/test-env.md §11, 먼저 00_restore REPLACE=1 로 원천 되돌리기). 실행 결과를 지어내지 않는다.
+
+## 2026-10-08 15:44 · 5단계 · 전환·화면·CLI 확인 · Mac(노트북 DB)
+- 목적: plan.md §6 5단계 완료 기준(S1 정상 전환 + 전환 소요 시간, S4 전환 뒤 새 입력, 화면)을 노트북 원천 MS-SQL·대상 PG 로 확인. S2·S3 은 클라우드 기록(위)으로 갈음.
+- 환경: Mac(Java 21, 브랜치 claude/stage5-cutover-jdq5mm e863278) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK Korean_Wansung_CI_AS, 로그인 kodong_ms, SQL Agent Running / PG 16.15 5432 kdms, kdms_app). Mac 창 main(빌드·load·cutover·status), sync(kdms sync), sub(kdms web).
+- 실행: docs/test-env.md §11 순서. 노트북 `00_restore`(REPLACE=1)·`10_enable_cdc`·`20_grant` 모두 exit 0 → Mac build(단위 시험 102 통과) → `reset --yes` → `schema --replace`(job_id 10) → `web` → `sync`(워터마크 0000002a:00004c78:0003) → 노트북 `30_writes.sql` 300초 → 쓰기 중 `load --throttle-ms 2000` → 쓰기 끝 → sync Ctrl+C → `cutover --yes` → `status` → 노트북 S4 psql.
+  결과 원문: Mac `runs/20261008_1547_p5_*.txt`(build·reset·schema·sync·load·cutover·status, Mac 에서 올림), `runs/20261008_1603_p5_s4.txt`(노트북 출력을 채팅으로 받아 옮김). 노트북 원문 `runs\20261008_154[45]_p5_*.txt`, `runs\20261008_1555_p5_writes.txt`, `runs\p5_s4.txt` 는 노트북에만 있다.
+- 결과:
+  - 적재 전 첫 진행 줄 `지연 0.0초`(원천 마지막 변경 8분 전) → 4단계 이월(348초 과대 표시) 해결 확인.
+  - 적재 7개 테이블 48,576행, 실패 0(쓰기와 겹침). 수집·반영 9,572건.
+  - **S1 cutover 종료 코드 0**: 마지막 반영 8.1초 · UNIQUE·인덱스 8개 0.6초 · **검증 30/30(run_id 7)** 3.1초 · IDENTITY 5개·SEQUENCE 1개 setval 0.5초 · FK 2개 0.3초 · **소요 시간(예상 다운타임) 13.0초**. status 작업 DONE, cutover 1 DONE.
+  - **S4**: 새 user_id 1162(원천 1161 다음), nextval 202605226(원천 202605225 다음), issuer_id -1 입력은 `fk_rating_issuer` 위반. ROLLBACK.
+  - 화면(sub): 원천·대상 접속됨, 관리 스키마 버전 3, CDC 캡처 테이블 7개, 테이블 대기 → 적재 → 전환 단계 표시.
+- 오류: 없음. 관찰: `load` 끝 안내가 4단계 방식(`schema --phase post-load`, `다음: kdms verify`)이라 혼동 → CDC 모드면 "kdms cutover 가 마지막 반영 뒤 적용", "다음: … kdms cutover --yes" 로 고침(437d1dd, 단위 시험 102 통과, DB 재실행 안 함).
+- 다운타임 13.0초가 클라우드(8.8초)보다 긴 것은 Mac↔노트북 네트워크 왕복 때문으로 추정(측정 안 함).

@@ -1,0 +1,23 @@
+# 5단계 S4 · 노트북 PowerShell 7 → docker exec -i mig-pg psql -U kdms_app -d kdms (전환 뒤, 입력은 ROLLBACK)
+# 노트북 runs\p5_s4.txt 출력을 채팅으로 받아 옮긴 것
+BEGIN;
+INSERT INTO dbo.app_user (login_id, user_nm) VALUES ('kdms_s4_new', 'S4') RETURNING user_id;
+SELECT nextval('dbo.seq_doc_no');
+INSERT INTO dbo.rating (issuer_id, rating_cd, rating_dt, eff_dtm, issue_amt, coupon_rate, is_watch) VALUES (-1, 'AAA', '2026-10-08', now(), 1, 1, false);
+ROLLBACK;
+---
+BEGIN
+ user_id
+---------
+    1162
+(1 row)
+
+INSERT 0 1
+  nextval
+-----------
+ 202605226
+(1 row)
+
+ERROR:  insert or update on table "rating" violates foreign key constraint "fk_rating_issuer"
+DETAIL:  Key (issuer_id)=(-1) is not present in table "issuer".
+ROLLBACK
