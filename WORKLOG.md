@@ -1,16 +1,9 @@
 # KDMS 실행 기록
 
-KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`, 여기에는 경로와 요약을 적는다. 비밀번호는 어디에도 남기지 않는다.
-클라우드 스레드는 노트북 DB 에 닿지 못하므로 실행 결과를 적지 않는다(지어내지 않는다).
+> 상태: 진행 중 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: runs/, PR #2~#10
 
-```
-## YYYY-MM-DD HH:MM · 단계 · 작업명 · Mac/노트북/클라우드
-- 목적 / 환경
-- 실행 명령·SQL(그대로)
-- 결과(건수·시간)
-- 오류 원문
-- 원인 → 해결 → 재실행 결과
-```
+형식(항목·단계 요약·runs 파일 이름·시각대)과 규칙(비밀번호를 남기지 않는다, 클라우드는 노트북 결과를 적지 않는다)은 [CLAUDE.md](CLAUDE.md) §2·§5.
+오류·관찰은 [docs/issues.md](docs/issues.md) 에 ID 로 모았다.
 
 ## 2026-10-01 · 1단계 · 골격 빌드 확인 · 클라우드
 - 목적: 1단계 PR 의 빌드·단위 시험·라이선스 검사가 통과하는지(노트북 DB 없이).
@@ -21,12 +14,24 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 원인 → 해결: 실행 jar 안에서 DriverManager 가 공용 스레드 풀의 클래스로더로 드라이버를 찾음 → 드라이버 클래스를 직접 생성해 연결(`kdms.config.Jdbc`) → 재실행 정상.
 - 원천 MS-SQL 쪽 확인(SourceProbeIT, Debezium 실제 스트리밍)은 Mac 에서 해야 한다(docs/test-env.md).
 
+## 2026-10-09 04:55 · 1단계 · 단계 요약 · 클라우드
+- 결과: PR #2·#3·#5 머지(2026-10-01). 위 클라우드 항목: 단위 시험 31, 오프라인 빌드, 라이선스 허용 목록 밖 0, 임시 PG 에서 `init`·`status`·`TargetSchemaIT`. 노트북 접속은 3단계 Mac 항목(2026-10-08 11:00)에서 간접 확인.
+- 이슈 ID: D01, D02, D03, D04, D09 ([docs/issues.md](docs/issues.md))
+- 남은 일: 완료 기준 중 "네트워크를 끊고 `status`" 를 Mac 에서 실행한 기록이 없다 → 6단계 T-N01.
+- runs 파일: 없음
+
 ## 2026-10-01 · 2단계 · 스키마 변환 빌드·대상 적용 확인 · 클라우드
 - 목적: `kdms plan`·`kdms schema` 와 규칙 엔진이 KDMS_MOCK 시험 고정 카탈로그(KIS `11_schema_pitfalls.sql` 을 옮긴 것)로 KIS mock.sql 과 같은 타입의 DDL 을 만들고, PG 16 에 실제로 적용되는지.
 - 환경: Linux, OpenJDK 21.0.11, Maven 3.9.11, 클라우드 컨테이너의 임시 PostgreSQL 16(노트북 PG 아님). 원천 MS-SQL 없음.
 - 실행: `mvn -B package`, `mvn -o test -Pintegration -Dtest='TargetDdlIT,TargetSchemaIT' -Dkdms.config=<임시 설정>`
 - 결과: 단위 시험 55개 통과(타입 비교 7테이블 55컬럼 일치 포함), 라이선스 검사 통과(새 의존성 없음). TargetDdlIT 3개·TargetSchemaIT 2개 통과: 세 단계 DDL 적용, `format_type` 으로 읽은 타입 = 계획, `Kim01`/`kim01` UNIQUE 거부(B14), tinyint CHECK, 계산 컬럼 GENERATED 값(`'aa+ '` → 2, `.PDF` → `pdf`), 시퀀스 기본값 202600001, FK 거부, `--replace`·LOADING 거부, 실패 시 전부 되돌림.
 - 원천 쪽(카탈로그 조회 SQL 이 실제 서버에서 시험 고정값과 같은지, `--scan`)은 Mac 에서 해야 한다(docs/test-env.md §8). 실행 결과를 지어내지 않는다.
+
+## 2026-10-09 04:55 · 2단계 · 단계 요약 · 클라우드
+- 결과: PR #4 머지(2026-10-06). 위 클라우드 항목: 단위 시험 55(7테이블 55컬럼 타입 일치), TargetDdlIT·TargetSchemaIT 5. Mac 2026-10-06 SourceCatalogIT·TargetDdlIT 5개 통과(PR #4 설명. 이 파일에 항목·runs 없음), 실측으로 `rating_rank` NOT NULL·`sys.table_types` 수정.
+- 이슈 ID: A01(`plan --scan` NUL 로 막힘 → 3단계에서 결정)
+- 남은 일: 없음(`KDMS_SITE` 는 8단계)
+- runs 파일: 없음. 노트북 PG 적용은 `runs/20261008_1056_p3_schema.txt`
 
 ## 2026-10-06 14:40 · 3단계 · 전체 적재·검증 확인 · 클라우드
 - 목적: `kdms load`·`kdms verify` 가 실제 MS-SQL·PG 에서 동작하는지, 강제 종료 뒤 이어서 적재되는지, 검증이 차이를 잡는지.
@@ -50,6 +55,12 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 원인 → 해결 → 재실행: 2단계 `schema` 를 노트북 PG 에 아직 적용하지 않았음 → `schema` 실행 → `load` 정상.
   ③ 의 `종료 코드` 가 빈 값: 문서 명령이 bash 의 `PIPESTATUS` 를 써서 zsh 에서 빈 값 → zsh `pipestatus[1]` 로 문서 수정.
 - 클라우드(48,047행)와 행 수가 6 다른 것은 노트북 원천 건수 차이로 추정(검증은 원천=대상 일치).
+
+## 2026-10-09 04:55 · 3단계 · 단계 요약 · 클라우드
+- 결과: PR #8 머지(2026-10-08). 완료 기준 두 가지(쓰기 없는 상태 검증 일치, 적재 중 kill -9 뒤 이어서 일치) 모두 노트북 DB 로 충족(2026-10-08 11:00, 48,053행 30/30). 클라우드는 2026-10-06 14:40(48,047행 30/30, 변조 4건 검출).
+- 이슈 ID: A01, A02, A03, D05, D06
+- 남은 일: 없음(원천 쓰기 중 적재는 4단계)
+- runs 파일: `runs/20261006_1440_p3_cloud_load_verify.txt`, `runs/20261008_1056_p3_{build,schema,load,verify,kill,integration}.txt`
 
 ## 2026-10-08 02:57 · 4단계 · 변경분 수집·반영(CDC) 확인 · 클라우드
 - 목적: plan.md §6 4단계 완료 기준(원천 쓰기를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치)과 T-C 시험을 실제 MS-SQL CDC·PG 로 확인.
@@ -83,6 +94,12 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
 - 오류: 없음. 손 실수 하나: 다시 시작한 sync 를 다른 창에서 돌려 `S` 가 없어 `runs/_p4_sync2.txt` 로 저장 → 이름만 바꿈(내용 영향 없음).
 - 관찰(고치지 않음, 5단계 전환 화면에서 다룬다): 적재 전 첫 수집 때 지연이 348~369초로 표시 → 아직 반영한 변경이 없으면 워터마크 LSN 의 커밋 시각부터 재는데, 그 LSN 은 스트리밍 시작 전 마지막 커밋이라 원천이 조용했던 시간까지 지연에 들어간다. 반영이 시작되자 0.6초로 정상.
 - 고침: `sync` 시작 줄의 워터마크 기록 시각이 UTC(03:30)로 찍혀 다른 줄(지역 시각 12:30)과 달라 보임 → 지역 시각대로 바꿔 찍는다(SyncRunner, 단위 시험 통과, DB 재실행은 하지 않음).
+
+## 2026-10-09 04:55 · 4단계 · 단계 요약 · 클라우드
+- 결과: PR #9 머지(2026-10-08). 쓰기 중 적재 → 반영 → 쓰기 중지 후 검증 일치를 노트북 DB 로 충족(2026-10-08 12:26, 48,535행·반영 9,688건·30/30, sync kill -9 뒤 이어 받음). 클라우드 2026-10-08 02:57(30/30, T-C09·T-C10).
+- 이슈 ID: B01, B02, B03, B04, B05, B06, B08, B09, B10, D08, E01, E02
+- 남은 일: B06(적재 전 지연 과대)은 5단계에서 해결. B08 은 DB 로 다시 실행하지 않았다. cdc.md §8 의 "노트북에서 SQL Agent 서비스로 T-C09 한 번" 은 기록이 없다.
+- runs 파일: `runs/20261008_0257_p4_cloud_e2e.txt`, `runs/20261008_0250_p4_cloud_tc10.txt`, `runs/20261008_0256_p4_cloud_drain_writes.txt`, `runs/20261008_0306_p4_cloud_tc09.txt`, `runs/20261008_1226_p4_{build,reset,schema,sync1,load,sync2,drain,verify,postload}.txt`
 
 ## 2026-10-08 04:10 · 5단계 · 전환·화면·CLI 확인 · 클라우드
 - 목적: plan.md §6 5단계 완료 기준(시나리오 S1~S4 통과 + 전환 소요 시간 보고)을 실제 MS-SQL CDC·PG 로 확인. 시나리오 정의는 docs/cutover.md §6.
@@ -119,3 +136,9 @@ KIS 와 같은 형식. 실행 결과 원문은 `runs/YYYYMMDD_HHMM_<단계>.txt`
   - 화면(sub): 원천·대상 접속됨, 관리 스키마 버전 3, CDC 캡처 테이블 7개, 테이블 대기 → 적재 → 전환 단계 표시.
 - 오류: 없음. 관찰: `load` 끝 안내가 4단계 방식(`schema --phase post-load`, `다음: kdms verify`)이라 혼동 → CDC 모드면 "kdms cutover 가 마지막 반영 뒤 적용", "다음: … kdms cutover --yes" 로 고침(437d1dd, 단위 시험 102 통과, DB 재실행 안 함).
 - 다운타임 13.0초가 클라우드(8.8초)보다 긴 것은 Mac↔노트북 네트워크 왕복 때문으로 추정(측정 안 함).
+
+## 2026-10-09 04:55 · 5단계 · 단계 요약 · 클라우드
+- 결과: PR #10 머지(2026-10-08). 노트북 DB 로 S1(종료 코드 0, 30/30, 예상 다운타임 13.0초)·S4 통과(2026-10-08 15:44). S2·S3·웹 버튼 흐름은 클라우드(2026-10-08 04:10)로 갈음.
+- 이슈 ID: B06(해결 확인), B07, C01, C02, C03, C04, C05, D07, E04
+- 남은 일: C04(load 끝 안내) 수정 뒤 DB 재실행 안 함. 노트북에서 S2·S3 은 하지 않았다. 6단계 리허설은 PR #11(draft).
+- runs 파일: `runs/20261008_0410_p5_cloud_scenarios.txt`, `runs/20261008_0424_p5_cloud_s4.txt`, `runs/20261008_0425_p5_cloud_web.txt`, `runs/20261008_1547_p5_{build,reset,schema,sync,load,cutover,status}.txt`, `runs/20261008_1603_p5_s4.txt`

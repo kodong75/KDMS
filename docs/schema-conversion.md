@@ -1,5 +1,7 @@
 # 스키마 변환 (2단계)
 
+> 상태: 완료 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: PR #4(2단계 머지 2026-10-06), WORKLOG 2026-10-01 2단계
+
 [plan.md](plan.md) §6 2단계: 원천 카탈로그 읽기 → 변환 규칙 적용 → 대상 DDL(Data Definition Language, 정의 언어) 생성·적용 → `kdms plan` 보고서.
 규칙 파일 형식은 [plan.md](plan.md) §5, 기본값은 `src/main/resources/kdms-rules.yml`(주석에 키·허용 값), KDMS_MOCK 용 덮어쓰기는 `config/kdms-rules.yml`.
 

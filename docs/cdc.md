@@ -1,5 +1,7 @@
 # 변경분 수집·반영 (4단계, CDC)
 
+> 상태: 완료 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: PR #9(4단계 머지 2026-10-08), WORKLOG 2026-10-08 02:57·12:26
+
 [plan.md](plan.md) §6 4단계: Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시.
 CDC(Change Data Capture, 변경 데이터 캡처)는 원천 MS-SQL 의 CDC 기능(캡처 Job 이 트랜잭션 로그를 읽어 `cdc.*_CT` 표에 쌓는다)을 Debezium SQL Server 커넥터가 읽는 방식이다. Kafka 브로커는 쓰지 않는다.
 전체 적재·검증은 [load-verify.md](load-verify.md), 값 정규화는 [normalization.md](normalization.md).
@@ -91,8 +93,8 @@ Debezium 배치 ──> change_log INSERT + 워터마크(처음 한 번) + chang
 
 ## 4. 반영 중 대상 DDL
 
-- **UNIQUE·보조 인덱스**: `kdms load` 는 워터마크가 있으면(CDC 모드) 모두 적재돼도 적재 뒤 DDL 을 적용하지 않는다. 변경을 순서대로 다시 적용하는 동안 잠깐 UNIQUE 가 겹칠 수 있기 때문이다(예: 원천에서 login_id 를 A→B, C→A 로 바꾼 순서를 따라갈 때). 쓰기를 멈추고 `--drain` 뒤 `kdms schema --phase post-load`. 5단계 전환 명령이 이 순서를 자동으로 한다.
-- **트리거·FK**: §1.1 처럼 있으면 시작하지 않는다. plan.md §4.4 는 `session_replication_role = replica` 로 끄는 방식을 적었지만, 그 설정은 PG superuser 만 바꿀 수 있어(이관 계정 `kdms_app` 은 superuser 가 아니다) "없을 때만 반영" 으로 바꿨다.
+- **UNIQUE·보조 인덱스**: `kdms load` 는 워터마크가 있으면(CDC 모드) 모두 적재돼도 적재 뒤 DDL 을 적용하지 않는다(DEC-31). 변경을 순서대로 다시 적용하는 동안 잠깐 UNIQUE 가 겹칠 수 있기 때문이다(예: 원천에서 login_id 를 A→B, C→A 로 바꾼 순서를 따라갈 때). 쓰기를 멈추고 `--drain` 뒤 `kdms schema --phase post-load`. 5단계 전환 명령이 이 순서를 자동으로 한다.
+- **트리거·FK**: §1.1 처럼 있으면 시작하지 않는다. plan.md §4.4 는 `session_replication_role = replica` 로 끄는 방식을 적었지만, 그 설정은 PG superuser 만 바꿀 수 있어(이관 계정 `kdms_app` 은 superuser 가 아니다) "없을 때만 반영" 으로 바꿨다(DEC-30).
 
 ## 5. `--drain` 이 끝나는 조건
 
@@ -118,7 +120,7 @@ Debezium 배치 ──> change_log INSERT + 워터마크(처음 한 번) + chang
 | `offset.flush.interval.ms` | 0 | 배치마다 오프셋 커밋(`change_log` 커밋 뒤) |
 | `tombstones.on.delete` | false | 삭제 뒤 빈 레코드 없음 |
 
-**오프셋 저장소 우회(KdmsOffsetStore)**: `debezium-storage-jdbc` 3.7.0 은 저장한 오프셋 JSON 을 Jackson 으로 읽어 작은 정수를 `Integer` 로 돌려주는데, SQL Server 커넥터는 `event_serial_no` 를 `Long` 으로 꺼낸다. 그래서 **오프셋이 저장된 뒤 다시 시작하면** `ClassCastException: Integer cannot be cast to Long` 으로 멈춘다(2026-10-08 클라우드 실측, 첫 시작은 오프셋이 없어 문제 없음). Debezium 을 고치지 않고(포크 금지) 공개 확장점만 써서, `JdbcOffsetBackingStore` 를 상속해 읽은 값의 `Integer` 를 `Long` 으로 바꾸는 `kdms.cdc.KdmsOffsetStore` 를 `META-INF/services/io.debezium.spi.storage.OffsetStoreProvider` 로 등록했다. 같은 이유로 `debezium-storage-jdbc` 가 provided 로만 선언한 `debezium-storage-common`(Apache-2.0)을 의존성에 넣었다(없으면 `NoClassDefFoundError: DefaultOffsetStorageReader`). Debezium 을 올릴 때 이 둘이 아직 필요한지 다시 본다.
+**오프셋 저장소 우회(KdmsOffsetStore)**: `debezium-storage-jdbc` 3.7.0 은 저장한 오프셋 JSON 을 Jackson 으로 읽어 작은 정수를 `Integer` 로 돌려주는데, SQL Server 커넥터는 `event_serial_no` 를 `Long` 으로 꺼낸다. 그래서 **오프셋이 저장된 뒤 다시 시작하면** `ClassCastException: Integer cannot be cast to Long` 으로 멈춘다(2026-10-08 클라우드 실측, 첫 시작은 오프셋이 없어 문제 없음). Debezium 을 고치지 않고(포크 금지) 공개 확장점만 써서, `JdbcOffsetBackingStore` 를 상속해 읽은 값의 `Integer` 를 `Long` 으로 바꾸는 `kdms.cdc.KdmsOffsetStore` 를 `META-INF/services/io.debezium.spi.storage.OffsetStoreProvider` 로 등록했다(DEC-32, [issues.md](issues.md) B01·B02). 같은 이유로 `debezium-storage-jdbc` 가 provided 로만 선언한 `debezium-storage-common`(Apache-2.0)을 의존성에 넣었다(없으면 `NoClassDefFoundError: DefaultOffsetStorageReader`). Debezium 을 올릴 때 이 둘이 아직 필요한지 다시 본다.
 
 실측한 이벤트 모양(클라우드, SQL Server 2019 CU32, Debezium 3.7.0):
 

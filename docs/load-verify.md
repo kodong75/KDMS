@@ -1,5 +1,7 @@
 # 전체 적재·검증 (3단계)
 
+> 상태: 완료 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: PR #8(3단계 머지 2026-10-08), WORKLOG 2026-10-06 14:40·2026-10-08 11:00
+
 [plan.md](plan.md) §6 3단계: 구간 분할 → COPY 적재 → 재시작 → 건수·합계·해시 검증 → 행 단위 차이.
 값 정규화 규칙은 [normalization.md](normalization.md)(KIS:docs/normalization.md 를 옮기고 구현 위치를 적은 것).
 원천에 쓰기가 있는 동안의 적재(워터마크 먼저 기록 → 적재 → CDC 반영)는 [cdc.md](cdc.md)(4단계). 4단계부터 `kdms load` 는 `kdms sync` 가 기록한 워터마크가 있어야 시작하고, 원천 쓰기가 없는 3단계 방식은 `kdms load --no-cdc` 다.
@@ -98,7 +100,7 @@ PG 문자 타입은 NUL(`U+0000`)을 저장하지 못한다. KIS 는 `dbo.issuer
 | `strip` | NUL 을 지운다 | `REPLACE(… COLLATE Latin1_General_100_BIN2_UTF8, NCHAR(0), N'')` |
 | `replace` | `text.nul_replacement`(기본 U+FFFD `�`)로 바꾼다 | `REPLACE(…, NCHAR(0), N'�')` |
 
-**결정(2026-10-06)**: 기본값은 `fail` 그대로 두고, KDMS_MOCK 의 `dbo.issuer.issuer_nm` 만 `config/kdms-rules.yml` 에서 `replace` 로 정했다.
+**결정(2026-10-06, DEC-27)**: 기본값은 `fail` 그대로 두고, KDMS_MOCK 의 `dbo.issuer.issuer_nm` 만 `config/kdms-rules.yml` 에서 `replace` 로 정했다.
 - `strip` 은 "NULL문자포함" 처럼 흔적 없이 붙어 버려 나중에 어느 값이 바뀌었는지 찾을 수 없다. `replace` 는 대상에서 `WHERE issuer_nm LIKE '%' || chr(65533) || '%'` 로 찾을 수 있다.
 - 다른 컬럼은 `fail` 이므로 새 NUL 이 생기면 조용히 바뀌지 않고 멈춰서 알린다. 미리 건수를 보려면 `kdms plan --scan`(`replace` 컬럼은 경고, `fail` 컬럼은 오류).
 - 원천 정규화의 REPLACE 는 행 해시와 같은 UTF-8 이진 콜레이션을 쓴다. 코드페이지 1252 인 `Latin1_General_100_BIN2` 로 바꾸면 바깥에 `COLLATE … UTF8` 을 붙여도 varchar 변환에서 한글이 `?` 가 되어 그 테이블 해시가 전부 달라진다(2026-10-06 클라우드 실측).
