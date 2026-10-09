@@ -4,6 +4,7 @@
 PowerPoint 도형으로 옮긴다(좌표·크기·색·글자 크기를 이 파일 한 곳에서 정한다).
 
 스타일 기준: 사용자 다이어그램 규칙(/diagram-style, 2026-10-09 갱신)과 docs/design/README.md.
+색은 이 프로젝트만 녹색 계열(사용자 2026-10-09). 규칙의 네이비·스카이블루 자리에 같은 역할로 넣었다.
 흰 배경, 플랫·그림자 없음, 고정 색 코드(C), 최소 글자 17px(T), Pretendard(calt 끔), Material Symbols,
 블록 안 아이콘 위·글 아래, 강조(진한 네이비 채움 + 흰 글자)는 주 경로에만,
 범례 왼쪽 아래(구성도: 실선 = 실시간 질의·점선 = 비동기 흐름, 흐름도: 실선 = 처리 순서·점선 = 불합격 경로).
@@ -24,21 +25,21 @@ FONT_PPTX = "Pretendard"
 
 # 색상 토큰. assets/doc.css 의 CSS 변수와 같은 값을 쓴다.
 C = {
-    "navy": "#0B2545",         # 제목·강조 블록 채움
-    "primary": "#1F4E8C",      # 실선·번호·아이콘
-    "sky": "#2B86C9",          # 점선(비동기·불합격 경로)
+    "navy": "#0B3D2E",         # 진한 녹색: 제목·강조 블록 채움
+    "primary": "#1E6B4F",      # 실선·번호·아이콘
+    "sky": "#2E9E6E",          # 밝은 녹색: 점선(비동기·불합격 경로)
     "text": "#16202C",
     "muted": "#3F4E61",        # 보조 글
-    "zone_fill": "#EEF6FD",    # 영역 바탕
-    "zone_line": "#8EC3EC",
-    "core_zone_fill": "#EEF6FD",
-    "core_zone_line": "#1F4E8C",
+    "zone_fill": "#EEF8F3",    # 영역 바탕
+    "zone_line": "#9DD3B8",
+    "core_zone_fill": "#EEF8F3",
+    "core_zone_line": "#1E6B4F",
     "block_fill": "#FFFFFF",
-    "block_line": "#8EC3EC",   # 블록 테두리
-    "strong_fill": "#0B2545",  # 강조(주 경로): 진한 네이비 채움 + 흰 글자
-    "strong_line": "#0B2545",
-    "tint_fill": "#D3E5F8",    # 표시(주의 등): 연한 채움 + 진한 테두리. 강조와 따로 쓴다
-    "tint_line": "#1F4E8C",
+    "block_line": "#9DD3B8",   # 블록 테두리
+    "strong_fill": "#0B3D2E",  # 강조(주 경로): 진한 녹색 채움 + 흰 글자
+    "strong_line": "#0B3D2E",
+    "tint_fill": "#D5EFE2",    # 표시(주의 등): 연한 채움 + 진한 테두리. 강조와 따로 쓴다
+    "tint_line": "#1E6B4F",
     "white": "#FFFFFF",
 }
 

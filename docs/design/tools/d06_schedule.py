@@ -65,7 +65,7 @@ def build() -> Diagram:
             d.bar(50, ROW_Y + i * ROW_H, 1500, ROW_H, C["zone_fill"], rx=0, name="줄 배경")
     for w in range(WEEKS + 1):
         x = x_of(START + timedelta(weeks=w))
-        d.bar(x - 0.5, top + 64, 1, bottom - top - 64, "#D6E3F2", rx=0, name="주 격자")
+        d.bar(x - 0.5, top + 64, 1, bottom - top - 64, "#D7EDE2", rx=0, name="주 격자")
     d.line(50, bottom, 1550, bottom, color=C["zone_line"], width=1.4)
 
     # 오늘 선(막대 뒤에 깔리도록 먼저 그린다)
