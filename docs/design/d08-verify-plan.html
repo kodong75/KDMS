@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KDMS 검증 계획서</title>
+<link rel="stylesheet" href="assets/doc.css">
+</head>
+<body>
+<main class="page">
+<header class="doc-head">
+  <div><div class="kicker">KDMS 설계 문서 D08</div><h1>KDMS 검증 계획서</h1></div>
+  <div class="meta">KDMS-D08 · v0.1 · 2026-10-09<br><a class="no-print" href="index.html">문서 목록</a> · <a class="no-print" href="dist/d08-verify-plan.pdf">PDF</a> · <a class="no-print" href="dist/d08-verify-plan.pptx">PPTX</a></div>
+</header>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS 검증 계획서">
+<defs>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E6B4F"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E9E6E"/></marker>
+<symbol id="i-database" viewBox="0 -960 960 960"><path d="M480-120q-151 0-255.5-46.5T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v400q0 67-104.5 113.5T480-120Zm0-488q86 0 176.5-26.5T773-694q-27-32-117.5-59T480-780q-88 0-177 26t-117 60q28 35 116 60.5T480-608Zm-1 214q42 0 84-4.5t80.5-13.5q38.5-9 73.5-22t63-29v-155q-29 16-64 29t-74 22q-39 9-80 14t-83 5q-42 0-84-5t-80.5-14q-38.5-9-73-22T180-618v155q27 16 61 29t72.5 22q38.5 9 80.5 13.5t85 4.5Zm1 214q48 0 99-8.5t93.5-22.5q42.5-14 72-31t35.5-35v-125q-28 16-63 28.5T643.5-352q-38.5 9-80 13.5T479-334q-43 0-85-4.5T313.5-352q-38.5-9-72.5-21.5T180-402v126q5 17 34 34.5t72 31q43 13.5 94 22t100 8.5Z"/></symbol>
+<symbol id="i-fact_check" viewBox="0 -960 960 960"><path d="M132-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h696q24 0 42 18t18 42v600q0 24-18 42t-42 18H132Zm0-60h696v-600H132v600Zm68-100h200v-80H200v80Zm382-80 198-198-57-57-141 142-57-57-56 57 113 113Zm-382-80h200v-80H200v80Zm0-160h200v-80H200v80Zm-68 420v-600 600Z"/></symbol>
+<symbol id="i-manage_search" viewBox="0 -960 960 960"><path d="M80-200v-60h400v60H80Zm0-210v-60h200v60H80Zm0-210v-60h200v60H80Zm758 420L678-360q-26 20-56 30t-62 10q-83 0-141.5-58.5T360-520q0-83 58.5-141.5T560-720q83 0 141.5 58.5T760-520q0 32-10 62t-30 56l160 160-42 42ZM559.76-380Q618-380 659-420.76q41-40.77 41-99Q700-578 659.24-619q-40.77-41-99-41Q502-660 461-619.24q-41 40.77-41 99Q420-462 460.76-421q40.77 41 99 41Z"/></symbol>
+<symbol id="i-rule_settings" viewBox="0 -960 960 960"><path d="M132-160v-60h123l-14-14q-60-60-86.5-121.5T128-476q0-109 62.5-195T355-790v62q-76 30-121.5 99T188-476q0 52 17.5 98.5T265-293l30 27v-117h60v223H132Zm699-334h-60q-2-51-20-94.5T695-667l-30-27v117h-60v-223h223v60H704l15 14q58 55 84 115t28 117ZM696-40l-5-48q-20-6-41-17.5T616-131l-42 20-35-54 38-30q-5-23-5-41.5t5-41.5l-38-30 35-55 42 20q13-12 34-24t41-18l5-49h60l6 49q20 6 41 18t34 24l42-20 35 55-38 30q5 23 5 41.5t-5 41.5l38 30-35 54-42-20q-13 14-34 25.5T762-88l-6 48h-60Zm30-95q44 0 73-29t29-73q0-44-29-73t-73-29q-44 0-73 29t-29 73q0 44 29 73t73 29Z"/></symbol>
+<symbol id="i-table" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm270-250H180v190h270v-190Zm60 0v190h270v-190H510Zm-60-60v-190H180v190h270Zm60 0h270v-190H510v190ZM180-680h600v-100H180v100Z"/></symbol>
+</defs>
+<rect width="1600" height="900" fill="#FFFFFF"/>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS 검증 계획서</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">원천 = 대상을 숫자로 확인 · kdms verify 와 전환의 검증 단계가 같은 절차 · 합격 기준과 시험 항목</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D08 · v0.1 · 2026-10-09</text>
+<rect x="44" y="126" width="1512" height="360" rx="18" fill="#EEF8F3" stroke="#1E6B4F" stroke-width="2"/>
+<text x="66" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">검증 절차</text>
+<text x="66" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">테이블마다 · 원천과 대상에서 동시에 계산하고 숫자만 가져온다</text>
+<rect x="44" y="502" width="740" height="288" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="66" y="536" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">검사 항목</text>
+<text x="66" y="562" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">행 값은 가져오지 않는다</text>
+<rect x="800" y="502" width="756" height="288" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="822" y="536" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">시험 항목 (plan.md §8)</text>
+<text x="822" y="562" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">단계마다 통과 기록은 각 단계 문서 · WORKLOG</text>
+<path d="M234.0,264.0 L280.0,264.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M510.0,264.0 L560.0,264.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M800.0,264.0 L850.0,264.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1060.0,264.0 L1090.0,264.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1310.0,264.0 L1380.0,264.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="1330.5" y="235.0" width="29.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="1345.0" y="255.0" font-size="17" font-weight="600" fill="#1E6B4F" text-anchor="middle">예</text>
+<path d="M1200.0,324.0 L1200.0,362.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="1206.0" y="330.5" width="63.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="1237.5" y="350.5" font-size="17" font-weight="600" fill="#2E9E6E" text-anchor="middle">아니오</text>
+<path d="M1085.0,412.0 L1060.0,412.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<path d="M800.0,412.0 L760.0,412.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="74" y="242" width="160" height="44" rx="22.0" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2"/>
+<text x="101.3" y="270.5" font-size="18" font-weight="700" fill="#FFFFFF">verify 시작</text>
+<rect x="280" y="210" width="230" height="108" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-rule_settings" x="375.0" y="215.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="395.0" y="284.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">정규화 SQL 생성</text>
+<text x="395.0" y="308.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">타입별 식 · 값 규칙</text>
+<circle cx="301" cy="231" r="14" fill="#1E6B4F"/>
+<text x="301" y="237" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="560" y="210" width="240" height="108" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-database" x="660.0" y="215.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="680.0" y="284.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">양쪽 동시 계산</text>
+<text x="680.0" y="308.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">원천 T-SQL · 대상 SQL</text>
+<circle cx="581" cy="231" r="14" fill="#1E6B4F"/>
+<text x="581" y="237" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+<rect x="850" y="210" width="210" height="108" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-fact_check" x="935.0" y="215.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="955.0" y="284.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">숫자 비교</text>
+<text x="955.0" y="308.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">항목마다 결과 기록</text>
+<circle cx="871" cy="231" r="14" fill="#1E6B4F"/>
+<text x="871" y="237" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+<path d="M1200.0,204 L1310,264.0 L1200.0,324 L1090,264.0 Z" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8" stroke-linejoin="round"/>
+<text x="1200.0" y="259.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">모두 일치?</text>
+<text x="1200.0" y="283.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">건수·해시·합계</text>
+<rect x="1380" y="242" width="152" height="44" rx="22.0" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2"/>
+<text x="1395.2" y="270.5" font-size="18" font-weight="700" fill="#FFFFFF">일치 (종료 0)</text>
+<rect x="1085" y="362" width="230" height="100" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-manage_search" x="1180.0" y="363.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1200.0" y="432.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">묶음 비교</text>
+<text x="1200.0" y="456.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK MD5 앞 2바이트</text>
+<circle cx="1106" cy="383" r="14" fill="#1E6B4F"/>
+<text x="1106" y="389" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+<rect x="800" y="362" width="260" height="100" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-table" x="910.0" y="363.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="930.0" y="432.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">행 비교</text>
+<text x="930.0" y="456.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">missing · extra · diff</text>
+<circle cx="821" cy="383" r="14" fill="#1E6B4F"/>
+<text x="821" y="389" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">5</text>
+<rect x="540" y="390" width="220" height="44" rx="22.0" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2"/>
+<text x="580.2" y="418.5" font-size="18" font-weight="700" fill="#FFFFFF">불일치 (종료 5)</text>
+<rect x="74" y="580" width="216" height="96" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="182.0" y="623.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">건수</text>
+<text x="182.0" y="647.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">COUNT_BIG ↔ count</text>
+<rect x="310" y="580" width="216" height="96" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="418.0" y="623.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">행 해시 합</text>
+<text x="418.0" y="647.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">MD5 앞 8바이트 합</text>
+<rect x="546" y="580" width="216" height="96" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="654.0" y="623.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">수치 합계</text>
+<text x="654.0" y="647.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">decimal(38, s) 합</text>
+<rect x="74" y="700" width="680" height="52" rx="26.0" fill="#FFFFFF" stroke="#1E6B4F" stroke-width="2"/>
+<use href="#i-rule_settings" x="176.4" y="713.0" width="26" height="26" fill="#1E6B4F"/>
+<text x="212.4" y="732.5" font-size="18" font-weight="700" fill="#0B3D2E">정규화는 표현만 맞춘다 · 값 차이는 해시로 잡는다</text>
+<rect x="830" y="580" width="340" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1000.0" y="620.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">T-L01 ~ T-L17</text>
+<text x="1000.0" y="644.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">변환 · 적재 17개 (3단계)</text>
+<rect x="1186" y="580" width="340" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1356.0" y="620.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">T-C01 ~ T-C12</text>
+<text x="1356.0" y="644.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC · 전환 12개 (4 · 5단계)</text>
+<rect x="830" y="684" width="340" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1000.0" y="724.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">T-N01 ~ T-N03</text>
+<text x="1000.0" y="748.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">폐쇄망 3개</text>
+<rect x="1186" y="684" width="340" height="90" rx="12" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="2.2"/>
+<text x="1356.0" y="724.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">B01 ~ B14</text>
+<text x="1356.0" y="748.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">주의 보고 · 합격 기준 아님</text>
+<rect x="50" y="828" width="499.75" height="52" rx="10" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B3D2E">범례</text>
+<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#1E6B4F" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<text x="176" y="860.0" font-size="17" font-weight="600" fill="#16202C">처리 순서</text>
+<line x1="283.35" y1="854.0" x2="329.35" y2="854.0" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
+<text x="339.35" y="860.0" font-size="17" font-weight="600" fill="#16202C">불합격(불일치) 시 경로</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">합격 기준: 모든 테이블의 건수·해시·합계 일치(KDMS_MOCK 30항목) · 원천·대상은 읽기만</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">차이 행은 PK 만 테이블마다 앞 100건(verify_row_diff) · 다른 컬럼 값은 남기지 않는다</text>
+</svg></figure>
+
+<h2>1. 검사 항목과 합격 기준</h2>
+<table>
+<thead><tr><th>항목</th><th>원천 (MS-SQL)</th><th>대상 (PG)</th><th>합격</th></tr></thead>
+<tbody>
+<tr><td>건수</td><td><code>COUNT_BIG(*)</code></td><td><code>count(*)</code></td><td>같음</td></tr>
+<tr><td>행 해시 합</td><td>컬럼 정규화 문자열을 <code>|</code> 로 이은 UTF-8 바이트의 MD5 앞 8바이트(bigint) 합</td><td>같은 식(<code>md5(text)</code>)</td><td>같음. 순서와 무관, 한 행이라도 다르면 바뀜</td></tr>
+<tr><td>수치 합계</td><td>정수·decimal·money 컬럼마다 <code>SUM(CAST(x AS decimal(38, s)))</code></td><td><code>sum(x)::numeric</code></td><td>값으로 같음(<code>1.50 = 1.5000</code>). float·real·bit 는 해시에만</td></tr>
+</tbody>
+</table>
+<p>작업 하나가 합격하려면 모든 테이블의 모든 항목이 일치해야 한다. KDMS_MOCK 은 7개 테이블 30항목(건수 7, 해시 7, 합계 16)이다. 전환(<code>kdms cutover</code>)은 이 검증이 하나라도 다르면 멈추고 setval·FK 를 하지 않는다.</p>
+
+<h2>2. 정규화 원칙</h2>
+<ul>
+<li>정규화는 표현(날짜 포맷, money 소수 자릿수, 16진 대소문자 등)만 맞춘다. 끝 공백·대소문자·NUL 손실처럼 실제로 달라진 값은 해시가 달라져야 한다. 예외는 <code>char(n)</code> 채움 공백뿐이다.</li>
+<li>규칙 파일이 값을 바꾸면(rtrim · upper · NUL replace · 센티널 → NULL) 원천 쪽에 같은 규칙을 적용해 비교한다. 적재(<code>CopyValues</code>)와 같은 순서다.</li>
+<li>NULL 은 <code>\N</code>. <code>ISNULL</code> 대신 <code>COALESCE</code>(첫 인수 타입으로 잘리는 문제, T-L17).</li>
+<li>타입별 식 전체는 <code>docs/normalization.md</code>.</li>
+</ul>
+
+<h2>3. 불일치일 때 (행 차이 찾기)</h2>
+<ol>
+<li>각 행의 PK 정규화 문자열 MD5 앞 2바이트로 묶음 번호(0~65535)를 내고 묶음별 (건수, 해시 합)을 양쪽에서 비교한다. 원천 CI·대상 C 콜레이션처럼 정렬 순서가 달라도 같은 행은 같은 묶음에 든다.</li>
+<li>다른 묶음의 행만 (PK, 행 해시)를 가져와 원천에만 = <code>missing</code>, 대상에만 = <code>extra</code>, 해시 다름 = <code>diff</code>.</li>
+<li>테이블마다 앞 100건의 PK 만 <code>kdms.verify_row_diff</code> 에 남긴다. 종료 코드 5.</li>
+</ol>
+
+<h2>4. 시험 항목</h2>
+<table>
+<thead><tr><th>묶음</th><th>무엇을 보나</th><th>단계</th><th>기록</th></tr></thead>
+<tbody>
+<tr><td>T-L01 ~ T-L17</td><td>datetime 3.33ms, datetime2 반올림, money 합계, bit, IDENTITY·SEQUENCE, 끝 공백, NUL, CP949 한글, CI UNIQUE, 계산 컬럼, 센티널 날짜, 이스케이프, 적재 중 강제 종료, ISNULL 금지</td><td>3단계</td><td><code>docs/load-verify.md</code> §5</td></tr>
+<tr><td>T-C01 ~ T-C12</td><td>쓰기 중 적재 + 반영 후 검증, 유령 행, 트리거 이력, 적재·CDC 같은 값, LOB 미변경, PK 변경, 강제 종료 후 재시작, SQL Agent 중지, 보존 기간 초과, 전환, 긴 트랜잭션</td><td>4·5단계</td><td><code>docs/cdc.md</code> §8, <code>docs/cutover.md</code> §6</td></tr>
+<tr><td>T-N01 ~ T-N03</td><td>네트워크 차단 실행, jar 안 외부 URL 0, 실행 중 외부 연결 0</td><td>6단계</td><td>6단계 리허설</td></tr>
+<tr><td>B01 ~ B14</td><td>값은 같지만 조회 결과가 달라지는 곳(대소문자·끝 공백·CP949 바이트 등). 합격·불합격이 아니라 규칙 결정을 보여 준다</td><td>보고서 "주의" 절</td><td><code>kdms plan</code>·<code>kdms verify</code> 출력</td></tr>
+</tbody>
+</table>
+<p>시험 하나하나의 기대 결과는 <code>docs/plan.md</code> §8. 노트북 DB 로 확인한 단계 완료 기록은 WORKLOG 와 <code>runs/</code> 파일이다.</p>
+
+</main>
+</body>
+</html>

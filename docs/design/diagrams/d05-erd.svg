@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS 관리 테이블 ERD">
+<style>@font-face{font-family:'Pretendard Variable';font-weight:45 920;src:url('../assets/fonts/PretendardVariable.woff2') format('woff2-variations');}</style>
+<defs>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E6B4F"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E9E6E"/></marker>
+</defs>
+<rect width="1600" height="900" fill="#FFFFFF"/>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS 관리 테이블 ERD</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">대상 PostgreSQL 의 kdms 스키마 · 관리 스키마 v3 · 정의는 docs/database.md</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D05 · v0.1 · 2026-10-09</text>
+<rect x="44" y="126" width="482" height="664" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="66" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">적재 · 기타</text>
+<text x="66" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">3단계 적재 구간, FK 없는 표</text>
+<rect x="560" y="126" width="480" height="664" rx="18" fill="#EEF8F3" stroke="#1E6B4F" stroke-width="2"/>
+<text x="582" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">작업 · 변경분</text>
+<text x="582" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">작업 1건 = 원천 DB 1 → 대상 DB 1</text>
+<rect x="1074" y="126" width="482" height="664" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="1096" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">검증 · 전환</text>
+<text x="1096" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">3단계 검증, 5단계 전환 기록</text>
+<path d="M654.0,352.0 L654.0,294.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M800.0,352.0 L800.0,294.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M946.0,352.0 L946.0,294.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M496.0,249.0 L590.0,249.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M285.0,352.0 L285.0,294.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1104.0,249.0 L1010.0,249.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1207.0,352.0 L1207.0,294.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1423.0,352.0 L1423.0,294.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1315.0,640.0 L1315.0,590.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1104.0,545.0 L1057.0,545.0 L1057.0,273.0 L1010.0,273.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="590" y="204" width="420" height="90" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<text x="800.0" y="233.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">job</text>
+<text x="800.0" y="257.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">PK job_id · UK job_name</text>
+<text x="800.0" y="279.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">status · config_sha256 · last_error</text>
+<rect x="586" y="352" width="136" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="654.0" y="381.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">watermark</text>
+<text x="654.0" y="405.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK = job_id</text>
+<text x="654.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">LSN · 지연</text>
+<rect x="732" y="352" width="136" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="800.0" y="381.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">change_log</text>
+<text x="800.0" y="405.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">반영 전 변경</text>
+<text x="800.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">반영 뒤 삭제</text>
+<rect x="878" y="352" width="136" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="946.0" y="381.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">event_log</text>
+<text x="946.0" y="405.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">단계 기록</text>
+<text x="946.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">행 값 없음</text>
+<rect x="590" y="500" width="420" height="90" rx="12" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="2.2"/>
+<text x="800.0" y="529.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">job.status</text>
+<text x="800.0" y="553.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">SCHEMA_DONE → LOADING → SYNCING</text>
+<text x="800.0" y="575.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">→ CUTOVER → VERIFIED → DONE · FAILED</text>
+<rect x="590" y="640" width="420" height="90" rx="12" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="2.2"/>
+<text x="800.0" y="669.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">job_table.status</text>
+<text x="800.0" y="693.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">PENDING → LOADING → LOADED</text>
+<text x="800.0" y="715.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">구간 실패 → FAILED → 다시 LOADING</text>
+<rect x="74" y="204" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="285.0" y="233.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">job_table</text>
+<text x="285.0" y="257.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK job_table_id · FK job_id</text>
+<text x="285.0" y="279.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">status · 테이블별 반영 위치(LSN)</text>
+<rect x="74" y="352" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="285.0" y="381.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">load_chunk</text>
+<text x="285.0" y="405.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK chunk_id · FK job_table_id</text>
+<text x="285.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">구간 상·하한(jsonb) · status</text>
+<rect x="74" y="500" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="285.0" y="529.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">schema_version</text>
+<text x="285.0" y="553.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">적용한 관리 스키마 버전 1 · 2 · 3</text>
+<text x="285.0" y="575.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">FK 없음</text>
+<rect x="74" y="640" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="285.0" y="669.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">debezium_offset · schema_history</text>
+<text x="285.0" y="693.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">Debezium 이 만든다 · 작업마다 따로</text>
+<text x="285.0" y="715.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">FK 없음 · reset 이 지운다</text>
+<rect x="1104" y="204" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1315.0" y="233.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">verify_run</text>
+<text x="1315.0" y="257.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK run_id · FK job_id</text>
+<text x="1315.0" y="279.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">checks · mismatches</text>
+<rect x="1104" y="352" width="206" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1207.0" y="381.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">verify_result</text>
+<text x="1207.0" y="405.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">건수·합계·해시</text>
+<text x="1207.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">숫자만</text>
+<rect x="1320" y="352" width="206" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1423.0" y="381.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">verify_row_diff</text>
+<text x="1423.0" y="405.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK 값만</text>
+<text x="1423.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">missing·extra·diff</text>
+<rect x="1104" y="500" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1315.0" y="529.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">cutover_run</text>
+<text x="1315.0" y="553.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK cutover_id · FK job_id</text>
+<text x="1315.0" y="575.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">elapsed_ms = 예상 다운타임</text>
+<rect x="1104" y="640" width="422" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1315.0" y="669.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">cutover_step</text>
+<text x="1315.0" y="693.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PK (cutover_id, step_no)</text>
+<text x="1315.0" y="715.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">drain → reload → … → fk</text>
+<rect x="50" y="828" width="555.95" height="52" rx="10" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B3D2E">범례</text>
+<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#1E6B4F" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<text x="176" y="860.0" font-size="17" font-weight="600" fill="#16202C">FK 참조 (자식 → 부모, 1 : N)</text>
+<rect x="457.6" y="845.0" width="24" height="18" rx="4" fill="#D5EFE2" stroke="#9DD3B8" stroke-width="1"/>
+<text x="491.6" y="860.0" font-size="17" font-weight="600" fill="#16202C">상태 코드값</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">verify_result · verify_row_diff 는 job_table 도 참조(선 생략) · FK 는 모두 ON DELETE CASCADE</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">행 값은 change_log.payload 에만 두고 반영하면 바로 지운다 · 비밀번호 컬럼 없음</text>
+</svg>
