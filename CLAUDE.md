@@ -1,6 +1,6 @@
 # CLAUDE.md: KDMS 작업 규칙
 
-> 상태: 초안 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: WORKLOG.md 머리, plan.md 초안 1 머리·§2·§6, README.md, 단계 PR(#1~#10)
+> 상태: 확정 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: WORKLOG.md 머리, plan.md 초안 1 머리·§2·§6, README.md, 단계 PR(#1~#10)
 
 **모든 세션은 작업 전에 이 파일과 [docs/plan.md](docs/plan.md)(개정 2)를 끝까지 읽는다.**
 문서 목록은 [docs/README.md](docs/README.md), 결정은 [docs/decisions.md](docs/decisions.md)(DEC-xx), 오류·관찰은 [docs/issues.md](docs/issues.md), 관리 테이블은 [docs/database.md](docs/database.md).

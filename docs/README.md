@@ -8,7 +8,7 @@
 
 | 문서 | 종류 | 상태 | 한 줄 설명 |
 |---|---|---|---|
-| [../CLAUDE.md](../CLAUDE.md) | 규칙 | 초안 | 목적, 절대 규칙, 클라우드·Mac·노트북 분담, 브랜치·PR, WORKLOG·문서 형식 |
+| [../CLAUDE.md](../CLAUDE.md) | 규칙 | 확정 | 목적, 절대 규칙, 클라우드·Mac·노트북 분담, 브랜치·PR, WORKLOG·문서 형식 |
 | [../README.md](../README.md) | 안내 | 진행 중 | 저장소 소개, 빌드·실행 명령, 폴더 구조 |
 | [../WORKLOG.md](../WORKLOG.md) | 기록 | 진행 중 | 실행 기록과 단계 요약. 결과 원문은 `runs/` |
 | [decisions.md](decisions.md) | 결정 | 진행 중 | 설계·운영 결정 DEC-01~ (날짜·이유·버린 대안·영향 문서) |
