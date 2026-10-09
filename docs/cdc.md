@@ -1,6 +1,6 @@
 # 변경분 수집·반영 (4단계, CDC)
 
-> 상태: 완료 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: PR #9(4단계 머지 2026-10-08), WORKLOG 2026-10-08 02:57·12:26
+> 상태: 완료 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: PR #9(4단계 머지 2026-10-08), WORKLOG 2026-10-08 11:57·12:26
 
 [plan.md](plan.md) §6 4단계: Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시.
 CDC(Change Data Capture, 변경 데이터 캡처)는 원천 MS-SQL 의 CDC 기능(캡처 Job 이 트랜잭션 로그를 읽어 `cdc.*_CT` 표에 쌓는다)을 Debezium SQL Server 커넥터가 읽는 방식이다. Kafka 브로커는 쓰지 않는다.

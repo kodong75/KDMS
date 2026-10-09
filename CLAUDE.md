@@ -77,7 +77,8 @@ git pull                                # Mac 의 main 을 최신으로
 ```
 
 - "오류 원문 / 원인 → 해결" 은 [issues.md](docs/issues.md) 에 ID 로 옮긴다.
-- 지금까지의 기록은 클라우드 항목이 UTC, Mac 항목이 지역 시각(KST)으로 적혀 있다(runs 파일 이름도 같다). 통일할지는 정하지 않았다.
+- **시각은 KST(한국 표준시, UTC+9) 하나로 쓴다**(DEC-45). WORKLOG 머리, `runs/` 파일 이름, 문서의 시각 모두 KST. 클라우드 컨테이너는 시계가 UTC 이므로 `TZ=Asia/Seoul date +%Y%m%d_%H%M` 처럼 KST 로 바꿔 적는다. 시각대를 섞어 쓸 수밖에 없는 곳(원문 인용 등)은 `+09:00`·`UTC` 를 붙인다.
+- 2026-10-09 이전 클라우드 기록은 UTC 로 적혀 있었다. WORKLOG 머리와 문서의 시각은 KST 로 고쳤고, `runs/*_cloud_*.txt` 파일 이름과 그 안의 시각은 원문 그대로 UTC 다(예: WORKLOG 2026-10-08 11:57 = `runs/20261008_0257_p4_cloud_e2e.txt`).
 
 ## 6. 문서 형식
 

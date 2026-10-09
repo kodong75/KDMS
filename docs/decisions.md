@@ -51,3 +51,4 @@
 | DEC-42 | 2026-10-06 | 사용자 결정: 설계 문서는 지금 필요한 것만(D01·D02·D03·D06), 나머지는 해당 단계에서 | 단계마다 바뀌는 내용을 미리 그리지 않는다 | 전체 문서를 먼저 | docs/design/README.md |
 | DEC-43 | 2026-10-06 | 채택(PR #4·#8): MVP 대상 테이블 = 노트북 실측 `KDMS_MOCK` dbo 테이블 7개(모두 PK 있음). KIS #23 의 `dbo.file_attach` 는 노트북 `MIG_MOCK` 에 없어 빠짐 | plan.md §3.1 "PK 있는 테이블 전부" 를 실측으로 확인 | — | plan.md §3.1·§10, schema-conversion.md §4 |
 | DEC-44 | 2026-10-08 | 채택(관행): 0단계 노트북 작업(복원·CDC 켜기·PG 역할)과 노트북 쪽 실행은 사용자가 직접 한다. Remote Control 은 쓰지 않았다 | 3~5단계 노트북 기록이 모두 사용자 실행(WORKLOG 2026-10-08 11:00·12:26·15:44) | Remote Control 로 노트북 세션에 맡김 | plan.md §10, CLAUDE.md §3 |
+| DEC-45 | 2026-10-09 | 사용자 결정(하나로 통일) + 채택 제안(KST, PR #12): 기록·문서의 시각은 KST(UTC+9) 하나로 쓴다. 과거 클라우드 기록은 WORKLOG·문서 시각만 KST 로 고치고 `runs/` 파일 이름은 그대로 둔다 | 사람·노트북·Mac·고객사 작업 시간이 모두 KST 이고 kdms 출력도 지역 시각(`+09:00`). 클라우드 UTC·Mac KST 가 섞여 있었다 | 모두 UTC(서버 로그 관행), 과거 runs 파일 이름까지 바꾸기(다른 PR 의 참조가 깨짐) | CLAUDE.md §5, WORKLOG.md, plan.md §6, issues.md |
