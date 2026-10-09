@@ -1,5 +1,7 @@
 # 검증용 값 정규화 규칙 (MS-SQL ↔ PostgreSQL)
 
+> 상태: 확정 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: KIS:docs/normalization.md, PR #8, 검증 30/30(WORKLOG 2026-10-08 11:00)
+
 KIS:docs/normalization.md 를 **그대로** 옮기고 KDMS 구현 위치를 적은 것이다(plan.md §4.7). 규칙을 바꾸면 KIS 문서·이 문서·코드를 함께 고친다.
 운영 방법은 [load-verify.md](load-verify.md).
 

@@ -1,5 +1,7 @@
 # 오픈소스 라이선스 확인
 
+> 상태: 진행 중 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: Maven Central POM(2026-10-01), license-maven-plugin 보고서(PR #2), PR #6·#9 추가분
+
 KDMS 가 쓸 예정인 오픈소스와 라이선스. [plan.md](plan.md) §1.2 의 구성 기준이다.
 
 - 확인일 **2026-10-01**. 출처는 Maven Central 의 각 라이브러리 POM(Project Object Model, Maven 설정 파일) `<licenses>` 항목(없으면 부모 POM). 버전은 그날의 최신 안정판이다.
