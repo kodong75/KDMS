@@ -1,13 +1,14 @@
 """D05 관리 테이블 물리 ERD(IE 표기). 근거: docs/database.md(관리 스키마 v3 정의서), src/main/resources/db/kdms-schema*.sql.
 
-컬럼이 많아(12개 테이블, 112개 컬럼) 두 장으로 나눈다. 1장 작업·적재·동기화, 2장 검증·전환·기록.
+1장 논리 ERD(엔터티·관계·핵심 속성, 사용자 2026-10-09 선택), 2·3장 물리 ERD(12개 테이블, 112개 컬럼 전체).
+물리는 컬럼이 많아 2장 작업·적재·동기화, 3장 검증·전환·기록으로 나눈다.
 """
 
 from diagram import Diagram
 
 ID = "d05-erd"
 TITLE = "관리 테이블 ERD"
-VERSION = "v0.2"
+VERSION = "v0.3"
 DATE = "2026-10-09"
 
 X1, X2, X3, W = 50, 577, 1104, 446   # 세 열 x, 엔터티 폭(열 사이 81px 에 관계선 기호가 들어간다)
@@ -78,10 +79,73 @@ SCHEMA_VERSION = [("PK", "version", "integer", True), ("", "description", "text"
                   ("", "applied_at", "timestamptz", True)]
 
 
+def logical() -> Diagram:
+    d = Diagram(1600, 900, "KDMS 관리 테이블 논리 ERD (1/3)",
+                "엔터티·관계·핵심 속성 · 머리 오른쪽은 물리 테이블 이름 · 컬럼·타입 전체는 2·3장 물리 ERD",
+                f"KDMS-D05 · {VERSION} · {DATE} · 1/3")
+    d.legend = LEGEND
+    w, xs, ys = 315, (50, 445, 840, 1235), (128, 368, 608)
+
+    def ent(eid, c, r, name, table, attrs):
+        return d.entity(eid, xs[c], ys[r], w, name, table, [(k, a, "", False) for k, a in attrs])
+
+    ev = ent("ev", 0, 0, "단계 기록", "event_log",
+             [("PK", "기록 ID"), ("FK", "작업 ID"), ("", "기록 시각"), ("", "수준 · 단계"), ("", "메시지")])
+    wm = ent("wm", 1, 0, "워터마크", "watermark",
+             [("PK", "작업 ID (FK)"), ("", "시작 LSN"), ("", "반영 위치 (LSN)"), ("", "지연 · 대기 건수")])
+    vr = ent("vr", 2, 0, "검증 실행", "verify_run",
+             [("PK", "검증 ID"), ("FK", "작업 ID"), ("", "시작 · 끝 시각"), ("", "검사 수 · 불일치 수")])
+    ent("sv", 3, 0, "스키마 버전", "schema_version", [("PK", "버전"), ("", "설명"), ("", "적용 시각")])
+    cl = ent("cl", 0, 1, "변경 버퍼", "change_log",
+             [("PK", "변경 ID"), ("FK", "작업 ID"), ("UK", "변경 위치 (LSN)"), ("", "변경 종류 (c · u · d)"),
+              ("", "원천 테이블"), ("", "변경 값 (반영 뒤 삭제)")])
+    job = ent("job", 1, 1, "작업", "job",
+              [("PK", "작업 ID"), ("UK", "작업 이름"), ("", "원천 서버 · DB"), ("", "대상 DB"), ("", "작업 상태")])
+    vres = ent("vres", 2, 1, "검사 결과", "verify_result",
+               [("PK", "검사 ID"), ("FK", "검증 ID"), ("FK", "작업 테이블 ID"), ("", "검사 종류"),
+                ("", "원천 값 · 대상 값"), ("", "일치 여부")])
+    rd = ent("rd", 3, 1, "불일치 행", "verify_row_diff",
+             [("PK", "차이 ID"), ("FK", "검증 ID"), ("FK", "작업 테이블 ID"), ("", "PK 값"),
+              ("", "차이 구분 (missing 등)")])
+    cr = ent("cr", 0, 2, "전환 실행", "cutover_run",
+             [("PK", "전환 ID"), ("FK", "작업 ID"), ("", "시작 · 끝 시각"), ("", "전환 상태"), ("", "소요 시간")])
+    cs = ent("cs", 1, 2, "전환 단계", "cutover_step",
+             [("PK", "전환 ID (FK)"), ("PK", "단계 번호"), ("", "단계 이름"), ("", "단계 상태"), ("", "소요 시간")])
+    jt = ent("jt", 2, 2, "작업 테이블", "job_table",
+             [("PK", "작업 테이블 ID"), ("FK", "작업 ID"), ("UK", "원천 스키마 · 테이블"), ("UK", "대상 스키마 · 테이블"),
+              ("", "테이블 상태"), ("", "마지막 반영 위치")])
+    lc = ent("lc", 3, 2, "적재 구간", "load_chunk",
+             [("PK", "구간 ID"), ("FK", "작업 테이블 ID"), ("UK", "구간 번호"), ("", "구간 하한 · 상한"), ("", "구간 상태")])
+
+    c01, c12, c23 = 405, 800, 1195          # 열 사이 통로 x
+    jm = job.y + job.h / 2
+    d.rel("job", "wm", [job.top(job.x + w / 2), wm.bottom(job.x + w / 2)], child_card="zero_one", ident=True)
+    d.rel("job", "cl", [job.left(jm), cl.right(jm)])
+    yu, yl = job.y + 40, job.y + job.h - 30
+    d.rel("job", "ev", [job.left(yu), (c01, yu), (c01, ev.y + 60), ev.right(ev.y + 60)], parent_card="zero_one")
+    d.rel("job", "cr", [job.left(yl), (c01, yl), (c01, cr.y + 50), cr.right(cr.y + 50)])
+    d.rel("cr", "cs", [cr.right(cr.y + 110), cs.left(cr.y + 110)], ident=True)
+    d.rel("job", "vr", [job.right(yu), (c12, yu), (c12, vr.y + 60), vr.left(vr.y + 60)])
+    d.rel("job", "jt", [job.right(yl), (c12, yl), (c12, jt.y + 50), jt.left(jt.y + 50)])
+    xv = vr.x + w / 2
+    d.rel("vr", "vres", [vr.bottom(xv), vres.top(xv)])
+    d.rel("jt", "vres", [jt.top(xv), vres.bottom(xv)])
+    gy0 = (vr.y + vr.h + vres.y) / 2 + 6     # 1·2줄 사이
+    gy1 = (vres.y + vres.h + jt.y) / 2       # 2·3줄 사이
+    xr = rd.x + w / 2
+    d.rel("vr", "rd", [vr.right(vr.y + vr.h - 30), (c23, vr.y + vr.h - 30), (c23, gy0), (xr, gy0), rd.top(xr)])
+    d.rel("jt", "rd", [jt.top(jt.x + w - 40), (jt.x + w - 40, gy1), (xr, gy1), rd.bottom(xr)])
+    d.rel("jt", "lc", [jt.right(jt.y + 110), lc.left(jt.y + 110)])
+
+    d.notes = ["작업 1건 = 원천 DB 1 → 대상 DB 1 · 스키마 버전은 관계 없음",
+               "행 값은 변경 버퍼에만, 반영하면 바로 지운다"]
+    return d
+
+
 def page1() -> Diagram:
-    d = Diagram(1600, 900, "KDMS 관리 테이블 물리 ERD (1/2) 작업·적재·동기화",
+    d = Diagram(1600, 900, "KDMS 관리 테이블 물리 ERD (2/3) 작업·적재·동기화",
                 "대상 PostgreSQL 의 kdms 스키마 · 관리 스키마 v3 · IE 표기 · 컬럼 정의는 docs/database.md",
-                f"KDMS-D05 · {VERSION} · {DATE} · 1/2")
+                f"KDMS-D05 · {VERSION} · {DATE} · 2/3")
     d.legend = LEGEND
     wm = d.entity("watermark", X1, TOP, W, "watermark", "워터마크·반영 위치", WATERMARK)
     cl = d.entity("change_log", X1, TOP + wm.h + 30, W, "change_log", "반영 전 변경", CHANGE_LOG)
@@ -106,11 +170,11 @@ def page1() -> Diagram:
 
 
 def page2() -> Diagram:
-    d = Diagram(1600, 900, "KDMS 관리 테이블 물리 ERD (2/2) 검증·전환·기록",
-                "점선 테두리 = 1장 엔터티를 참조로 다시 그림(PK 만) · 컬럼 정의는 docs/database.md",
-                f"KDMS-D05 · {VERSION} · {DATE} · 2/2")
+    d = Diagram(1600, 900, "KDMS 관리 테이블 물리 ERD (3/3) 검증·전환·기록",
+                "점선 테두리 = 2장 엔터티를 참조로 다시 그림(PK 만) · 컬럼 정의는 docs/database.md",
+                f"KDMS-D05 · {VERSION} · {DATE} · 3/3")
     d.legend = LEGEND
-    ref = ("", "나머지 컬럼은 1장", "", False)
+    ref = ("", "나머지 컬럼은 2장", "", False)
     vr = d.entity("verify_run", X1, TOP, W, "verify_run", "검증 실행", VERIFY_RUN)
     vres = d.entity("verify_result", X1, TOP + vr.h + 70, W, "verify_result", "검사 항목 결과", VERIFY_RESULT)
     jt = d.entity("job_table", X1, vres.y + vres.h + 70, W, "job_table", "작업 테이블",
@@ -145,17 +209,18 @@ def page2() -> Diagram:
 
 
 def build() -> list[Diagram]:
-    return [page1(), page2()]
+    return [logical(), page1(), page2()]
 
 
 EXPLAIN = """
 <h2>1. 읽는 법</h2>
 <ul>
-<li>물리 ERD 다. 대상 PostgreSQL 의 <code>kdms</code> 스키마에 실제로 있는 테이블·컬럼·타입을 그대로 그렸다. 업무 개체를 정리한 논리 ERD 가 아니다(관리 테이블은 KDMS 가 직접 쓰는 기술 테이블이라 논리 모델을 따로 두지 않는다).</li>
+<li>1장은 논리 ERD 다. 엔터티를 한글 이름으로, 관계와 핵심 속성(식별자·외래 식별자·주요 속성)만 그렸다. 머리 오른쪽 글은 그 엔터티를 구현한 물리 테이블 이름이다.</li>
+<li>2·3장은 물리 ERD 다. 대상 PostgreSQL 의 <code>kdms</code> 스키마에 실제로 있는 테이블·컬럼·타입을 그대로 그렸다. 2장 작업·적재·동기화, 3장 검증·전환·기록.</li>
 <li>IE(Information Engineering, 정보 공학) 표기. 선 끝 기호로 관계 차수를 읽는다: 두 줄 = 정확히 1, 원 + 한 줄 = 0 또는 1, 원 + 까마귀발 = 0 이상(N). 부모 쪽이 1, 자식(FK 를 가진 쪽)이 N 이다.</li>
 <li>실선 = 식별 관계(부모 PK 가 자식 PK 에 들어감: <code>watermark</code>, <code>cutover_step</code>), 점선 = 비식별 관계.</li>
-<li>엔터티 박스: 머리 = 테이블 이름과 한글 이름, 구분선 위 = PK, 아래 = 나머지 컬럼. 왼쪽 표시 PK·FK·UK, 오른쪽 NN = NOT NULL(빈칸은 NULL 허용). <code>(FK)</code> 는 PK 이면서 FK 인 컬럼.</li>
-<li>2장의 점선 테두리 엔터티(<code>job</code>, <code>job_table</code>)는 1장 엔터티를 관계를 보이려고 다시 그린 것이다.</li>
+<li>물리 엔터티 박스: 머리 = 테이블 이름과 한글 이름, 구분선 위 = PK, 아래 = 나머지 컬럼. 왼쪽 표시 PK·FK·UK, 오른쪽 NN = NOT NULL(빈칸은 NULL 허용). <code>(FK)</code> 는 PK 이면서 FK 인 컬럼.</li>
+<li>3장의 점선 테두리 엔터티(<code>job</code>, <code>job_table</code>)는 2장 엔터티를 관계를 보이려고 다시 그린 것이다.</li>
 <li>컬럼 설명·기본값·CHECK·인덱스 전체는 <code>docs/database.md</code> §2 한 곳에 둔다. 이 그림은 그 문서와 같은 순서로 컬럼을 그렸다.</li>
 </ul>
 

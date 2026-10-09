@@ -428,7 +428,7 @@ class Diagram:
             by = ry + 15
             if key:
                 out.append(f'<text x="{cx["key"]}" y="{by}" font-size="{f}" font-weight="800" fill="{C["primary"]}">{escape(key)}</text>')
-            muted = not typ and not key
+            muted = name.startswith("나머지")
             out.append(f'<text x="{cx["name"]}" y="{by}" font-size="{f}" font-weight="{700 if key == "PK" else 500}" '
                        f'fill="{C["muted"] if muted else C["text"]}">{escape(name)}</text>')
             if typ:

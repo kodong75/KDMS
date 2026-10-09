@@ -26,7 +26,7 @@ DOCS = [
     {"no": "D04", "module": "d04_data_flow", "title": "데이터 흐름도", "status": "draft",
      "desc": "적재 경로와 CDC 경로의 값 변환, change_log·워터마크·오프셋 기록 시점"},
     {"no": "D05", "module": "d05_erd", "title": "관리 테이블 ERD", "status": "draft",
-     "desc": "ERD(Entity Relationship Diagram, 개체 관계도). kdms 스키마 물리 ERD(IE 표기) 2장: 컬럼·타입·PK·FK·UK·NOT NULL"},
+     "desc": "ERD(Entity Relationship Diagram, 개체 관계도). kdms 스키마 논리 ERD 1장 + 물리 ERD 2장(IE 표기): 엔터티·관계, 컬럼·타입·키·NOT NULL"},
     {"no": "D06", "module": "d06_schedule", "title": "개발 일정", "status": "done",
      "desc": "단계별 일정(간트), 완료 기준, 현재 위치"},
     {"no": "D07", "module": "d07_type_mapping", "title": "변환 규칙 매핑표", "status": "done",
