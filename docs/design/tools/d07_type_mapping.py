@@ -8,8 +8,8 @@ from diagram import C, DESIGN_DIR, Diagram
 
 ID = "d07-type-mapping"
 TITLE = "변환 규칙 매핑표"
-VERSION = "v0.1"
-DATE = "2026-10-06"
+VERSION = "v0.2"
+DATE = "2026-10-09"
 
 RULES = DESIGN_DIR.parent.parent / "src" / "main" / "resources" / "kdms-rules.yml"
 
@@ -18,43 +18,43 @@ def build() -> Diagram:
     d = Diagram(1600, 900, "KDMS 변환 규칙 매핑표",
                 "MS-SQL 2019 → PostgreSQL 16 · 기본 규칙 kdms-rules.yml · 2단계(스키마 변환) 결과",
                 f"KDMS-D07 · {VERSION} · {DATE}")
-    d.legend = [("sync", "변환"), (C["strong_fill"], "kdms plan 이 경고를 내는 규칙")]
+    d.legend = [("sync", "변환"), (C["tint_fill"], "kdms plan 이 경고를 내는 규칙")]
 
-    d.zone(50, 120, 970, 664, "자료형 (types)", "원천 타입 → 대상 타입 · 괄호는 KIS 함정 번호")
-    d.zone(1040, 120, 510, 340, "DDL 세 단계", "한 번에 만들지 않고 시점을 나눈다")
+    d.zone(50, 126, 970, 658, "자료형 (types)", "원천 타입 → 대상 타입 · 괄호는 KIS 함정 번호")
+    d.zone(1040, 126, 510, 334, "DDL 세 단계", "한 번에 만들지 않고 시점을 나눈다")
     d.zone(1040, 476, 510, 308, "값 규칙", "DDL 은 그대로, 적재·반영·검증이 같이 쓴다")
 
     pairs = [
         ("datetime", ["3.33ms 단위"], "timestamp(3)", [".997 값 그대로 (A05)"], False),
         ("datetime2(7)", ["100ns 단위"], "timestamp(6)", ["7→6자리 반올림 (A06)"], False),
-        ("money", ["8바이트 고정 소수"], "numeric(19,4)", ["합계 오버플로 방지 (A04)"], False),
-        ("bit", ["0 · 1"], "boolean", ["앱 SQL '= 1' 주의 (A07)"], False),
+        ("money", ["8바이트 고정 소수"], "numeric(19,4)", ["합계 넘침 방지 (A04)"], False),
+        ("bit", ["0 · 1"], "boolean", ["앱의 '= 1' 주의 (A07)"], False),
         ("tinyint", ["0 ~ 255"], "smallint", ["CHECK 0 ~ 255"], False),
-        ("(n)varchar(n)", ["UTF-16 · CP949"], "varchar(n)", ["UTF-8 바이트 증가 (A03)"], False),
+        ("(n)varchar(n)", ["UTF-16 · CP949"], "varchar(n)", ["바이트 늘어남 (A03)"], False),
         ("char(n)", ["채움 공백"], "char(n)", ["검증은 RTRIM (A10)"], False),
         ("uniqueidentifier", ["GUID"], "uuid", ["정렬 순서가 달라짐"], True),
-        ("rowversion", ["행 버전"], "bytea", ["낙관적 잠금이면 별도 설계"], True),
+        ("rowversion", ["행 버전"], "bytea", ["잠금용이면 별도 설계"], True),
         ("datetimeoffset", ["시간대 포함"], "timestamptz(6)", ["오프셋 버리고 UTC 저장"], True),
     ]
-    sw, tw, h = 192, 210, 82
+    sw, tw, h = 196, 224, 82
     for i, (s, ss, t, ts, warn) in enumerate(pairs):
         col, row = divmod(i, 5)
         x0 = 72 + col * 478
-        y = 196 + row * 100
+        y = 204 + row * 98
         d.block(f"s{i}", x0, y, sw, h, s, ss)
-        d.block(f"t{i}", x0 + sw + 30, y, tw, h, t, ts, strong=warn)
+        d.block(f"t{i}", x0 + sw + 28, y, tw, h, t, ts, tint=warn)
         d.link(f"s{i}", "r", f"t{i}", "l")
-    d.block("none", 72, 702, 926, 52, "규칙 없는 타입(geography · hierarchyid · sql_variant 등)은 kdms plan 이 오류로 멈춘다",
+    d.block("none", 72, 702, 926, 56, "규칙 없는 타입(geography · hierarchyid · sql_variant 등)은 kdms plan 이 오류로 멈춘다",
             icon="report", pill=True)
 
-    d.block("p1", 1062, 190, 466, 76, "10_pre_load.sql", ["테이블 · PK · 시퀀스 · 기본값 · 계산 컬럼"], num="1")
-    d.block("p2", 1062, 280, 466, 76, "20_post_load.sql", ["UNIQUE · lower() 유일 인덱스 · 보조 인덱스"], num="2")
-    d.block("p3", 1062, 370, 466, 76, "30_cutover.sql", ["FK (setval 은 전환 시점 값으로 5단계)"], num="3")
+    d.block("p1", 1062, 200, 466, 74, "10_pre_load.sql", ["테이블 · PK · 시퀀스 · 기본값 · 계산 컬럼"], num="1")
+    d.block("p2", 1062, 288, 466, 74, "20_post_load.sql", ["UNIQUE · lower() 유일 인덱스 · 보조 인덱스"], num="2")
+    d.block("p3", 1062, 376, 466, 74, "30_cutover.sql", ["FK (setval 은 전환 시점 값으로 5단계)"], num="3")
     d.link("p1", "b", "p2", "t")
     d.link("p2", "b", "p3", "t")
 
-    vals = [("끝 공백", ["keep (B02 · B04)"]), ("NUL 문자", ["fail · 적재 전 결정 (A02)"]),
-            ("콜레이션 C", ["CI UNIQUE → lower() (B14)"]), ("센티널 날짜", ["keep (A08)"])]
+    vals = [("끝 공백", ["keep (B02 · B04)"]), ("NUL 문자", ["fail (A02)", "확인한 컬럼만 replace"]),
+            ("콜레이션 C", ["CI UNIQUE → lower()", "(B14)"]), ("센티널 날짜", ["keep (A08)"])]
     for i, (t, sub) in enumerate(vals):
         col, row = i % 2, i // 2
         d.block(f"v{i}", 1062 + col * 238, 548 + row * 112, 228, 98, t, sub)
@@ -134,7 +134,7 @@ def _explain() -> str:
 <thead><tr><th>규칙</th><th>기본값</th><th>선택지</th><th>근거(KIS)</th></tr></thead>
 <tbody>
 <tr><td>끝 공백</td><td><code>keep</code></td><td>keep · rtrim (코드성 컬럼만 rtrim 하려면 컬럼별)</td><td>B02 · B04</td></tr>
-<tr><td>NUL 문자</td><td><code>fail</code></td><td>fail · strip · replace. <code>--scan</code> 에서 나오면 오류. 3단계 적재 전에 정한다</td><td>A02</td></tr>
+<tr><td>NUL 문자</td><td><code>fail</code></td><td>fail · strip · replace(U+FFFD). 기본은 멈춰서 알리고, 확인한 컬럼만 replace(DEC-27)</td><td>A02</td></tr>
 <tr><td>대소문자</td><td><code>keep</code></td><td>keep · upper · lower</td><td></td></tr>
 <tr><td>센티널 날짜(1753-01-01 · 1900-01-01 · 9999-12-31)</td><td><code>keep</code></td><td>keep · null · infinity</td><td>A08</td></tr>
 <tr><td>소수 초 반올림</td><td><code>half_up</code></td><td>datetime2 · time · datetimeoffset 7자리 → 6자리</td><td>A06</td></tr>
@@ -147,7 +147,7 @@ def _explain() -> str:
 <li>컬럼 타입은 7개 테이블 55개 컬럼 모두 KIS <code>mock.sql</code> 과 같다(Mac 에서 <code>SourceCatalogIT</code> · <code>TargetDdlIT</code> 통과).</li>
 <li>작업별 덮어쓰기(<code>config/kdms-rules.yml</code>): 계산 컬럼 <code>dbo.rating.rating_rank</code>(원천 CI 비교에 맞춰 <code>upper(rtrim(…))</code>), <code>dbo.research_doc.file_ext</code> 의 PG 식.</li>
 <li>예상 경고 9건(트리거, uniqueidentifier · rowversion 타입, 함수 기본값 4종, 자동 변환 안 하는 객체), 주의 3건(CI 비교, 끝 공백, CP949 바이트).</li>
-<li>NUL 처리 방식은 아직 정하지 않았다. <code>--scan</code> 이 <code>dbo.issuer.issuer_nm</code> 에서 막힌다(3단계 전에 결정).</li>
+<li>NUL 문자: 기본 <code>fail</code> 을 유지하고 <code>dbo.issuer.issuer_nm</code> 만 <code>config/kdms-rules.yml</code> 에서 <code>replace</code>(DEC-27, issues.md A01·A02).</li>
 </ul>
 """
 

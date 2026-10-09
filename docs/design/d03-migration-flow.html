@@ -10,144 +10,135 @@
 <main class="page">
 <header class="doc-head">
   <div><div class="kicker">KDMS 설계 문서 D03</div><h1>KDMS 이관 흐름도</h1></div>
-  <div class="meta">KDMS-D03 · v0.1 · 2026-10-06<br><a class="no-print" href="index.html">문서 목록</a> · <a class="no-print" href="dist/d03-migration-flow.pdf">PDF</a> · <a class="no-print" href="dist/d03-migration-flow.pptx">PPTX</a></div>
+  <div class="meta">KDMS-D03 · v0.2 · 2026-10-09<br><a class="no-print" href="index.html">문서 목록</a> · <a class="no-print" href="dist/d03-migration-flow.pdf">PDF</a> · <a class="no-print" href="dist/d03-migration-flow.pptx">PPTX</a></div>
 </header>
-<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" role="img" aria-label="KDMS 이관 흐름도">
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS 이관 흐름도">
 <defs>
-<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#164B8C"/></marker>
-<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F74C4"/></marker>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F4E8C"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2B86C9"/></marker>
 <symbol id="i-bookmark_flag" viewBox="0 -960 960 960"><path d="M385-405h50v-120h175l-56.25-75L610-675H385v270ZM200-120v-665q0-24 18-42t42-18h440q24 0 42 18t18 42v665L480-240 200-120Zm60-91 220-93 220 93v-574H260v574Zm0-574h440-440Z"/></symbol>
 <symbol id="i-database_upload" viewBox="0 -960 960 960"><path d="M506-120v-.5.5q-33 1-97.5-5T280-148.5q-64-17.5-112-49T120-280q0 51 48 82.5t112 49Q344-131 408.5-125t97.5 5Zm-27-214v-1 1q-52 0-95-4.5T305-352q-36-9-67-21.5T180-402q27 16 58 28.5t67 21.5q36 9 79 13.5t95 4.5Zm1-274q86 0 176.5-26.5T773-694q-27-32-117.5-59T480-780q-88 0-177 26t-117 60q28 35 116 60.5T480-608Zm235 492h30v-171l77 77 21-21-113-113-113 113 21 21 77-77v171ZM596-95.5Q540-151 540-229q0-79 56-135t134-56q78 0 134 56t56 135q0 78-56 133.5T730-40q-78 0-134-55.5ZM485-180q3 16 8.5 31t12.5 29q-33 1-97.5-5T280-148.5q-64-17.5-112-49T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v226q-14-7-29-12.5t-31-8.5v-143q-59 33-138 51.5T479-548q-85 0-164.5-18.5T180-618v155q54 32 133 50.5T479-394q17 0 33-.5t33-2.5q-13 14-23 30t-18 33h-25q-105 0-174.5-18T180-402v126q5 17 35 34.5t73.5 31q43.5 13.5 95.5 22t101 8.5Z"/></symbol>
-<symbol id="i-edit_note" viewBox="0 -960 960 960"><path d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z"/></symbol>
-<symbol id="i-fact_check" viewBox="0 -960 960 960"><path d="M132-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h696q24 0 42 18t18 42v600q0 24-18 42t-42 18H132Zm0-60h696v-600H132v600Zm68-100h200v-80H200v80Zm382-80 198-198-57-57-141 142-57-57-56 57 113 113Zm-382-80h200v-80H200v80Zm0-160h200v-80H200v80Zm-68 420v-600 600Z"/></symbol>
 <symbol id="i-pause_circle" viewBox="0 -960 960 960"><path d="M370-320h60v-320h-60v320Zm160 0h60v-320h-60v320ZM480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"/></symbol>
 <symbol id="i-published_with_changes" viewBox="0 -960 960 960"><path d="M430-82q-72-9-134.5-43t-108-86.5Q142-264 116-332.5T90-480q0-88 41.5-168T243-790H121v-60h229v229h-60v-129q-64 51-102 121.5T150-480q0 132 80 225.5T430-143v61Zm-7-228L268-465l42-42 113 113 227-227 42 42-269 269Zm187 200v-229h60v129q64-52 102-122t38-148q0-132-80-225.5T530-817v-61q146 18 243 129t97 269q0 88-41.5 168T717-170h122v60H610Z"/></symbol>
-<symbol id="i-report" viewBox="0 -960 960 960"><path d="M480-281q14 0 24.5-10.5T515-316q0-14-10.5-24.5T480-351q-14 0-24.5 10.5T445-316q0 14 10.5 24.5T480-281Zm-30-144h60v-263h-60v263ZM330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm25-60h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></symbol>
 <symbol id="i-swap_horiz" viewBox="0 -960 960 960"><path d="M273-160 80-353l193-193 42 42-121 121h316v60H194l121 121-42 42Zm414-254-42-42 121-121H450v-60h316L645-758l42-42 193 193-193 193Z"/></symbol>
 <symbol id="i-sync" viewBox="0 -960 960 960"><path d="M167-160v-60h130l-15-12q-64-51-93-111t-29-134q0-106 62.5-190.5T387-784v62q-75 29-121 96.5T220-477q0 63 23.5 109.5T307-287l30 21v-124h60v230H167Zm407-15v-63q76-29 121-96.5T740-483q0-48-23.5-97.5T655-668l-29-26v124h-60v-230h230v60H665l15 14q60 56 90 120t30 123q0 106-62 191T574-175Z"/></symbol>
-<symbol id="i-timer" viewBox="0 -960 960 960"><path d="M360-860v-60h240v60H360Zm90 447h60v-230h-60v230ZM340.5-109.5Q275-138 226-187t-77.5-114.5Q120-367 120-441t28.5-139.5Q177-646 226-695t114.5-77.5Q406-801 480-801q67 0 126 22.5T711-716l51-51 42 42-51 51q36 40 61.5 97T840-441q0 74-28.5 139.5T734-187q-49 49-114.5 77.5T480-81q-74 0-139.5-28.5Zm352-119Q780-316 780-441t-87.5-212.5Q605-741 480-741t-212.5 87.5Q180-566 180-441t87.5 212.5Q355-141 480-141t212.5-87.5ZM480-440Z"/></symbol>
 </defs>
 <rect width="1600" height="900" fill="#FFFFFF"/>
-<rect x="50" y="38" width="7" height="44" rx="3.5" fill="#164B8C"/>
-<text x="70" y="68" font-size="30" font-weight="800" fill="#0A2342">KDMS 이관 흐름도</text>
-<text x="70" y="96" font-size="16" font-weight="500" fill="#3F4E61">워터마크 → 전체 적재 → 변경분 반영 → 쓰기 중지 → 마지막 반영 → 검증 → 전환</text>
-<text x="1550" y="68" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D03 · v0.1 · 2026-10-06</text>
-<rect x="44" y="126" width="636" height="390" rx="18" fill="#F1F6FC" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="66" y="160" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">온라인 구간</text>
-<text x="66" y="183" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">원천 업무는 평소처럼 계속 쓰인다</text>
-<rect x="704" y="126" width="846" height="390" rx="18" fill="#E8F1FB" stroke="#164B8C" stroke-width="2"/>
-<text x="726" y="160" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">다운타임 구간</text>
-<text x="726" y="183" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">원천 쓰기를 멈춘 뒤 · 실제 다운타임 = ④ ~ ⑦</text>
-<rect x="44" y="536" width="1506" height="206" rx="18" fill="#F1F6FC" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="66" y="570" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">작업 상태 (kdms.job)</text>
-<text x="66" y="593" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">어느 단계에서 멈춰도 다시 실행하면 이어서 진행 · 오류는 FAILED 로 남고 원인 수정 후 재실행</text>
-<path d="M246.0,280.0 L268.0,280.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M454.0,280.0 L476.0,280.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M662.0,280.0 L722.0,280.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M908.0,280.0 L930.0,280.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M1116.0,280.0 L1138.0,280.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M1324.0,280.0 L1346.0,280.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M569.0,420.0 L569.0,355.0" fill="none" stroke="#1F74C4" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
-<rect x="575.0" y="376.5" width="106.5" height="22.0" rx="4" fill="#FFFFFF"/>
-<text x="628.2" y="393.5" font-size="14" font-weight="600" fill="#1F74C4" text-anchor="middle">CDC 로 따라감</text>
-<path d="M1231.0,355.0 L1231.0,384.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<rect x="1237.0" y="358.5" width="54.0" height="22.0" rx="4" fill="#FFFFFF"/>
-<text x="1264.0" y="375.5" font-size="14" font-weight="600" fill="#164B8C" text-anchor="middle">불일치</text>
-<path d="M264.0,660.0 L300.0,660.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M470.0,660.0 L506.0,660.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M676.0,660.0 L712.0,660.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M882.0,660.0 L918.0,660.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M1088.0,660.0 L1124.0,660.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<path d="M1294.0,660.0 L1330.0,660.0" fill="none" stroke="#164B8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
-<rect x="60" y="205" width="186" height="150" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-bookmark_flag" x="133.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="153.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">워터마크 기록</text>
-<text x="153.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC 시작 LSN 저장</text>
-<text x="153.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">적재보다 먼저</text>
-<circle cx="80" cy="225" r="13" fill="#164B8C"/>
-<text x="80" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
-<rect x="268" y="205" width="186" height="150" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-database_upload" x="341.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="361.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">전체 적재</text>
-<text x="361.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">SNAPSHOT · COPY</text>
-<text x="361.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">구간 병렬 · 수 시간</text>
-<circle cx="288" cy="225" r="13" fill="#164B8C"/>
-<text x="288" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
-<rect x="476" y="205" width="186" height="150" rx="12" fill="#D3E5F8" stroke="#0F3C78" stroke-width="2.4"/>
-<use href="#i-sync" x="549.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="569.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">변경분 반영</text>
-<text x="569.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC 이벤트 반복 적용</text>
-<text x="569.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">지연 수 초 ~ 수 분</text>
-<circle cx="496" cy="225" r="13" fill="#164B8C"/>
-<text x="496" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
-<rect x="722" y="205" width="186" height="150" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-pause_circle" x="795.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="815.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">원천 쓰기 중지</text>
-<text x="815.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">사람이 업무 중지</text>
-<text x="815.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">캡처 지연 확인</text>
-<circle cx="742" cy="225" r="13" fill="#164B8C"/>
-<text x="742" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
-<rect x="930" y="205" width="186" height="150" rx="12" fill="#D3E5F8" stroke="#0F3C78" stroke-width="2.4"/>
-<use href="#i-published_with_changes" x="1003.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="1023.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">마지막 반영</text>
-<text x="1023.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">반영 0건이</text>
-<text x="1023.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">2회 연속될 때까지</text>
-<circle cx="950" cy="225" r="13" fill="#164B8C"/>
-<text x="950" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">5</text>
-<rect x="1138" y="205" width="186" height="150" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-fact_check" x="1211.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="1231.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">검증</text>
-<text x="1231.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">건수 · 합계 · 해시</text>
-<text x="1231.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">원천 = 대상</text>
-<circle cx="1158" cy="225" r="13" fill="#164B8C"/>
-<text x="1158" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">6</text>
-<rect x="1346" y="205" width="186" height="150" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-swap_horiz" x="1419.0" y="224.0" width="40" height="40" fill="#164B8C"/>
-<text x="1439.0" y="292.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">전환</text>
-<text x="1439.0" y="313.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">setval · FK 켜기</text>
-<text x="1439.0" y="332.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">소요 시간 기록</text>
-<circle cx="1366" cy="225" r="13" fill="#164B8C"/>
-<text x="1366" y="230.5" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">7</text>
-<rect x="60" y="420" width="602" height="52" rx="26.0" fill="#FFFFFF" stroke="#164B8C" stroke-width="2"/>
-<use href="#i-edit_note" x="261.0" y="433.0" width="26" height="26" fill="#164B8C"/>
-<text x="297.0" y="452.0" font-size="17" font-weight="700" fill="#0A2342">원천 업무 쓰기 계속</text>
-<rect x="722" y="420" width="394" height="52" rx="26.0" fill="#FFFFFF" stroke="#164B8C" stroke-width="2"/>
-<use href="#i-timer" x="777.8" y="433.0" width="26" height="26" fill="#164B8C"/>
-<text x="813.8" y="452.0" font-size="17" font-weight="700" fill="#0A2342">다운타임 측정: ④ 시작 ~ ⑦ 끝</text>
-<rect x="1138" y="384" width="186" height="116" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-report" x="1211.0" y="386.0" width="40" height="40" fill="#164B8C"/>
-<text x="1231.0" y="454.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">불일치 시 멈춤</text>
-<text x="1231.0" y="475.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">전환하지 않음</text>
-<text x="1231.0" y="494.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">행 차이 목록</text>
-<rect x="94" y="622" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<text x="179.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">PLANNED</text>
-<text x="179.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">계획</text>
-<rect x="300" y="622" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<text x="385.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">SCHEMA_DONE</text>
-<text x="385.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">스키마 생성</text>
-<rect x="506" y="622" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<text x="591.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">LOADING</text>
-<text x="591.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">전체 적재 중</text>
-<rect x="712" y="622" width="170" height="76" rx="12" fill="#D3E5F8" stroke="#0F3C78" stroke-width="2.4"/>
-<text x="797.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">SYNCING</text>
-<text x="797.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">변경분 반영 중</text>
-<rect x="918" y="622" width="170" height="76" rx="12" fill="#D3E5F8" stroke="#0F3C78" stroke-width="2.4"/>
-<text x="1003.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">CUTOVER</text>
-<text x="1003.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">전환 중</text>
-<rect x="1124" y="622" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<text x="1209.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">VERIFIED</text>
-<text x="1209.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">검증 일치</text>
-<rect x="1330" y="622" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<text x="1415.0" y="656.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">DONE</text>
-<text x="1415.0" y="677.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">완료</text>
-<rect x="50" y="828" width="451.75" height="52" rx="10" fill="#FFFFFF" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="68" y="859.0" font-size="15" font-weight="800" fill="#0A2342">범례</text>
-<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#164B8C" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
-<text x="176" y="859.0" font-size="15" font-weight="600" fill="#16202C">실시간 질의</text>
-<line x1="289.25" y1="854.0" x2="335.25" y2="854.0" stroke="#1F74C4" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
-<text x="345.25" y="859.0" font-size="15" font-weight="600" fill="#16202C">비동기 데이터 흐름</text>
-<text x="1550" y="854" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">④ 쓰기 중지는 사람이 한다(KDMS 는 업무 중지를 대신하지 않는다) · ⑥ 이 맞지 않으면 전환하지 않고 멈춘다</text>
-<text x="1550" y="876" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">③ 은 테이블별 전체 적재가 끝난 뒤부터 반영한다 · 적재 중 들어온 변경은 워터마크 이후라 모두 change_log 에 있다</text>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1F4E8C"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B2545">KDMS 이관 흐름도</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">워터마크 → 전체 적재 → 변경분 반영 → 쓰기 중지 → 마지막 반영 → 검증 → 전환</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D03 · v0.2 · 2026-10-09</text>
+<rect x="44" y="126" width="1512" height="204" rx="18" fill="#EEF6FD" stroke="#8EC3EC" stroke-width="1.4"/>
+<text x="66" y="160" font-size="20" font-weight="800" fill="#0B2545" text-anchor="start">온라인 구간</text>
+<text x="66" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">원천 업무 쓰기는 계속된다 · 그 변경은 CDC 로 따라간다</text>
+<rect x="44" y="346" width="1512" height="290" rx="18" fill="#EEF6FD" stroke="#1F4E8C" stroke-width="2"/>
+<text x="66" y="380" font-size="20" font-weight="800" fill="#0B2545" text-anchor="start">다운타임 구간</text>
+<text x="66" y="406" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">원천 쓰기를 멈춘 뒤 · 실제 다운타임 = 4 ~ 7 (kdms 가 재는 것은 cutover 시작 ~ 끝)</text>
+<rect x="44" y="652" width="1512" height="160" rx="18" fill="#EEF6FD" stroke="#8EC3EC" stroke-width="1.4"/>
+<text x="66" y="686" font-size="20" font-weight="800" fill="#0B2545" text-anchor="start">작업 상태 (kdms.job)</text>
+<text x="66" y="712" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">어느 단계에서 멈춰도 다시 실행하면 이어서 진행 · 실패는 FAILED 와 원인(last_error)으로 남는다</text>
+<path d="M244.0,260.0 L310.0,260.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M550.0,260.0 L620.0,260.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M860.0,260.0 L930.0,260.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1170.0,260.0 L1250.0,260.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M118.0,478.0 L170.0,478.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M410.0,478.0 L470.0,478.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M710.0,478.0 L770.0,478.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1020.0,478.0 L1080.0,478.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="1035.5" y="449.0" width="29.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="1050.0" y="469.0" font-size="17" font-weight="600" fill="#1F4E8C" text-anchor="middle">예</text>
+<path d="M1320.0,478.0 L1380.0,478.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M895.0,538.0 L895.0,568.0" fill="none" stroke="#2B86C9" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="901.0" y="540.5" width="63.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="932.5" y="560.5" font-size="17" font-weight="600" fill="#2B86C9" text-anchor="middle">아니오</text>
+<path d="M770.0,597.0 L590.0,597.0 L590.0,532.0" fill="none" stroke="#2B86C9" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="600.5" y="568.0" width="159.1" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="680.0" y="588.0" font-size="17" font-weight="600" fill="#2B86C9" text-anchor="middle">원인 수정 후 다시</text>
+<path d="M250.0,766.0 L284.0,766.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M464.0,766.0 L498.0,766.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M678.0,766.0 L712.0,766.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M892.0,766.0 L926.0,766.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1106.0,766.0 L1140.0,766.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1320.0,766.0 L1354.0,766.0" fill="none" stroke="#1F4E8C" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="74" y="238" width="170" height="44" rx="22.0" fill="#0B2545" stroke="#0B2545" stroke-width="2"/>
+<text x="118.0" y="266.5" font-size="18" font-weight="700" fill="#FFFFFF">이관 시작</text>
+<rect x="310" y="206" width="240" height="108" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<use href="#i-bookmark_flag" x="410.0" y="211.0" width="40" height="40" fill="#1F4E8C"/>
+<text x="430.0" y="280.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">워터마크 기록</text>
+<text x="430.0" y="304.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC 시작 LSN 저장</text>
+<circle cx="331" cy="227" r="14" fill="#1F4E8C"/>
+<text x="331" y="233" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="620" y="206" width="240" height="108" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<use href="#i-database_upload" x="720.0" y="211.0" width="40" height="40" fill="#1F4E8C"/>
+<text x="740.0" y="280.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">전체 적재</text>
+<text x="740.0" y="304.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">SNAPSHOT · COPY 병렬</text>
+<circle cx="641" cy="227" r="14" fill="#1F4E8C"/>
+<text x="641" y="233" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+<rect x="930" y="206" width="240" height="108" rx="12" fill="#0B2545" stroke="#0B2545" stroke-width="2.4"/>
+<use href="#i-sync" x="1030.0" y="211.0" width="40" height="40" fill="#FFFFFF"/>
+<text x="1050.0" y="280.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">변경분 반영</text>
+<text x="1050.0" y="304.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">change_log 멱등 반영</text>
+<circle cx="951" cy="227" r="14" fill="#FFFFFF"/>
+<text x="951" y="233" font-size="17" font-weight="700" fill="#0B2545" text-anchor="middle">3</text>
+<circle cx="1272.0" cy="260.0" r="22.0" fill="#FFFFFF" stroke="#1F4E8C" stroke-width="2.2"/>
+<text x="1272.0" y="267.0" font-size="20" font-weight="800" fill="#1F4E8C" text-anchor="middle">A</text>
+<circle cx="96.0" cy="478.0" r="22.0" fill="#FFFFFF" stroke="#1F4E8C" stroke-width="2.2"/>
+<text x="96.0" y="485.0" font-size="20" font-weight="800" fill="#1F4E8C" text-anchor="middle">A</text>
+<rect x="170" y="424" width="240" height="108" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<use href="#i-pause_circle" x="270.0" y="429.0" width="40" height="40" fill="#1F4E8C"/>
+<text x="290.0" y="498.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">원천 쓰기 중지</text>
+<text x="290.0" y="522.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">사람이 업무를 멈춘다</text>
+<circle cx="191" cy="445" r="14" fill="#1F4E8C"/>
+<text x="191" y="451" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+<rect x="470" y="424" width="240" height="108" rx="12" fill="#0B2545" stroke="#0B2545" stroke-width="2.4"/>
+<use href="#i-published_with_changes" x="570.0" y="429.0" width="40" height="40" fill="#FFFFFF"/>
+<text x="590.0" y="498.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">마지막 반영</text>
+<text x="590.0" y="522.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">kdms cutover 시작</text>
+<circle cx="491" cy="445" r="14" fill="#FFFFFF"/>
+<text x="491" y="451" font-size="17" font-weight="700" fill="#0B2545" text-anchor="middle">5</text>
+<path d="M895.0,418 L1020,478.0 L895.0,538 L770,478.0 Z" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8" stroke-linejoin="round"/>
+<text x="895.0" y="473.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">6. 검증 일치?</text>
+<text x="895.0" y="497.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">건수·합계·해시</text>
+<rect x="1080" y="424" width="240" height="108" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<use href="#i-swap_horiz" x="1180.0" y="429.0" width="40" height="40" fill="#1F4E8C"/>
+<text x="1200.0" y="498.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">전환</text>
+<text x="1200.0" y="522.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">setval · FK 켜기</text>
+<circle cx="1101" cy="445" r="14" fill="#1F4E8C"/>
+<text x="1101" y="451" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">7</text>
+<rect x="1380" y="456" width="150" height="44" rx="22.0" fill="#0B2545" stroke="#0B2545" stroke-width="2"/>
+<text x="1402.3" y="484.5" font-size="18" font-weight="700" fill="#FFFFFF">완료 (DONE)</text>
+<rect x="770" y="568" width="250" height="58" rx="12" fill="#D3E5F8" stroke="#1F4E8C" stroke-width="2.2"/>
+<text x="895.0" y="592.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">멈춤 (FAILED)</text>
+<text x="895.0" y="616.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">setval · FK 안 함</text>
+<rect x="70" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="160.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">PLANNED</text>
+<text x="160.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">계획</text>
+<rect x="284" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="374.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">SCHEMA_DONE</text>
+<text x="374.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">스키마 생성</text>
+<rect x="498" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="588.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">LOADING</text>
+<text x="588.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">전체 적재 중</text>
+<rect x="712" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="802.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">SYNCING</text>
+<text x="802.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">변경분 반영 중</text>
+<rect x="926" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="1016.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">CUTOVER</text>
+<text x="1016.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">전환 중</text>
+<rect x="1140" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="1230.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">VERIFIED</text>
+<text x="1230.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">검증 일치</text>
+<rect x="1354" y="734" width="180" height="64" rx="12" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.8"/>
+<text x="1444.0" y="761.0" font-size="20" font-weight="700" fill="#0B2545" text-anchor="middle">DONE</text>
+<text x="1444.0" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">완료</text>
+<rect x="50" y="828" width="524.4000000000001" height="52" rx="10" fill="#FFFFFF" stroke="#8EC3EC" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B2545">범례</text>
+<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#1F4E8C" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<text x="176" y="860.0" font-size="17" font-weight="600" fill="#16202C">처리 순서</text>
+<line x1="283.35" y1="854.0" x2="329.35" y2="854.0" stroke="#2B86C9" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
+<text x="339.35" y="860.0" font-size="17" font-weight="600" fill="#16202C">불합격 시 되돌아가는 경로</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">4 쓰기 중지와 전환 뒤 앱 연결은 사람이 한다 · 5 ~ 7 은 kdms cutover 한 번</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">3 은 테이블별 적재가 끝난 뒤부터 반영 · 적재 중 변경은 모두 change_log 에 있다</text>
 </svg></figure>
 
 <h2>1. 단계</h2>
