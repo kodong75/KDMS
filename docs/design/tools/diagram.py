@@ -53,6 +53,8 @@ T = {
     "pill": 18, "pill_icon": 26, "badge_r": 14, "badge": 17,
     "line": 2.2,
 }
+# 범례에서 선 모양으로 그리는 항목: 흐름(sync·async), ERD 관계(식별·비식별), IE 끝 기호
+LINE_KINDS = ("sync", "async", "ident", "nonident", "ie_one", "ie_zero_one", "ie_many")
 # 최소 글자 17px: 1600x900 을 와이드 슬라이드(960x540pt)에 채우면 0.6배 → 10pt 이상
 MIN_FONT = 17
 
@@ -182,6 +184,110 @@ class Bar:
     name: str = "막대"
 
 
+# ---- ERD(IE 표기, 까마귀발) ----
+E_HEAD, E_ROW, E_PAD, E_SEP = 32, 20, 6, 8   # 머리 높이, 컬럼 한 줄, 위아래 여백, PK 구분선 간격
+
+
+@dataclass
+class Entity:
+    """물리 ERD 엔터티. cols: (키, 컬럼, 타입, NOT NULL). 키가 PK 인 줄이 구분선 위(PK 영역)."""
+    id: str
+    x: float
+    y: float
+    w: float
+    name: str
+    label: str = ""              # 한글 이름(머리 오른쪽)
+    cols: list = field(default_factory=list)
+    ref: bool = False            # 다른 장 엔터티를 참조용으로 다시 그림(PK 만)
+
+    @property
+    def pk(self) -> list:
+        return [c for c in self.cols if c[0] == "PK"]
+
+    @property
+    def rest(self) -> list:
+        return [c for c in self.cols if c[0] != "PK"]
+
+    @property
+    def h(self) -> float:
+        return E_HEAD + E_PAD + E_ROW * len(self.pk) + E_SEP + E_ROW * len(self.rest) + E_PAD
+
+    def rows(self) -> list[tuple[float, tuple]]:
+        """(줄 위 y, 컬럼). SVG 와 PPTX 가 같이 쓴다."""
+        out, y = [], self.y + E_HEAD + E_PAD
+        for c in self.pk:
+            out.append((y, c))
+            y += E_ROW
+        y += E_SEP
+        for c in self.rest:
+            out.append((y, c))
+            y += E_ROW
+        return out
+
+    def sep_y(self) -> float:
+        return self.y + E_HEAD + E_PAD + E_ROW * len(self.pk) + E_SEP / 2
+
+    def col_x(self) -> dict:
+        """키·컬럼(왼쪽 정렬), 타입·NN(오른쪽 끝 정렬) x."""
+        return {"key": self.x + 12, "name": self.x + 46, "type": self.x + self.w - 46, "nn": self.x + self.w - 12}
+
+    def left(self, y: float) -> tuple[float, float]:
+        return (self.x, y)
+
+    def right(self, y: float) -> tuple[float, float]:
+        return (self.x + self.w, y)
+
+    def top(self, x: float) -> tuple[float, float]:
+        return (x, self.y)
+
+    def bottom(self, x: float) -> tuple[float, float]:
+        return (x, self.y + self.h)
+
+
+@dataclass
+class Rel:
+    """관계선. pts 는 부모 끝 → 자식 끝(엔터티 변 위 점). 실선 = 식별, 점선 = 비식별."""
+    parent: str
+    child: str
+    pts: list
+    parent_card: str = "one"     # one(정확히 1) | zero_one(0 또는 1)
+    child_card: str = "many"     # many(0 이상) | zero_one(0 또는 1)
+    ident: bool = False
+
+
+def ie_marks(p: tuple[float, float], q: tuple[float, float], kind: str) -> list[tuple]:
+    """IE 끝 기호. p = 엔터티 변 위 끝점, q = 선의 다음 점(방향).
+    ("line", x1, y1, x2, y2) | ("circle", cx, cy, r). SVG 와 PPTX 가 같이 쓴다."""
+    dx, dy = q[0] - p[0], q[1] - p[1]
+    n = (dx * dx + dy * dy) ** 0.5 or 1.0
+    ux, uy = dx / n, dy / n
+    nx, ny = -uy, ux
+
+    def at(d, s=0.0):
+        return (p[0] + ux * d + nx * s, p[1] + uy * d + ny * s)
+
+    def bar(d):
+        a, b = at(d, -8), at(d, 8)
+        return ("line", a[0], a[1], b[0], b[1])
+
+    def circ(d):
+        c = at(d)
+        return ("circle", c[0], c[1], 6)
+
+    if kind == "one":
+        return [bar(10), bar(17)]
+    if kind == "zero_one":
+        return [bar(10), circ(24)]
+    if kind == "many":
+        tip = at(16)
+        out = []
+        for s in (-9, 0, 9):
+            e = at(0, s)
+            out.append(("line", tip[0], tip[1], e[0], e[1]))
+        return out + [circ(28)]
+    raise ValueError(kind)
+
+
 class Diagram:
     def __init__(self, width: int, height: int, title: str, subtitle: str, meta: str):
         self.width, self.height = width, height
@@ -193,6 +299,8 @@ class Diagram:
         self.texts: list[Text] = []
         self.lines: list[Line] = []
         self.bars: list[Bar] = []
+        self.entities: dict[str, Entity] = {}
+        self.rels: list[Rel] = []
         # 범례 항목: ("sync"|"async"|"#색", 글). 기본은 사용자 지정 두 가지
         self.legend: list[tuple[str, str]] = [("sync", "실시간 질의"), ("async", "비동기 데이터 흐름")]
 
@@ -225,6 +333,16 @@ class Diagram:
         b = Bar(*a, **k)
         self.bars.append(b)
         return b
+
+    def entity(self, *a, **k) -> Entity:
+        e = Entity(*a, **k)
+        self.entities[e.id] = e
+        return e
+
+    def rel(self, *a, **k) -> Rel:
+        r = Rel(*a, **k)
+        self.rels.append(r)
+        return r
 
     # ---- 공통 계산 ----
     def route(self, l: Link) -> list[tuple[float, float]]:
@@ -263,6 +381,15 @@ class Diagram:
             for s, size in [(b.title, T["block_title"])] + [(s, T["block_sub"]) for s in b.sub]:
                 if not b.pill and b.shape not in ("start", "point") and text_width(s, size) > room:
                     out.append(f"{b.id}: '{s}' 폭 {text_width(s, size):.0f} > {room:.0f}")
+        for e in self.entities.values():
+            cx = e.col_x()
+            for _, (key, name, typ, nn) in e.rows():
+                if cx["name"] + text_width(name, T["label"]) + 12 > cx["type"] - text_width(typ, T["label"]):
+                    out.append(f"{e.id}: '{name} {typ}' 넘침")
+            if text_width(e.name, T["block_title"]) + text_width(e.label, T["label"]) + 40 > e.w:
+                out.append(f"{e.id}: 머리 넘침")
+            if e.y + e.h > self.height - 86:
+                out.append(f"{e.id}: 아래 {e.y + e.h:.0f} > {self.height - 86}")
         return out
 
     # ---- SVG ----
@@ -279,6 +406,52 @@ class Diagram:
             out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="4" fill="{C["white"]}"/>')
             out.append(f'<text x="{tx:.1f}" y="{ty + T["label"] - 1:.1f}" font-size="{T["label"]}" font-weight="600" '
                        f'fill="{color}" text-anchor="middle">{escape(l.label)}</text>')
+        return "\n".join(out)
+
+    def _svg_entity(self, e: Entity) -> str:
+        r = 10
+        x, y, w, h = e.x, e.y, e.w, e.h
+        line = C["block_line"] if e.ref else C["primary"]
+        dash = ' stroke-dasharray="6 5"' if e.ref else ""
+        head = (f'M{x + 1},{y + E_HEAD} L{x + 1},{y + r} Q{x + 1},{y + 1} {x + r},{y + 1} '
+                f'L{x + w - r},{y + 1} Q{x + w - 1},{y + 1} {x + w - 1},{y + r} L{x + w - 1},{y + E_HEAD} Z')
+        out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" fill="{C["white"]}"/>',
+               f'<path d="{head}" fill="{C["zone_fill"] if e.ref else C["tint_fill"]}"/>',
+               f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" fill="none" stroke="{line}" stroke-width="1.8"{dash}/>',
+               f'<line x1="{x}" y1="{y + E_HEAD}" x2="{x + w}" y2="{y + E_HEAD}" stroke="{line}" stroke-width="1.4"/>',
+               f'<text x="{x + 14}" y="{y + 23}" font-size="{T["block_title"]}" font-weight="800" fill="{C["navy"]}">{escape(e.name)}</text>',
+               f'<text x="{x + w - 14}" y="{y + 22}" font-size="{T["label"]}" font-weight="600" fill="{C["muted"]}" text-anchor="end">{escape(e.label)}</text>',
+               f'<line x1="{x + 10}" y1="{e.sep_y()}" x2="{x + w - 10}" y2="{e.sep_y()}" stroke="{C["block_line"]}" stroke-width="1.4"/>']
+        cx = e.col_x()
+        f = T["label"]
+        for ry, (key, name, typ, nn) in e.rows():
+            by = ry + 15
+            if key:
+                out.append(f'<text x="{cx["key"]}" y="{by}" font-size="{f}" font-weight="800" fill="{C["primary"]}">{escape(key)}</text>')
+            muted = not typ and not key
+            out.append(f'<text x="{cx["name"]}" y="{by}" font-size="{f}" font-weight="{700 if key == "PK" else 500}" '
+                       f'fill="{C["muted"] if muted else C["text"]}">{escape(name)}</text>')
+            if typ:
+                out.append(f'<text x="{cx["type"]}" y="{by}" font-size="{f}" font-weight="500" fill="{C["muted"]}" text-anchor="end">{escape(typ)}</text>')
+            if nn:
+                out.append(f'<text x="{cx["nn"]}" y="{by}" font-size="{f}" font-weight="600" fill="{C["muted"]}" text-anchor="end">NN</text>')
+        return "\n".join(out)
+
+    def _svg_marks(self, marks: list[tuple]) -> list[str]:
+        out = []
+        for m in marks:
+            if m[0] == "line":
+                out.append(f'<line x1="{m[1]:.1f}" y1="{m[2]:.1f}" x2="{m[3]:.1f}" y2="{m[4]:.1f}" stroke="{C["primary"]}" stroke-width="2"/>')
+            else:
+                out.append(f'<circle cx="{m[1]:.1f}" cy="{m[2]:.1f}" r="{m[3]}" fill="{C["white"]}" stroke="{C["primary"]}" stroke-width="2"/>')
+        return out
+
+    def _svg_rel(self, r: Rel) -> str:
+        d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in r.pts)
+        dash = "" if r.ident else ' stroke-dasharray="8 6"'
+        out = [f'<path d="{d}" fill="none" stroke="{C["primary"]}" stroke-width="2"{dash} stroke-linejoin="round"/>']
+        out += self._svg_marks(ie_marks(r.pts[0], r.pts[1], r.parent_card))
+        out += self._svg_marks(ie_marks(r.pts[-1], r.pts[-2], r.child_card))
         return "\n".join(out)
 
     def _svg_zone(self, z: Zone) -> str:
@@ -346,7 +519,7 @@ class Diagram:
         cur = x + 70
         items = []
         for kind, label in self.legend:
-            items.append((kind, label, cur, cur + (56 if kind in ("sync", "async") else 34)))
+            items.append((kind, label, cur, cur + (56 if kind in LINE_KINDS else 34)))
             cur = items[-1][3] + text_width(label, T["legend"]) + 30
         return (x, y, cur - x - 10, h), items
 
@@ -361,6 +534,11 @@ class Diagram:
                 out.append(f'<line x1="{mx}" y1="{my}" x2="{mx + 46}" y2="{my}" stroke="{C["primary"]}" stroke-width="{T["line"]}" marker-end="url(#arrow-sync)"/>')
             elif kind == "async":
                 out.append(f'<line x1="{mx}" y1="{my}" x2="{mx + 46}" y2="{my}" stroke="{C["sky"]}" stroke-width="{T["line"]}" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>')
+            elif kind in LINE_KINDS:
+                dash = ' stroke-dasharray="8 6"' if kind == "nonident" else ""
+                out.append(f'<line x1="{mx}" y1="{my}" x2="{mx + 46}" y2="{my}" stroke="{C["primary"]}" stroke-width="2"{dash}/>')
+                if kind.startswith("ie_"):
+                    out += self._svg_marks(ie_marks((mx + 46, my), (mx, my), kind[3:]))
             else:
                 out.append(f'<rect x="{mx}" y="{my - 9}" width="24" height="18" rx="4" fill="{kind}" stroke="{C["block_line"]}" stroke-width="1"/>')
             out.append(f'<text x="{tx}" y="{my + 6}" font-size="{f}" font-weight="600" fill="{C["text"]}">{escape(label)}</text>')
@@ -411,6 +589,8 @@ class Diagram:
         body += [self._svg_bar(b) for b in self.bars]
         body += [self._svg_line(l) for l in self.lines]
         body += [self._svg_link(l) for l in self.links]
+        body += [self._svg_rel(r) for r in self.rels]
+        body += [self._svg_entity(e) for e in self.entities.values()]
         body += [self._svg_block(b) for b in self.blocks.values()]
         body += [self._svg_text(t) for t in self.texts]
         if self.legend:
