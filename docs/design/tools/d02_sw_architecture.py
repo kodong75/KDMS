@@ -4,8 +4,8 @@ from diagram import C, Diagram
 
 ID = "d02-sw-architecture"
 TITLE = "SW 아키텍처"
-VERSION = "v0.1"
-DATE = "2026-10-06"
+VERSION = "v0.2"
+DATE = "2026-10-09"
 
 
 def build() -> Diagram:
@@ -14,18 +14,18 @@ def build() -> Diagram:
                 f"KDMS-D02 · {VERSION} · {DATE}")
 
     # 계층(띠). 왼쪽 200px 는 계층 이름, 블록은 x 290 부터
-    d.zone(100, 112, 1450, 146, "진입 계층", "같은 기능을\n두 입구로")
-    d.zone(100, 272, 1450, 160, "이관 엔진", "단계마다 채운다\n(아래 줄 = 구현 단계)", core=True)
-    d.zone(100, 446, 1450, 160, "공통 계층", "모든 엔진이\n함께 쓴다")
-    d.zone(100, 620, 1450, 160, "외부 라이브러리", "모두 jar 에 포함\n실행 중 다운로드 0")
+    d.zone(100, 120, 1450, 164, "진입 계층", "같은 기능을\n두 입구로")
+    d.zone(100, 296, 1450, 164, "이관 엔진", "단계마다 채운다\n(아래 줄 = 구현 단계)", core=True)
+    d.zone(100, 472, 1450, 164, "공통 계층", "모든 엔진이\n함께 쓴다")
+    d.zone(100, 648, 1450, 164, "외부 라이브러리", "모두 jar 에 포함\n실행 중 다운로드 0")
 
     # 진입
-    d.block("main", 290, 126, 400, 118, "Kdms (main)", ["단일 jar 시작점", "--no-web 이면 CLI 만"], icon="deployed_code")
-    d.block("cli", 710, 126, 400, 118, "kdms.cli", ["picocli 명령 · status · init · web", "plan · load · sync · cutover · verify"], icon="terminal")
-    d.block("web", 1130, 126, 400, 118, "kdms.web", ["Spring MVC · Thymeleaf · 상태 REST", "127.0.0.1 에만 바인딩"], icon="web")
+    d.block("main", 290, 134, 400, 136, "Kdms (main)", ["단일 jar 시작점", "--no-web 이면 CLI 만"], icon="deployed_code")
+    d.block("cli", 710, 134, 400, 136, "kdms.cli", ["picocli 명령 10개", "plan · load · sync · cutover 등"], icon="terminal")
+    d.block("web", 1130, 134, 400, 136, "kdms.web", ["Spring MVC · Thymeleaf · REST", "127.0.0.1 에만 바인딩"], icon="web")
 
     # 이관 엔진 (cdc·apply 사이를 넓혀 점선 흐름을 보인다)
-    y, h, w = 291, 122, 186
+    y, h, w = 310, 136, 186
     d.block("ddl", 290, y, w, h, "kdms.ddl", ["대상 DDL 생성·적용", "2단계"], icon="schema")
     d.block("load", 492, y, w, h, "kdms.load", ["구간 분할 · COPY", "3단계"], icon="database_upload")
     d.block("verify", 694, y, w, h, "kdms.verify", ["건수 · 합계 · 해시", "3단계"], icon="fact_check")
@@ -35,14 +35,14 @@ def build() -> Diagram:
     d.link("cdc", "r", "apply", "l", dashed=True)
 
     # 공통
-    y, w = 465, 295
-    d.block("catalog", 290, y, w, h, "kdms.catalog", ["원천·대상 메타데이터", "접속 확인 1단계 · 카탈로그 2단계"], icon="manage_search")
+    y, w = 486, 295
+    d.block("catalog", 290, y, w, h, "kdms.catalog", ["원천·대상 메타데이터", "접속 확인 · 카탈로그"], icon="manage_search")
     d.block("rules", 605, y, w, h, "kdms.rules", ["kdms-rules.yml 읽기·검사", "타입·값 변환기 선택"], icon="rule_settings")
-    d.block("state", 920, y, w, h, "kdms.state", ["관리 테이블 · 작업 상태 기계", "pg_advisory_lock 동시 실행 방지"], icon="account_tree")
+    d.block("state", 920, y, w, h, "kdms.state", ["관리 테이블 · 상태 기계", "pg_advisory_lock 잠금"], icon="account_tree")
     d.block("config", 1235, y, w, h, "kdms.config", ["YAML 설정 · .env 치환", "JDBC 연결"], icon="settings")
 
     # 외부 라이브러리 (버전은 licenses.md §5.1 기준)
-    y, w = 639, 235
+    y, w = 662, 235
     d.block("boot", 290, y, w, h, "Spring Boot 4.1", ["내장 Tomcat · MVC", "Thymeleaf"], icon="package_2")
     d.block("dbz", 541, y, w, h, "Debezium 3.7", ["Embedded · SQL Server", "JDBC 오프셋 저장소"], icon="extension")
     d.block("jdbc", 792, y, w, h, "JDBC 드라이버", ["PgJDBC", "mssql-jdbc"], icon="cable")
@@ -50,10 +50,10 @@ def build() -> Diagram:
     d.block("yaml", 1294, y, w, h, "SnakeYAML · Logback", ["설정 읽기 · 로그"], icon="description")
 
     # 왼쪽 세로 화살표: 의존 방향(위 → 아래)
-    d.line(70, 120, 70, 360, color=C["primary"], width=2.4)
-    d.line(70, 500, 70, 776, color=C["primary"], width=2.4, arrow=True)
+    d.line(70, 128, 70, 382, color=C["primary"], width=2.4)
+    d.line(70, 530, 70, 806, color=C["primary"], width=2.4, arrow=True)
     for i, ch in enumerate("의존방향"):
-        d.text(70, 392 + i * 30, ch, size=19, bold=True, color=C["primary"], anchor="middle")
+        d.text(70, 416 + i * 30, ch, size=20, bold=True, color=C["primary"], anchor="middle")
 
     d.notes = [
         "점선: CDC 가 대상 PG 의 kdms.change_log 에 쌓고 반영기가 따로 읽는다(수집과 반영 분리)",

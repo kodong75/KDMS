@@ -29,7 +29,7 @@ DOCS = [
      "desc": "ERD(Entity Relationship Diagram, 개체 관계도). kdms 스키마 테이블·키·상태 값"},
     {"no": "D06", "module": "d06_schedule", "title": "개발 일정", "status": "done",
      "desc": "단계별 일정(간트), 완료 기준, 현재 위치"},
-    {"no": "D07", "title": "변환 규칙 매핑표", "status": "todo", "when": "2단계 머지 후",
+    {"no": "D07", "module": "d07_type_mapping", "title": "변환 규칙 매핑표", "status": "done",
      "desc": "MS-SQL → PG 자료형·콜레이션·끝 공백·날짜 규칙과 근거"},
     {"no": "D08", "title": "검증 계획서", "status": "todo", "when": "3단계",
      "desc": "건수·합계·해시 정규화 규칙, 시험 항목(T-L·T-C·T-N), 합격 기준"},

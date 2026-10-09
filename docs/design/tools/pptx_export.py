@@ -22,7 +22,8 @@ from svgpath import flatten
 SLIDE_W, SLIDE_H = 12192000, 6858000      # 16:9
 PX = SLIDE_W / 1600                        # EMU / 캔버스 px
 PT = PX / 12700                            # pt / 캔버스 px
-CXN = {"t": 0, "l": 1, "b": 2, "r": 3}     # 사각형 연결점 번호
+CXN = {"t": 0, "l": 1, "b": 2, "r": 3}     # 사각형·마름모 연결점 번호
+CXN_OVAL = {"t": 0, "l": 2, "b": 4, "r": 6}  # 타원(연결점 원)은 8개
 
 
 def E(v: float) -> Emu:
@@ -133,10 +134,14 @@ def connector(slide, kind, p1, p2, color, dashed, name, a=None, a_side=None, b=N
     c = slide.shapes.add_connector(kind, E(p1[0]), E(p1[1]), E(p2[0]), E(p2[1]))
     _plain(c)
     # 변 가운데(연결점)에 닿는 끝만 붙인다. 비켜난 끝까지 붙이면 뷰어가 선을 연결점으로 다시 그린다.
+    def site(shape, side):
+        oval = shape.shape_type is not None and getattr(shape, "auto_shape_type", None) == MSO_SHAPE.OVAL
+        return (CXN_OVAL if oval else CXN)[side]
+    # 위치는 아래에서 직접 정하므로 연결 정보(XML)만 붙인다(python-pptx 이동 계산은 사각형 0~3번만 안다)
     if a is not None:
-        c.begin_connect(a, CXN[a_side])
+        c._connect_begin_to(a, site(a, a_side))
     if b is not None:
-        c.end_connect(b, CXN[b_side])
+        c._connect_end_to(b, site(b, b_side))
     c.begin_x, c.begin_y, c.end_x, c.end_y = E(p1[0]), E(p1[1]), E(p2[0]), E(p2[1])
     c.line.color.rgb = rgb(color)
     c.line.width = Pt((width or T["line"]) * PT)
@@ -156,10 +161,10 @@ def build(d: Diagram, out_path, title: str) -> None:
     slide.background.fill.fore_color.rgb = rgb("#FFFFFF")
 
     # 머리글
-    bar = rrect(slide, 50, 38, 7, 44, C["primary"], None, 0, 3.5, "제목 막대")
-    textbox(slide, 70, 38, 1000, 40, [(d.title, T["title"], True, C["navy"], None)], name="제목")
-    textbox(slide, 70, 82, 1000, 22, [(d.subtitle, T["subtitle"], False, C["muted"], None)], name="부제")
-    textbox(slide, 1150, 56, 400, 20, [(d.meta, T["meta"], False, C["muted"], None)], PP_ALIGN.RIGHT, name="문서 정보")
+    bar = rrect(slide, 50, 36, 7, 72, C["primary"], None, 0, 3.5, "제목 막대")
+    textbox(slide, 70, 30, 1050, 48, [(d.title, T["title"], True, C["navy"], None)], name="제목")
+    textbox(slide, 70, 84, 1200, 24, [(d.subtitle, T["subtitle"], False, C["muted"], None)], name="부제")
+    textbox(slide, 1100, 54, 450, 22, [(d.meta, T["meta"], False, C["muted"], None)], PP_ALIGN.RIGHT, name="문서 정보")
     del bar
 
     # 영역(제목·부제는 도형 안)
@@ -172,7 +177,7 @@ def build(d: Diagram, out_path, title: str) -> None:
         tf.vertical_anchor = MSO_ANCHOR.TOP
         lines = [(z.title, T["zone_title"], True, C["navy"], 26)]
         for sub in (z.sub.split("\n") if z.sub else []):
-            lines.append((sub, T["zone_sub"], False, C["muted"], 20))
+            lines.append((sub, T["zone_sub"], False, C["muted"], T["zone_sub_line"]))
         _paras(tf, lines, PP_ALIGN.LEFT if z.align == "start" else PP_ALIGN.RIGHT)
 
     # 막대·자유 선(블록 아래에 깔린다)
@@ -190,39 +195,65 @@ def build(d: Diagram, out_path, title: str) -> None:
     # 블록
     shapes = {}
     for b in d.blocks.values():
-        if b.pill:
-            s = rrect(slide, b.x, b.y, b.w, b.h, C["white"], C["primary"], 2, b.h / 2, f"블록 {b.title}")
+        st = b.style()
+        if b.pill or b.shape == "start":
+            dark = b.shape == "start"
+            s = rrect(slide, b.x, b.y, b.w, b.h, C["navy"] if dark else C["white"],
+                      C["navy"] if dark else C["primary"], 2, b.h / 2, f"블록 {b.title}")
             ix, tx = d.pill_layout(b)
             tf = s.text_frame
             _margins(tf, tx - b.x, 0, 0, 0)
             tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-            _paras(tf, [(b.title, T["pill"], True, C["navy"], None)], PP_ALIGN.LEFT)
-            icon(slide, b.icon, ix, b.y + (b.h - T["pill_icon"]) / 2, T["pill_icon"], C["primary"])
+            _paras(tf, [(b.title, T["pill"], True, C["white"] if dark else C["navy"], None)], PP_ALIGN.LEFT)
+            if b.icon:
+                icon(slide, b.icon, ix, b.y + (b.h - T["pill_icon"]) / 2, T["pill_icon"],
+                     C["white"] if dark else C["primary"])
             shapes[b.id] = s
             continue
-        s = rrect(slide, b.x, b.y, b.w, b.h,
-                  C["strong_fill"] if b.strong else C["block_fill"],
-                  C["strong_line"] if b.strong else C["block_line"], 2.4 if b.strong else 1.6, 12, f"블록 {b.title}")
+        if b.shape == "point":
+            s = slide.shapes.add_shape(MSO_SHAPE.OVAL, E(b.x), E(b.y), E(b.w), E(b.h))
+            _plain(s)
+            s.fill.solid()
+            s.fill.fore_color.rgb = rgb(st["fill"])
+            s.line.color.rgb = rgb(st["line"])
+            s.line.width = Pt(st["lw"] * PT)
+            tf = s.text_frame
+            _margins(tf)
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            _paras(tf, [(b.title, T["block_title"], True, st["title"], None)], PP_ALIGN.CENTER)
+            s.name = f"연결점 {b.title}"
+            shapes[b.id] = s
+            continue
+        if b.shape == "diamond":
+            s = slide.shapes.add_shape(MSO_SHAPE.DIAMOND, E(b.x), E(b.y), E(b.w), E(b.h))
+            _plain(s)
+            s.fill.solid()
+            s.fill.fore_color.rgb = rgb(st["fill"])
+            s.line.color.rgb = rgb(st["line"])
+            s.line.width = Pt(st["lw"] * PT)
+            s.name = f"판단 {b.title}"
+        else:
+            s = rrect(slide, b.x, b.y, b.w, b.h, st["fill"], st["line"], st["lw"], 12, f"블록 {b.title}")
         lay = b.layout()
         tf = s.text_frame
         _margins(tf, 6, lay["text_top"] - b.y - 4, 6, 0)  # 뷰어 줄간격 여유
         tf.vertical_anchor = MSO_ANCHOR.TOP
-        lines = [(b.title, T["block_title"], True, C["navy"], T["title_line"])]
-        lines += [(x, T["block_sub"], False, C["muted"], T["sub_line"]) for x in b.sub]
+        lines = [(b.title, T["block_title"], True, st["title"], T["title_line"])]
+        lines += [(x, T["block_sub"], False, st["sub"], T["sub_line"]) for x in b.sub]
         _paras(tf, lines, PP_ALIGN.CENTER)
         if b.icon:
-            icon(slide, b.icon, lay["cx"] - T["icon"] / 2, lay["icon_y"], T["icon"], C["primary"])
+            icon(slide, b.icon, lay["cx"] - T["icon"] / 2, lay["icon_y"], T["icon"], st["icon"])
         if b.num:
             r = T["badge_r"]
-            o = slide.shapes.add_shape(MSO_SHAPE.OVAL, E(b.x + 20 - r), E(b.y + 20 - r), E(2 * r), E(2 * r))
+            o = slide.shapes.add_shape(MSO_SHAPE.OVAL, E(b.x + 21 - r), E(b.y + 21 - r), E(2 * r), E(2 * r))
             _plain(o)
             o.fill.solid()
-            o.fill.fore_color.rgb = rgb(C["primary"])
+            o.fill.fore_color.rgb = rgb(st["badge"])
             o.line.fill.background()
             tf = o.text_frame
             _margins(tf)
             tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-            _paras(tf, [(b.num, T["badge"], True, C["white"], None)], PP_ALIGN.CENTER)
+            _paras(tf, [(b.num, T["badge"], True, st["badge_text"], None)], PP_ALIGN.CENTER)
             o.name = f"번호 {b.num}"
         shapes[b.id] = s
 

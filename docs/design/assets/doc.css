@@ -7,14 +7,14 @@
 }
 
 :root {
-  --navy: #0A2342;
-  --primary: #164B8C;
-  --sky: #1F74C4;
+  --navy: #0B3D2E;
+  --primary: #1E6B4F;
+  --sky: #2E9E6E;
   --text: #16202C;
   --muted: #3F4E61;
-  --line: #A9C3E2;
-  --soft: #F1F6FC;
-  --strong-fill: #D3E5F8;
+  --line: #9DD3B8;
+  --soft: #EEF8F3;
+  --strong-fill: #D5EFE2;
   --bg: #FFFFFF;
 }
 
@@ -28,6 +28,7 @@ body {
   font-size: 14px;
   line-height: 1.65;
   word-break: keep-all;
+  font-feature-settings: 'calt' 0;   /* 0x0a 가 0×0a 로 바뀌는 문맥 대체 끔 */
 }
 
 .page { max-width: 1240px; margin: 0 auto; padding: 32px 24px 56px; }

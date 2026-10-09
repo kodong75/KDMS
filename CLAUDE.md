@@ -100,4 +100,4 @@ git pull                                # Mac 의 main 을 최신으로
 - **이슈**: 오류·관찰은 [docs/issues.md](docs/issues.md) 에 ID 로. KIS 에 같은 현상이 있으면 `KIS:docs/issues.md A05` 로 연결한다.
 - **같은 내용은 한 곳에만** 쓰고 다른 곳은 링크한다.
 - 한국어로 쓴다. 약어는 처음 나올 때 괄호에 원어와 한글 뜻을 쓴다: CDC(Change Data Capture, 변경 데이터 캡처).
-- 설계 그림 문서(`docs/design/`)의 형식·스타일은 [docs/design/README.md](docs/design/README.md)(DEC-41).
+- 설계 그림 문서(`docs/design/`)의 형식·스타일은 [docs/design/README.md](docs/design/README.md)(DEC-41, 색은 DEC-46).

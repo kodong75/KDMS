@@ -21,7 +21,7 @@
 | [plan.md](plan.md) | 계획 | 진행 중 | 개정 2. 구조, MVP 범위, 설계, 규칙 파일, 단계표(상태·완료 근거), 위험, 시험 계획 |
 | [database.md](database.md) | 설계 | 확정 | 관리 스키마 `kdms` 테이블 정의서, 관계도, 코드값·상태 전이, 버전 이력(v1~v3) |
 | [normalization.md](normalization.md) | 설계 | 확정 | 검증용 값 정규화 규칙(KIS 규칙 + KDMS 구현 위치) |
-| [design/README.md](design/README.md) | 설계 | 진행 중 | 그림 문서(D01 구성도·D02 SW 아키텍처·D03 이관 흐름도·D06 일정) 형식·스타일·다시 만들기. 목록은 [design/index.html](design/index.html) |
+| [design/README.md](design/README.md) | 설계 | 진행 중 | 그림 문서(D01 구성도·D02 SW 아키텍처·D03 이관 흐름도·D06 일정·D07 변환 규칙 매핑표) 형식·스타일·다시 만들기. 목록은 [design/index.html](design/index.html) |
 
 ## 3. 단계 문서
 

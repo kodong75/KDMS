@@ -4,8 +4,8 @@ from diagram import Diagram
 
 ID = "d01-system-architecture"
 TITLE = "시스템 구성도"
-VERSION = "v0.2"
-DATE = "2026-10-06"
+VERSION = "v0.3"
+DATE = "2026-10-09"
 
 
 def build() -> Diagram:
@@ -19,12 +19,12 @@ def build() -> Diagram:
            core=True, align="end")
     d.zone(1270, 270, 280, 506, "대상 · PostgreSQL 16", "JDBC(PgJDBC) · TCP 5432")
 
-    d.block("op", 450, 108, 433, 48, "운영자 · 브라우저 / 터미널", icon="person", pill=True)
+    d.block("op", 450, 122, 433, 46, "운영자 · 브라우저 / 터미널", icon="person", pill=True)
 
     # 1행: 사용 화면·설정
     d.block("web", 410, 248, 246, 100, "내장 웹 화면", ["진행률 · 지연 · 검증 결과"], icon="web")
-    d.block("cli", 677, 248, 246, 100, "CLI", ["plan · load · sync · cutover"], icon="terminal")
-    d.block("cfg", 944, 248, 246, 100, "설정 · 변환 규칙", ["kdms.yml · kdms-rules.yml"], icon="rule_settings")
+    d.block("cli", 677, 248, 246, 100, "CLI", ["load · sync · cutover 등"], icon="terminal")
+    d.block("cfg", 944, 248, 246, 100, "설정 · 변환 규칙", ["kdms.yml · 규칙 파일"], icon="rule_settings")
 
     # 2행: 전체 적재
     d.block("s1", 410, 362, 360, 122, "스키마 변환", ["카탈로그 → 대상 DDL (규칙 적용)"], icon="schema", num="1")
@@ -37,8 +37,8 @@ def build() -> Diagram:
 
     # 4행: 검증·전환·상태
     d.block("s5", 410, 634, 246, 122, "검증", ["건수 · 합계 · 해시 (양쪽)"], icon="fact_check", num="5")
-    d.block("s6", 677, 634, 246, 122, "전환 제어", ["마지막 반영 → 검증 → setval"], icon="swap_horiz", num="6")
-    d.block("s7", 944, 634, 246, 122, "상태 · 재시작", ["작업 상태 기계 · 이어 하기"], icon="restart_alt", num="7")
+    d.block("s6", 677, 634, 246, 122, "전환 제어", ["반영 → 검증 → setval"], icon="swap_horiz", num="6")
+    d.block("s7", 944, 634, 246, 122, "상태 · 재시작", ["상태 기계 · 이어 하기"], icon="restart_alt", num="7")
 
     # 원천
     d.block("src", 70, 362, 230, 122, "업무 테이블", ["dbo.* · PK 구간 분할"], icon="table")
@@ -47,14 +47,14 @@ def build() -> Diagram:
 
     # 대상
     d.block("tgt", 1290, 362, 240, 258, "대상 테이블", ["변환된 스키마", "전환 후 FK · 트리거 켬"], icon="table")
-    d.block("meta", 1290, 634, 240, 122, "kdms 관리 스키마",
-            ["job · watermark · 오프셋", "change_log · verify_result"], icon="database")
+    d.block("meta", 1290, 634, 240, 134, "kdms 관리 스키마",
+            ["job · 워터마크 · 오프셋", "change_log · 검증 결과"], icon="database")
 
     # 연결선: 실선 = 실시간 질의, 점선 = 비동기 데이터 흐름
     d.link("op", "b", "web", "t", a_off=-133.5, label="HTTP 127.0.0.1", label_at=0.3)
     d.link("op", "b", "cli", "t", a_off=133.5, label="명령 실행", label_at=0.3)
 
-    d.link("src", "r", "s1", "l", label="SNAPSHOT 읽기")
+    d.link("src", "r", "s1", "l", label="kdms 읽기")
     d.link("s1", "r", "s2", "l")
     d.link("s2", "r", "tgt", "l", b_off=-68, label="COPY 병렬")
 

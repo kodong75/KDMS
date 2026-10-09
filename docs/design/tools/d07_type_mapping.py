@@ -1,0 +1,155 @@
+"""D07 변환 규칙 매핑표. 근거: src/main/resources/kdms-rules.yml(기본 규칙), config/kdms-rules.yml,
+docs/schema-conversion.md. 자료형 표는 기본 규칙 파일에서 직접 읽어 만든다(파일과 표가 어긋나지 않게)."""
+
+import re
+from html import escape
+
+from diagram import C, DESIGN_DIR, Diagram
+
+ID = "d07-type-mapping"
+TITLE = "변환 규칙 매핑표"
+VERSION = "v0.2"
+DATE = "2026-10-09"
+
+RULES = DESIGN_DIR.parent.parent / "src" / "main" / "resources" / "kdms-rules.yml"
+
+
+def build() -> Diagram:
+    d = Diagram(1600, 900, "KDMS 변환 규칙 매핑표",
+                "MS-SQL 2019 → PostgreSQL 16 · 기본 규칙 kdms-rules.yml · 2단계(스키마 변환) 결과",
+                f"KDMS-D07 · {VERSION} · {DATE}")
+    d.legend = [("sync", "변환"), (C["tint_fill"], "kdms plan 이 경고를 내는 규칙")]
+
+    d.zone(50, 126, 970, 658, "자료형 (types)", "원천 타입 → 대상 타입 · 괄호는 KIS 함정 번호")
+    d.zone(1040, 126, 510, 334, "DDL 세 단계", "한 번에 만들지 않고 시점을 나눈다")
+    d.zone(1040, 476, 510, 308, "값 규칙", "DDL 은 그대로, 적재·반영·검증이 같이 쓴다")
+
+    pairs = [
+        ("datetime", ["3.33ms 단위"], "timestamp(3)", [".997 값 그대로 (A05)"], False),
+        ("datetime2(7)", ["100ns 단위"], "timestamp(6)", ["7→6자리 반올림 (A06)"], False),
+        ("money", ["8바이트 고정 소수"], "numeric(19,4)", ["합계 넘침 방지 (A04)"], False),
+        ("bit", ["0 · 1"], "boolean", ["앱의 '= 1' 주의 (A07)"], False),
+        ("tinyint", ["0 ~ 255"], "smallint", ["CHECK 0 ~ 255"], False),
+        ("(n)varchar(n)", ["UTF-16 · CP949"], "varchar(n)", ["바이트 늘어남 (A03)"], False),
+        ("char(n)", ["채움 공백"], "char(n)", ["검증은 RTRIM (A10)"], False),
+        ("uniqueidentifier", ["GUID"], "uuid", ["정렬 순서가 달라짐"], True),
+        ("rowversion", ["행 버전"], "bytea", ["잠금용이면 별도 설계"], True),
+        ("datetimeoffset", ["시간대 포함"], "timestamptz(6)", ["오프셋 버리고 UTC 저장"], True),
+    ]
+    sw, tw, h = 196, 224, 82
+    for i, (s, ss, t, ts, warn) in enumerate(pairs):
+        col, row = divmod(i, 5)
+        x0 = 72 + col * 478
+        y = 204 + row * 98
+        d.block(f"s{i}", x0, y, sw, h, s, ss)
+        d.block(f"t{i}", x0 + sw + 28, y, tw, h, t, ts, tint=warn)
+        d.link(f"s{i}", "r", f"t{i}", "l")
+    d.block("none", 72, 702, 926, 56, "규칙 없는 타입(geography · hierarchyid · sql_variant 등)은 kdms plan 이 오류로 멈춘다",
+            icon="report", pill=True)
+
+    d.block("p1", 1062, 200, 466, 74, "10_pre_load.sql", ["테이블 · PK · 시퀀스 · 기본값 · 계산 컬럼"], num="1")
+    d.block("p2", 1062, 288, 466, 74, "20_post_load.sql", ["UNIQUE · lower() 유일 인덱스 · 보조 인덱스"], num="2")
+    d.block("p3", 1062, 376, 466, 74, "30_cutover.sql", ["FK (setval 은 전환 시점 값으로 5단계)"], num="3")
+    d.link("p1", "b", "p2", "t")
+    d.link("p2", "b", "p3", "t")
+
+    vals = [("끝 공백", ["keep (B02 · B04)"]), ("NUL 문자", ["fail (A02)", "확인한 컬럼만 replace"]),
+            ("콜레이션 C", ["CI UNIQUE → lower()", "(B14)"]), ("센티널 날짜", ["keep (A08)"])]
+    for i, (t, sub) in enumerate(vals):
+        col, row = i % 2, i // 2
+        d.block(f"v{i}", 1062 + col * 238, 548 + row * 112, 228, 98, t, sub)
+
+    d.notes = [
+        "전체 표와 기본값·IDENTITY·계산 컬럼 규칙은 PDF 2쪽부터 · 작업별 덮어쓰기는 config/kdms-rules.yml",
+        "규칙이 값을 바꾸면(rtrim · upper · 센티널→NULL) 검증도 같은 규칙으로 원천을 정규화한다",
+    ]
+    return d
+
+
+def _type_rows() -> list[tuple[str, str, str]]:
+    """기본 규칙 파일 types: 절에서 (원천, 대상, 비고)."""
+    rows, inside = [], False
+    for line in RULES.read_text(encoding="utf-8").splitlines():
+        if line.startswith("types:"):
+            inside = True
+            continue
+        if inside and line and not line.startswith(" "):
+            break
+        m = re.match(r"\s+(\w+):\s*\{(.*)\}\s*(?:#\s*(.*))?$", line)
+        if not (inside and m):
+            continue
+        name, body, comment = m.group(1), m.group(2), (m.group(3) or "").strip()
+        kv = dict(re.findall(r'(\w+):\s*("[^"]*"|[^,]+)', body))
+        kv = {k: v.strip().strip('"') for k, v in kv.items()}
+        to = kv.get("to", "")
+        if "check" in kv:
+            to += f" CHECK ({kv['check']})"
+        notes = []
+        if "max" in kv:
+            notes.append(f"(max) → {kv['max']}")
+        if "max_precision" in kv:
+            notes.append(f"소수 {kv['max_precision']}자리까지 {kv.get('round', '')} 반올림")
+        if "warn" in kv:
+            notes.append(f"경고: {kv['warn']}")
+        if comment:
+            notes.append(comment)
+        rows.append((name, to, " · ".join(notes)))
+    return rows
+
+
+def _explain() -> str:
+    type_rows = "\n".join(
+        f"<tr><td><code>{escape(s)}</code></td><td><code>{escape(t)}</code></td><td>{escape(n)}</td></tr>"
+        for s, t, n in _type_rows())
+    return f"""
+<h2>1. 자료형 전체 (기본 규칙 파일에서 생성)</h2>
+<p><code>{{n}}</code> 글자 수(nvarchar 는 바이트/2), <code>{{p}}</code> 정밀도, <code>{{s}}</code> 스케일. 여기 없는 타입은 <code>kdms plan</code> 이 "규칙 없음" 오류로 멈춘다. 컬럼 하나만 다르게 하려면 <code>tables.&lt;t&gt;.columns.&lt;c&gt;.type</code>.</p>
+<table>
+<thead><tr><th>원천(MS-SQL)</th><th>대상(PostgreSQL)</th><th>비고</th></tr></thead>
+<tbody>
+{type_rows}
+</tbody>
+</table>
+
+<h2>2. 자료형 밖의 규칙</h2>
+<table>
+<thead><tr><th>항목</th><th>대상</th><th>규칙 키 · 기본값</th><th>근거(KIS)</th></tr></thead>
+<tbody>
+<tr><td>IDENTITY</td><td><code>GENERATED BY DEFAULT AS IDENTITY</code>, 시작·증가값 유지. 정수 타입이 아니면 오류</td><td><code>identity.setval: from_ident_current</code> (전환 때 setval)</td><td>A09</td></tr>
+<tr><td>SEQUENCE</td><td><code>CREATE SEQUENCE … AS 타입 START WITH … [NO] CYCLE</code>. decimal 시퀀스는 bigint + 경고</td><td><code>sequence.setval: from_current_value</code></td><td>B09 · B13</td></tr>
+<tr><td>기본값</td><td>상수·<code>NEXT VALUE FOR</code> 는 자동. 인자 없는 함수는 표(<code>getdate()</code> → <code>LOCALTIMESTAMP</code>, <code>newid()</code> → <code>gen_random_uuid()</code>, <code>suser_sname()</code> → <code>session_user</code> 등). 그 밖의 식은 오류</td><td><code>defaults.functions</code>, 컬럼별 <code>default</code></td><td>B13</td></tr>
+<tr><td>계산 컬럼</td><td><code>GENERATED ALWAYS AS (식) STORED</code>, 적재·반영에서 뺀다. PG 식은 사람이 적는다(없으면 오류)</td><td><code>computed_columns.action: generated_stored</code>, 컬럼별 <code>generated</code></td><td>B12</td></tr>
+<tr><td>콜레이션</td><td>모든 문자 컬럼에 <code>COLLATE "C"</code></td><td><code>collation.target: C</code> (C · ko-KR-x-icu · ci)</td><td>B01 · B06 · G08</td></tr>
+<tr><td>CI UNIQUE</td><td><code>CREATE UNIQUE INDEX … (lower(col))</code>. FK 가 가리키면 일반 UNIQUE 도</td><td><code>collation.ci_unique: lower_index</code></td><td>B14</td></tr>
+<tr><td>NULL 허용 UNIQUE</td><td><code>NULLS NOT DISTINCT</code> (NULL 1건만, MS-SQL 과 같음)</td><td>자동</td><td></td></tr>
+<tr><td>필터 인덱스</td><td>단순 조건만 <code>WHERE</code> 로, 나머지는 경고</td><td>자동</td><td></td></tr>
+<tr><td>이름</td><td>소문자. 63바이트 초과는 오류, 겹치는 인덱스 이름은 <code>이름_테이블</code></td><td><code>identifiers.case: lower</code>, <code>map</code>, <code>schemas</code></td><td></td></tr>
+<tr><td>트리거 · CHECK · 뷰 · SP · 함수 · SYNONYM</td><td>옮기지 않고 경고·목록(수작업 전환)</td><td>—</td><td>B11 · C01~C04</td></tr>
+<tr><td>PK 없는 테이블</td><td>만들고 경고(전환 때 전체 재적재)</td><td>—</td><td>plan §4.6</td></tr>
+</tbody>
+</table>
+
+<h2>3. 값 규칙 (DDL 은 바꾸지 않음)</h2>
+<table>
+<thead><tr><th>규칙</th><th>기본값</th><th>선택지</th><th>근거(KIS)</th></tr></thead>
+<tbody>
+<tr><td>끝 공백</td><td><code>keep</code></td><td>keep · rtrim (코드성 컬럼만 rtrim 하려면 컬럼별)</td><td>B02 · B04</td></tr>
+<tr><td>NUL 문자</td><td><code>fail</code></td><td>fail · strip · replace(U+FFFD). 기본은 멈춰서 알리고, 확인한 컬럼만 replace(DEC-27)</td><td>A02</td></tr>
+<tr><td>대소문자</td><td><code>keep</code></td><td>keep · upper · lower</td><td></td></tr>
+<tr><td>센티널 날짜(1753-01-01 · 1900-01-01 · 9999-12-31)</td><td><code>keep</code></td><td>keep · null · infinity</td><td>A08</td></tr>
+<tr><td>소수 초 반올림</td><td><code>half_up</code></td><td>datetime2 · time · datetimeoffset 7자리 → 6자리</td><td>A06</td></tr>
+</tbody>
+</table>
+<p>값을 바꾸는 규칙을 쓰면 검증도 같은 규칙으로 원천을 정규화한다. 바꾸지 않은 컬럼의 차이는 해시에 그대로 잡힌다(KIS normalization §0).</p>
+
+<h2>4. 시험 원천 KDMS_MOCK 결과</h2>
+<ul>
+<li>컬럼 타입은 7개 테이블 55개 컬럼 모두 KIS <code>mock.sql</code> 과 같다(Mac 에서 <code>SourceCatalogIT</code> · <code>TargetDdlIT</code> 통과).</li>
+<li>작업별 덮어쓰기(<code>config/kdms-rules.yml</code>): 계산 컬럼 <code>dbo.rating.rating_rank</code>(원천 CI 비교에 맞춰 <code>upper(rtrim(…))</code>), <code>dbo.research_doc.file_ext</code> 의 PG 식.</li>
+<li>예상 경고 9건(트리거, uniqueidentifier · rowversion 타입, 함수 기본값 4종, 자동 변환 안 하는 객체), 주의 3건(CI 비교, 끝 공백, CP949 바이트).</li>
+<li>NUL 문자: 기본 <code>fail</code> 을 유지하고 <code>dbo.issuer.issuer_nm</code> 만 <code>config/kdms-rules.yml</code> 에서 <code>replace</code>(DEC-27, issues.md A01·A02).</li>
+</ul>
+"""
+
+
+EXPLAIN = _explain()

@@ -4,47 +4,60 @@ from diagram import Diagram
 
 ID = "d03-migration-flow"
 TITLE = "이관 흐름도"
-VERSION = "v0.1"
-DATE = "2026-10-06"
+VERSION = "v0.2"
+DATE = "2026-10-09"
 
 
 def build() -> Diagram:
     d = Diagram(1600, 900, "KDMS 이관 흐름도",
                 "워터마크 → 전체 적재 → 변경분 반영 → 쓰기 중지 → 마지막 반영 → 검증 → 전환",
                 f"KDMS-D03 · {VERSION} · {DATE}")
+    # 흐름도 범례: 실선 = 처리 순서, 점선 = 불합격 시 되돌아가는 경로
+    d.legend = [("sync", "처리 순서"), ("async", "불합격 시 되돌아가는 경로")]
 
-    d.zone(44, 126, 636, 390, "온라인 구간", "원천 업무는 평소처럼 계속 쓰인다")
-    d.zone(704, 126, 846, 390, "다운타임 구간", "원천 쓰기를 멈춘 뒤 · 실제 다운타임 = ④ ~ ⑦", core=True)
-    d.zone(44, 536, 1506, 206, "작업 상태 (kdms.job)",
-           "어느 단계에서 멈춰도 다시 실행하면 이어서 진행 · 오류는 FAILED 로 남고 원인 수정 후 재실행")
+    d.zone(44, 126, 1512, 204, "온라인 구간", "원천 업무 쓰기는 계속된다 · 그 변경은 CDC 로 따라간다")
+    d.zone(44, 346, 1512, 290, "다운타임 구간",
+           "원천 쓰기를 멈춘 뒤 · 실제 다운타임 = 4 ~ 7 (kdms 가 재는 것은 cutover 시작 ~ 끝)", core=True)
+    d.zone(44, 652, 1512, 160, "작업 상태 (kdms.job)",
+           "어느 단계에서 멈춰도 다시 실행하면 이어서 진행 · 실패는 FAILED 와 원인(last_error)으로 남는다")
 
-    y, h, w = 205, 150, 186
-    d.block("s1", 60, y, w, h, "워터마크 기록", ["CDC 시작 LSN 저장", "적재보다 먼저"], icon="bookmark_flag", num="1")
-    d.block("s2", 268, y, w, h, "전체 적재", ["SNAPSHOT · COPY", "구간 병렬 · 수 시간"], icon="database_upload", num="2")
-    d.block("s3", 476, y, w, h, "변경분 반영", ["CDC 이벤트 반복 적용", "지연 수 초 ~ 수 분"], icon="sync", num="3", strong=True)
-    d.block("s4", 722, y, w, h, "원천 쓰기 중지", ["사람이 업무 중지", "캡처 지연 확인"], icon="pause_circle", num="4")
-    d.block("s5", 930, y, w, h, "마지막 반영", ["반영 0건이", "2회 연속될 때까지"], icon="published_with_changes", num="5", strong=True)
-    d.block("s6", 1138, y, w, h, "검증", ["건수 · 합계 · 해시", "원천 = 대상"], icon="fact_check", num="6")
-    d.block("s7", 1346, y, w, h, "전환", ["setval · FK 켜기", "소요 시간 기록"], icon="swap_horiz", num="7")
-    for a, b in (("s1", "s2"), ("s2", "s3"), ("s3", "s4"), ("s4", "s5"), ("s5", "s6"), ("s6", "s7")):
+    # 1줄: 온라인
+    y, h, w = 206, 108, 240
+    d.block("start", 74, y + 32, 170, 44, "이관 시작", shape="start")
+    d.block("s1", 310, y, w, h, "워터마크 기록", ["CDC 시작 LSN 저장"], icon="bookmark_flag", num="1")
+    d.block("s2", 620, y, w, h, "전체 적재", ["SNAPSHOT · COPY 병렬"], icon="database_upload", num="2")
+    d.block("s3", 930, y, w, h, "변경분 반영", ["change_log 멱등 반영"], icon="sync", num="3", strong=True)
+    d.block("a1", 1250, y + 32, 44, 44, "A", shape="point")
+    for a, b in (("start", "s1"), ("s1", "s2"), ("s2", "s3"), ("s3", "a1")):
         d.link(a, "r", b, "l")
 
-    d.block("writes", 60, 420, 602, 52, "원천 업무 쓰기 계속", icon="edit_note", pill=True)
-    d.link("writes", "t", "s3", "b", dashed=True, a_off=208, label="CDC 로 따라감", label_at=0.5)
-    d.block("down", 722, 420, 394, 52, "다운타임 측정: ④ 시작 ~ ⑦ 끝", icon="timer", pill=True)
-    d.block("stop", 1138, 384, 186, 116, "불일치 시 멈춤", ["전환하지 않음", "행 차이 목록"], icon="report")
-    d.link("s6", "b", "stop", "t", label="불일치")
+    # 2줄: 다운타임
+    y = 424
+    d.block("a2", 74, y + 32, 44, 44, "A", shape="point")
+    d.block("s4", 170, y, w, h, "원천 쓰기 중지", ["사람이 업무를 멈춘다"], icon="pause_circle", num="4")
+    d.block("s5", 470, y, w, h, "마지막 반영", ["kdms cutover 시작"], icon="published_with_changes", num="5", strong=True)
+    d.block("chk", 770, y - 6, 250, 120, "6. 검증 일치?", ["건수·합계·해시"], shape="diamond")
+    d.block("s7", 1080, y, w, h, "전환", ["setval · FK 켜기"], icon="swap_horiz", num="7")
+    d.block("end", 1380, y + 32, 150, 44, "완료 (DONE)", shape="start")
+    d.block("stop", 770, 568, 250, 58, "멈춤 (FAILED)", ["setval · FK 안 함"], tint=True)
+    for a, b in (("a2", "s4"), ("s4", "s5"), ("s5", "chk")):
+        d.link(a, "r", b, "l")
+    d.link("chk", "r", "s7", "l", label="예")
+    d.link("s7", "r", "end", "l")
+    d.link("chk", "b", "stop", "t", dashed=True, label="아니오")
+    d.link("stop", "l", "s5", "b", dashed=True, label="원인 수정 후 다시")
 
+    # 작업 상태
     states = [("PLANNED", "계획"), ("SCHEMA_DONE", "스키마 생성"), ("LOADING", "전체 적재 중"),
               ("SYNCING", "변경분 반영 중"), ("CUTOVER", "전환 중"), ("VERIFIED", "검증 일치"), ("DONE", "완료")]
     for i, (st, ko) in enumerate(states):
-        d.block(f"st{i}", 94 + i * 206, 622, 170, 76, st, [ko], strong=(st in ("SYNCING", "CUTOVER")))
+        d.block(f"st{i}", 70 + i * 214, 734, 180, 64, st, [ko])
         if i:
             d.link(f"st{i - 1}", "r", f"st{i}", "l")
 
     d.notes = [
-        "④ 쓰기 중지는 사람이 한다(KDMS 는 업무 중지를 대신하지 않는다) · ⑥ 이 맞지 않으면 전환하지 않고 멈춘다",
-        "③ 은 테이블별 전체 적재가 끝난 뒤부터 반영한다 · 적재 중 들어온 변경은 워터마크 이후라 모두 change_log 에 있다",
+        "4 쓰기 중지와 전환 뒤 앱 연결은 사람이 한다 · 5 ~ 7 은 kdms cutover 한 번",
+        "3 은 테이블별 적재가 끝난 뒤부터 반영 · 적재 중 변경은 모두 change_log 에 있다",
     ]
     return d
 
