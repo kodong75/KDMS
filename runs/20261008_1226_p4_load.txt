@@ -1,0 +1,27 @@
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 00000060:00001f68:0003 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+dbo.daily_count 구간 2/2: 3행, 0.4초
+dbo.code_master 구간 1/2: 14행, 0.4초
+dbo.code_master 구간 2/2: 13행, 0.4초
+dbo.daily_count 구간 1/2: 4행, 0.4초
+dbo.app_user 구간 1/2: 503행, 0.4초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.7초
+dbo.daily_count → dbo.daily_count: 완료 7행, 구간 2개, 0.7초
+dbo.app_user 구간 2/2: 504행, 0.5초
+dbo.app_user → dbo.app_user: 완료 1,007행, 구간 2개, 0.7초
+dbo.research_doc 구간 2/2: 20행, 0.5초
+dbo.issuer 구간 2/2: 1,027행, 2.5초
+dbo.issuer 구간 1/2: 1,032행, 2.6초
+dbo.issuer → dbo.issuer: 완료 2,059행, 구간 2개, 2.9초
+dbo.research_doc 구간 1/2: 5,005행, 11.6초
+dbo.research_doc → dbo.research_doc: 완료 5,025행, 구간 2개, 11.9초
+dbo.rating 구간 1/2: 10,063행, 20.6초
+dbo.rating 구간 2/2: 10,030행, 20.6초
+dbo.rating → dbo.rating: 완료 20,093행, 구간 2개, 20.9초
+dbo.rating_hist 구간 1/2: 10,157행, 20.6초
+dbo.rating_hist 구간 2/2: 10,160행, 20.6초
+dbo.rating_hist → dbo.rating_hist: 완료 20,317행, 구간 2개, 22.8초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 48,535
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load
+다음: kdms verify

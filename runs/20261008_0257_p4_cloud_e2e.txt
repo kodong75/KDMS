@@ -1,0 +1,160 @@
+# KDMS 4단계(CDC) 종단 시험(기록용) · 클라우드 컨테이너(노트북 아님)
+# 원천: SQL Server 2019 CU32 Linux 컨테이너(서버 콜레이션 SQL_Latin1_General_CP1_CI_AS, DB KDMS_MOCK 은 Korean_Wansung_CI_AS), 로그인 kodong_ms
+# 대상: PostgreSQL 16.15, DB kdms, 역할 kdms_app · OpenJDK 21 · Debezium 3.7.0.Final
+# 원천 쓰기: test/sql/mssql/30_writes.sql (sa, 시험 환경). kdms 명령은 -c <설정> --env-file <비밀 파일> 로 실행(경로·비밀번호 생략)
+# 줄 앞 '=====' 은 시험 스크립트가 찍은 단계 표시. Java 스택 트레이스 줄은 뺐다
+# 순서: reset → sync → 쓰기 300초 → 쓰기 중 load → sync kill -9 → sync 재시작 → 쓰기 끝 → SIGTERM → sync --drain → verify → 관리 테이블 → post-load DDL
+
+
+===== 2026-10-08 02:57:39 kdms reset --yes
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+exit 0
+
+===== 2026-10-08 02:57:40 kdms sync (백그라운드, 1차)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 캡처 테이블 7개
+워터마크 없음: 스트리밍이 시작되면 기록한다. 그 뒤에 kdms load 를 시작한다
+워터마크 기록: 0000003c:00007248:0006 · 스트리밍 시작. 이제 다른 터미널에서 kdms load 를 실행할 수 있다
+
+===== 2026-10-08 02:57:43 원천 쓰기 시작 30_writes.sql DURATION_SEC=300 (백그라운드)
+
+===== 2026-10-08 02:58:03 kdms load --throttle-ms 20 (쓰기 중, 백그라운드)
+
+===== 2026-10-08 02:58:07 적재 중 kdms sync 강제 종료(kill -9, T-C08)
+killed pid 10180
+
+===== 2026-10-08 02:58:17 kdms sync 다시 시작(2차)
+
+===== 2026-10-08 02:58:17 kdms load 출력
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+워터마크 0000003c:00007248:0006 뒤 시점을 적재한다. 적재 중 변경은 kdms sync 가 반영한다
+dbo.daily_count 구간 1/1: 1행, 0.2초
+dbo.code_master 구간 2/2: 13행, 0.1초
+dbo.code_master 구간 1/2: 14행, 0.2초
+dbo.daily_count → dbo.daily_count: 완료 1행, 구간 1개, 0.3초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.3초
+dbo.app_user 구간 1/2: 583행, 0.2초
+dbo.app_user 구간 2/2: 640행, 0.2초
+dbo.app_user → dbo.app_user: 완료 1,223행, 구간 2개, 0.4초
+dbo.issuer 구간 2/2: 2,062행, 0.5초
+dbo.issuer 구간 1/2: 2,056행, 0.5초
+dbo.issuer → dbo.issuer: 완료 4,118행, 구간 2개, 0.7초
+dbo.research_doc 구간 2/2: 704행, 0.5초
+dbo.rating 구간 1/2: 11,989행, 0.7초
+dbo.rating 구간 2/2: 11,322행, 0.7초
+dbo.rating_hist 구간 2/2: 15,441행, 0.7초
+dbo.rating → dbo.rating: 완료 23,311행, 구간 2개, 0.8초
+dbo.rating_hist 구간 1/2: 15,439행, 0.8초
+dbo.rating_hist → dbo.rating_hist: 완료 30,880행, 구간 2개, 0.9초
+dbo.research_doc 구간 1/2: 5,005행, 0.8초
+dbo.research_doc → dbo.research_doc: 완료 5,709행, 구간 2개, 0.9초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 65,269
+적재 뒤 DDL(UNIQUE·인덱스)은 변경분 반영 중이라 지금 적용하지 않는다. 쓰기 중지·반영 완료 뒤 kdms schema --phase post-load
+다음: kdms verify
+EXIT 0
+
+===== 2026-10-08 03:02:47 원천 쓰기 끝
+Changed database context to 'KDMS_MOCK'.
+쓰기 시작 2026-10-08 02:57:43.400, 끝 예정 2026-10-08 03:02:43.400
+쓰기 끝 2026-10-08 03:02:45.090
+loops rating_ins rating_upd rating_del issuer_ins issuer_upd doc_viewcnt_only doc_body doc_ins app_user_rows pk_changes insert_then_delete multi_table_tx daily_merge long_tx writes_stopped_at
+----- ---------- ---------- ---------- ---------- ---------- ---------------- -------- ------- ------------- ---------- ------------------ -------------- ----------- ------- -----------------
+8000 1749 1300 580 646 493 407 112 305 593 234 394 312 92 16 2026-10-08 03:02:45.090
+table_name rows_now
+---------- --------
+app_user 1360
+code_master 27
+daily_count 1
+issuer 5017
+rating 24696
+rating_hist 35284
+research_doc 5985
+EXIT 0
+
+===== 2026-10-08 03:02:47 kdms sync 2차 출력(마지막 15줄), Ctrl+C 와 같은 SIGTERM 으로 멈춤
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 캡처 테이블 7개
+워터마크 0000003c:00007248:0006 (2026-10-08T02:57:42 기록) · 저장된 오프셋 다음부터 이어 받는다
+[02:58:20] 수집 1,629 · 반영 1,629 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 02:58:18
+…
+[03:00:31] 수집 7,295 · 반영 7,295 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:00:28
+[03:00:41] 수집 7,770 · 반영 7,770 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:00:40
+[03:00:52] 수집 8,153 · 반영 8,153 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:00:50
+[03:01:02] 수집 8,633 · 반영 8,633 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:01
+[03:01:12] 수집 8,971 · 반영 8,971 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:01:11
+[03:01:22] 수집 9,524 · 반영 9,524 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:01:21
+[03:01:32] 수집 9,894 · 반영 9,894 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:01:31
+[03:01:42] 수집 10,427 · 반영 10,427 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:01:41
+[03:01:52] 수집 10,850 · 반영 10,850 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:01:51
+[03:02:02] 수집 11,367 · 반영 11,367 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:01
+[03:02:12] 수집 11,754 · 반영 11,754 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:11
+[03:02:22] 수집 12,203 · 반영 12,203 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:21
+[03:02:32] 수집 12,598 · 반영 12,598 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:31
+[03:02:42] 수집 13,071 · 반영 13,071 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:41
+중지 요청: 진행 중 배치를 마치고 멈춘다
+
+===== 2026-10-08 03:02:48 kdms sync --drain
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 캡처 테이블 7개 · --drain
+워터마크 0000003c:00007248:0006 (2026-10-08T02:57:42 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T03:02:50 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[03:02:52] 수집 13,109 · 반영 13,109 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:45 · 스트리밍 시작 전
+[03:02:56] 수집 13,109 · 반영 13,109 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 03:02:45
+따라잡음(--drain): 원천 마지막 변경 00000043:000040b8:0005 까지 반영, 반영 대기 0건 · 6초
+다음: kdms verify
+exit 0
+
+===== 2026-10-08 03:02:57 kdms verify
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 2026-10-08 03:02:58 +00:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + /home/claude/KDMS/config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,360 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.issuer → dbo.issuer: 건수 5,017 · 해시 같음 · 합계 1개 같음 (0.2초)
+[일치]   dbo.rating → dbo.rating: 건수 24,696 · 해시 같음 · 합계 5개 같음 (0.7초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 35,284 · 해시 같음 · 합계 2개 같음 (0.7초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,985 · 해시 같음 · 합계 4개 같음 (0.6초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 7)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)
+exit 0
+
+===== 2026-10-08 03:03:00 관리 테이블
+ job_name  | status  
+-----------+---------
+ kdms_mock | SYNCING
+(1 row)
+
+  src_table   | status | rows_loaded | changes_applied |   applied_commit_lsn   
+--------------+--------+-------------+-----------------+------------------------
+ app_user     | LOADED |        1223 |             593 | 00000043:00003e58:0006
+ code_master  | LOADED |          27 |             468 | 00000043:00004090:0004
+ daily_count  | LOADED |           1 |              88 | 00000043:00004048:0003
+ issuer       | LOADED |        4118 |            1467 | 00000043:000040b8:0005
+ rating       | LOADED |       23311 |            4744 | 00000043:000040b8:0005
+ rating_hist  | LOADED |       30880 |            4744 | 00000043:000040b8:0005
+ research_doc | LOADED |        5709 |            1005 | 00000043:000040a8:000a
+(7 rows)
+
+       start_lsn        |      start_recorded_at       |   applied_commit_lsn   | changes_captured | changes_applied | pending_changes | lag_seconds 
+------------------------+------------------------------+------------------------+------------------+-----------------+-----------------+-------------
+ 0000003c:00007248:0006 | 2026-10-08 02:57:42.34649+00 | 00000043:000040b8:0005 |            13109 |           13109 |               0 |       0.000
+(1 row)
+
+ change_log_rows 
+-----------------
+               0
+(1 row)
+
+
+===== 2026-10-08 03:03:01 적재 뒤 DDL
+파일: out/kdms_mock/plan.txt, 10_pre_load.sql, 20_post_load.sql, 30_cutover.sql
+대상 kdms_app@127.0.0.1:5432/kdms 에 post-load 적용: 문장 8개, 테이블 7개
+작업 kdms_mock (job_id 1)
+exit 0
+
+===== 2026-10-08 03:03:02 끝

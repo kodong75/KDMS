@@ -1,0 +1,27 @@
+# KDMS 4단계(CDC) 보존 기간 초과(T-C10)·reset·워터마크 없는 load · 클라우드 컨테이너(노트북 아님)
+# 원천: SQL Server 2019 CU32 Linux 컨테이너(서버 콜레이션 SQL_Latin1_General_CP1_CI_AS, DB KDMS_MOCK 은 Korean_Wansung_CI_AS), 로그인 kodong_ms
+# 대상: PostgreSQL 16.15, DB kdms, 역할 kdms_app · OpenJDK 21 · Debezium 3.7.0.Final
+# 원천 쓰기: test/sql/mssql/30_writes.sql (sa, 시험 환경). kdms 명령은 -c <설정> --env-file <비밀 파일> 로 실행(경로·비밀번호 생략)
+# 줄 앞 '=====' 은 시험 스크립트가 찍은 단계 표시. Java 스택 트레이스 줄은 뺐다
+# 순서: (sync 멈춤) 쓰기 8초 → 모든 캡처 인스턴스를 sys.fn_cdc_get_max_lsn() 까지 sp_cdc_cleanup_change_table → kdms sync → kdms reset(--yes 없이 / 있게) → kdms load(워터마크 없음)
+
+===== kdms sync (종료 코드 5)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 캡처 테이블 7개
+워터마크 0000002d:00004ff0:0003 (2026-10-08T02:38:18 기록) · 저장된 오프셋 다음부터 이어 받는다
+2026-10-08 02:50:35.431 WARN  [pool-2-thread-1] i.d.connector.common.BaseSourceTask - Last recorded offset is no longer available on the server.
+2026-10-08 02:50:35.439 ERROR [kdms-cdc] i.d.e.async.AsyncEmbeddedEngine - 1 task(s) out of 1 failed to start.
+2026-10-08 02:50:35.443 ERROR [kdms-cdc] i.d.e.async.AsyncEmbeddedEngine - Engine has failed with 
+java.util.concurrent.ExecutionException: io.debezium.DebeziumException: The connector is trying to read change stream starting at SqlServerOffsetContext [sourceInfoSchema=Schema{io.debezium.connector.sqlserver.Source:STRUCT}, sourceInfo=SourceInfo [serverName=kdms, changeLsn=NULL, commitLsn=00000035:00002a98:0004, eventSerialNo=null, commandId=-1, snapshot=FALSE, sourceTime=null], snapshotCompleted=false, eventSerialNo=0], but this is no longer available on the server. Reconfigure the connector to use a snapshot mode when needed.
+Caused by: io.debezium.DebeziumException: The connector is trying to read change stream starting at SqlServerOffsetContext [sourceInfoSchema=Schema{io.debezium.connector.sqlserver.Source:STRUCT}, sourceInfo=SourceInfo [serverName=kdms, changeLsn=NULL, commitLsn=00000035:00002a98:0004, eventSerialNo=null, commandId=-1, snapshot=FALSE, sourceTime=null], snapshotCompleted=false, eventSerialNo=0], but this is no longer available on the server. Reconfigure the connector to use a snapshot mode when needed.
+수집 오류: 원천 CDC 보존 기간이 지나 마지막 위치 뒤의 변경이 지워졌다(T-C10). 이어 받을 수 없으므로 kdms reset --yes 뒤 kdms sync → kdms load 로 전체 적재부터 다시 한다
+
+===== kdms reset (종료 코드 4)
+대상 테이블의 데이터와 적재·동기화 기록을 지운다. 맞으면 --yes 를 붙여 다시 실행한다
+
+===== kdms reset --yes (종료 코드 0)
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+
+===== kdms load (워터마크 없음, 종료 코드 4)
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+적재하지 않음: 워터마크가 없다. 원천 쓰기가 있으면 먼저 다른 터미널에서 kdms sync 를 실행해 "워터마크 기록" 이 나온 뒤 적재한다(그래야 적재 중 변경을 놓치지 않는다, docs/cdc.md). 원천 쓰기가 없는 시험이면 --no-cdc

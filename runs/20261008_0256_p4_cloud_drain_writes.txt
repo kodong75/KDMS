@@ -1,0 +1,55 @@
+# KDMS 4단계(CDC) 쓰기 도중 시작한 sync --drain · 클라우드 컨테이너(노트북 아님)
+# 원천: SQL Server 2019 CU32 Linux 컨테이너(서버 콜레이션 SQL_Latin1_General_CP1_CI_AS, DB KDMS_MOCK 은 Korean_Wansung_CI_AS), 로그인 kodong_ms
+# 대상: PostgreSQL 16.15, DB kdms, 역할 kdms_app · OpenJDK 21 · Debezium 3.7.0.Final
+# 원천 쓰기: test/sql/mssql/30_writes.sql (sa, 시험 환경). kdms 명령은 -c <설정> --env-file <비밀 파일> 로 실행(경로·비밀번호 생략)
+# 줄 앞 '=====' 은 시험 스크립트가 찍은 단계 표시. Java 스택 트레이스 줄은 뺐다
+# 순서: 쓰기 40초(백그라운드) 5초 뒤 kdms sync --drain → 끝난 시각 → 쓰기 중지 시각 → verify
+
+===== kdms sync --drain (종료 코드 0, 끝난 시각 02:57:16)
+KDMS 변경분 동기화 · 작업 kdms_mock (job_id 1) · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 캡처 테이블 7개 · --drain
+워터마크 00000035:00003598:0006 (2026-10-08T02:51:04 기록) · 저장된 오프셋 다음부터 이어 받는다
+drain 기준 시각(원천): 2026-10-08T02:56:35 · 이 시각까지 커밋된 변경을 모두 반영하고 원천 쓰기가 없으면 끝낸다
+[02:56:37] 수집 9,705 · 반영 9,705 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 02:56:34
+원천 쓰기가 아직 있다(drain 시작 뒤 커밋 2026-10-08T02:56:39). 쓰기를 멈출 때까지 반영을 계속한다
+[02:56:47] 수집 10,216 · 반영 10,216 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 02:56:44
+[02:56:57] 수집 10,593 · 반영 10,593 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 02:56:54
+[02:57:08] 수집 11,067 · 반영 11,067 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 02:57:04
+[02:57:16] 수집 11,150 · 반영 11,150 · 대기 0 · 지연 0.0초 · 원천 마지막 변경 02:57:09
+따라잡음(--drain): 원천 마지막 변경 0000003c:00007248:0006 까지 반영, 반영 대기 0건 · 40초
+다음: kdms verify
+
+===== 30_writes.sql 결과
+Changed database context to 'KDMS_MOCK'.
+쓰기 시작 2026-10-08 02:56:29.549, 끝 예정 2026-10-08 02:57:09.550
+쓰기 끝 2026-10-08 02:57:09.551
+loops rating_ins rating_upd rating_del issuer_ins issuer_upd doc_viewcnt_only doc_body doc_ins app_user_rows pk_changes insert_then_delete multi_table_tx daily_merge long_tx writes_stopped_at
+----- ---------- ---------- ---------- ---------- ---------- ---------------- -------- ------- ------------- ---------- ------------------ -------------- ----------- ------- -----------------
+1010 235 162 65 75 64 52 18 41 75 33 58 39 7 2 2026-10-08 02:57:09.551
+table_name rows_now
+---------- --------
+app_user 1210
+code_master 27
+daily_count 1
+issuer 4059
+rating 23215
+rating_hist 30540
+research_doc 5680
+
+===== kdms verify
+KDMS 0.1.0-SNAPSHOT 검증 · 작업 kdms_mock · kodong_ms@127.0.0.1:14331/KDMS_MOCK → kdms_app@127.0.0.1:5432/kdms · 2026-10-08 02:57:17 +00:00
+규칙: KIS:docs/normalization.md (docs/load-verify.md §3) · 변환 규칙 기본 + /home/claude/KDMS/config/kdms-rules.yml, 타입 규칙 30개
+
+[일치]   dbo.app_user → dbo.app_user: 건수 1,210 · 해시 같음 · 합계 2개 같음 (0.1초)
+[일치]   dbo.code_master → dbo.code_master: 건수 27 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.daily_count → dbo.daily_count: 건수 1 · 해시 같음 · 합계 1개 같음 (0.0초)
+[일치]   dbo.issuer → dbo.issuer: 건수 4,059 · 해시 같음 · 합계 1개 같음 (0.1초)
+[일치]   dbo.rating → dbo.rating: 건수 23,215 · 해시 같음 · 합계 5개 같음 (0.6초)
+[일치]   dbo.rating_hist → dbo.rating_hist: 건수 30,540 · 해시 같음 · 합계 2개 같음 (0.6초)
+[일치]   dbo.research_doc → dbo.research_doc: 건수 5,680 · 해시 같음 · 합계 4개 같음 (0.5초)
+
+결과: 검증 항목 30개 중 일치 30 · 불일치 0 / 테이블 7개 중 일치 7 (kdms.verify_run run_id 6)
+
+주의: 값은 같지만 조회 결과가 원천과 다를 수 있는 곳(이관 오류가 아니라 규칙 결정, plan.md §8.3)
+  - collation.target: C: 원천 대소문자 무시(CI) 문자 컬럼 27개가 대상에선 대소문자를 구분해 비교·정렬한다: = 'aa+' 결과 건수, 키 조회, 영문 정렬 순서가 달라진다(B01·B03·B06)
+  - text.trailing_space: keep: 끝 공백을 그대로 옮긴 varchar 컬럼 22개: MS-SQL 의 'A' = 'A ' 는 참이지만 대상에선 거짓(B02·B04). 코드성 컬럼은 tables 에서 trailing_space: rtrim
+  - 문자 인코딩: 비유니코드(CP949 등) 문자 컬럼 19개: 문자 수는 같고 UTF-8 바이트는 늘어난다. LEN ↔ length·octet_length 결과가 다르다(B05). 원천에 이미 '?' 로 저장된 문자는 되살릴 수 없다(A03)

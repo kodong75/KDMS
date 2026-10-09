@@ -69,9 +69,14 @@ class SourceCatalogIT {
             assertThat(scan.get("dbo.issuer").columns().get("issuer_nm").nulRows()).as("A02 NUL").isPositive();
             assertThat(scan.get("dbo.research_doc").columns().get("pub_dtm").sentinelRows()).as("A08 센티널").isGreaterThanOrEqualTo(2);
             assertThat(scan.get("dbo.app_user").rows()).isPositive();
+            SchemaPlan defaults = SchemaPlanner.plan(real, cfg.tables(), kdms.rules.RulesLoader.load(null), scan);
+            assertThat(defaults.allIssues()).filteredOn(i -> i.level() == SchemaPlan.Issue.Level.ERROR).extracting(SchemaPlan.Issue::where)
+                    .as("기본 nul_char: fail 이면 NUL 컬럼만 오류(T-L09)").contains("dbo.issuer.issuer_nm");
+            // 저장소 규칙(3단계 결정): issuer_nm 은 replace → 오류가 아니라 경고
             SchemaPlan p = SchemaPlanner.plan(real, cfg.tables(), rules, scan);
-            assertThat(p.allIssues()).filteredOn(i -> i.level() == SchemaPlan.Issue.Level.ERROR).extracting(SchemaPlan.Issue::where)
-                    .as("nul_char: fail 이면 NUL 컬럼만 오류(T-L09)").containsExactlyElementsOf(List.of("dbo.issuer.issuer_nm"));
+            assertThat(p.blocked()).isFalse();
+            assertThat(p.allIssues()).filteredOn(i -> i.where().equals("dbo.issuer.issuer_nm") && i.message().contains("NUL"))
+                    .extracting(SchemaPlan.Issue::level).containsExactly(SchemaPlan.Issue.Level.WARN);
         }
     }
 }

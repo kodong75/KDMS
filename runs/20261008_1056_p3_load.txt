@@ -1,0 +1,26 @@
+KDMS 0.1.0-SNAPSHOT 전체 적재 · 작업 kdms_mock · kodong_ms@192.168.0.12:1433/KDMS_MOCK → kdms_app@192.168.0.12:5432/kdms · 병렬 테이블 4 × 구간 2 · 원천 격리 snapshot
+dbo.daily_count 구간 1/2: 3행, 0.3초
+dbo.code_master 구간 2/2: 13행, 0.3초
+dbo.daily_count 구간 2/2: 3행, 0.3초
+dbo.code_master 구간 1/2: 14행, 0.3초
+dbo.app_user 구간 2/2: 501행, 0.5초
+dbo.app_user 구간 1/2: 500행, 0.5초
+dbo.daily_count → dbo.daily_count: 완료 6행, 구간 2개, 0.8초
+dbo.code_master → dbo.code_master: 완료 27행, 구간 2개, 0.8초
+dbo.app_user → dbo.app_user: 완료 1,001행, 구간 2개, 0.9초
+dbo.issuer 구간 2/2: 1,003행, 0.5초
+dbo.issuer 구간 1/2: 1,002행, 0.5초
+dbo.issuer → dbo.issuer: 완료 2,005행, 구간 2개, 1.0초
+dbo.rating 구간 2/2: 10,002행, 0.9초
+dbo.rating_hist 구간 2/2: 10,002행, 0.9초
+dbo.rating 구간 1/2: 10,002행, 0.9초
+dbo.rating_hist 구간 1/2: 10,002행, 0.9초
+dbo.rating_hist → dbo.rating_hist: 완료 20,004행, 구간 2개, 1.1초
+dbo.rating → dbo.rating: 완료 20,004행, 구간 2개, 1.1초
+dbo.research_doc 구간 2/2: 6행, 1.0초
+dbo.research_doc 구간 1/2: 5,000행, 2.0초
+dbo.research_doc → dbo.research_doc: 완료 5,006행, 구간 2개, 2.2초
+
+결과: 테이블 7개 중 적재 7개(이미 적재돼 건너뜀 0), 실패 0개, 대상 행 48,053
+적재 뒤 DDL(UNIQUE·인덱스) 적용: 문장 8개
+다음: kdms verify

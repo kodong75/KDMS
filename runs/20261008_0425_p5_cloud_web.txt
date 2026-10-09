@@ -1,0 +1,51 @@
+# 5단계 전환 시나리오 · 클라우드 컨테이너(노트북 아님)
+# 원천 SQL Server 2019 CU32(Linux 컨테이너) KDMS_MOCK · 대상 PostgreSQL 16.15 · OpenJDK 21
+# 명령: java -jar target/kdms.jar <명령> -c kdms.yml --env-file e2e.env (비밀번호는 env 파일에만, 여기에 남기지 않음)
+# 원천 쓰기: test/sql/mssql/30_writes.sql (시험용 sysadmin 로그인)
+# 웹 화면 버튼(api/tasks + X-KDMS-Token)으로 sync → load(쓰기 중) → cutover. reset·schema 는 명령줄
+작업 kdms_mock 을 적재 전(SCHEMA_DONE)으로 되돌렸다: 대상 테이블 7개 비움, 워터마크·변경 기록·Debezium 오프셋 삭제
+다음: kdms sync (워터마크 기록) → 다른 터미널에서 kdms load
+작업 kdms_mock (job_id 1) 상태 SCHEMA_DONE
+
+===== 2026-10-08 04:25:03 kdms web (화면, 버튼으로 실행)
+token 길이 48
+토큰 없이: 403
+
+===== 2026-10-08 04:25:07 버튼: 동기화 시작
+POST sync → 200
+
+===== 2026-10-08 04:25:09 원천 쓰기 30초
+
+===== 2026-10-08 04:25:12 버튼: 전체 적재
+POST load → 200
+같은 버튼 두 번: POST load → 409
+
+
+writes exit 0
+
+===== 2026-10-08 04:25:47 버튼: 전환 시작(화면에서 띄운 sync 를 먼저 멈춘다)
+POST cutover → 200
+
+
+
+===== 2026-10-08 04:26:00 작업 목록(종료 코드)
+sync exit 0
+load exit 0
+cutover exit 0
+     → 완료 (0.0초): 문장 2개 적용
+   
+   전환 끝
+     1 마지막 반영         완료        6.2초  반영 대기 0, 원천 마지막 커밋까지 반영
+     2 PK 없는 테이블 재적재 건너뜀      0.0초  PK 없는 테이블 없음
+     3 UNIQUE·인덱스       완료        0.1초  문장 8개 적용
+     4 검증                완료        1.4초  검증 항목 30개 중 일치 30 · 불일치 0 (run_id 7)
+     5 IDENTITY·SEQUENCE   완료        0.0초  "dbo"."app_user"."user_id" 다음 1200, "dbo"."issuer"."issuer_id" 다음 2798, "dbo"."rating"."rating_id" 다음 21992, "dbo"."rating_hist"."hist_id" 다음 23914, "dbo"."research_doc"."doc_id" 다음 10256, "dbo"."seq_doc_no" 다음 202605261
+     6 FK                  완료        0.0초  문장 2개 적용
+   소요 시간(예상 다운타임) 7.7초
+   
+   전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):
+     - dbo.rating 트리거 trg_rating_audit → PL/pgSQL 트리거로 배포(반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다)
+     - 뷰·SP·함수·SYNONYM 등 6개: dbo.usp_daily_count(sql_stored_procedure), dbo.usp_search_docs(sql_stored_procedure), dbo.usp_upsert_ratings(sql_stored_procedure), dbo.syn_region(synonym), dbo.rating_tvp(table_type), dbo.vw_issuer_region(view)
+
+===== 2026-10-08 04:26:00 api/job 요약
+job DONE · verify 30 / 30 · cutover DONE 7676 ms

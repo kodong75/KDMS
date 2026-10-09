@@ -36,6 +36,7 @@ class ConfigLoaderTest {
         assertThat(c.target().user()).isEqualTo("kdms_app");
         assertThat(c.target().properties()).containsEntry("sslmode", "prefer");
         assertThat(c.load().tableParallelism()).isEqualTo(4);
+        assertThat(c.load().isolation()).isEqualTo("snapshot");
         assertThat(c.tables().include()).containsExactly("dbo.*");
         assertThat(c.rules()).isEqualTo("config/kdms-rules.yml");
         assertThat(c.web().address()).isEqualTo("127.0.0.1");
@@ -73,9 +74,43 @@ class ConfigLoaderTest {
     @Test
     void 필수값_누락(@TempDir Path dir) throws IOException {
         Path f = write(dir, """
-                source: { host: h, database: d, user: u }
+                source: { host: h, database: d, user: u, password: p }
                 """);
         assertThatThrownBy(() -> loader.load(f)).hasMessageContaining("target");
+    }
+
+    @Test
+    void 빈_비밀번호는_접속_전에_설정_오류로_알린다(@TempDir Path dir) throws IOException {
+        // .env 에 KDMS_SRC_PASSWORD= 만 있고 값이 없는 경우(.env.example 을 복사만 한 상태)
+        ConfigLoader blank = new ConfigLoader(new EnvResolver(k -> null, Map.of("KDMS_SRC_PASSWORD", "", "KDMS_TGT_PASSWORD", "x")));
+        Path f = write(dir, """
+                source: { host: h, database: d, user: u, password: "${KDMS_SRC_PASSWORD}" }
+                target: { host: h, database: d, user: u, password: "${KDMS_TGT_PASSWORD}" }
+                """);
+        assertThatThrownBy(() -> blank.load(f)).isInstanceOf(ConfigException.class)
+                .hasMessageContaining("source.password").hasMessageContaining("KDMS_SRC_PASSWORD=");
+
+        Path g = write(dir, """
+                source: { host: h, database: d, user: u, password: p }
+                target: { host: h, database: d, user: u }
+                """);
+        assertThatThrownBy(() -> loader.load(g)).hasMessageContaining("target.password").hasMessageContaining("비어 있습니다");
+    }
+
+    @Test
+    void 원천_읽기_격리_수준(@TempDir Path dir) throws IOException {
+        Path f = write(dir, """
+                source: { host: h, database: d, user: u, password: p }
+                target: { host: h, database: d, user: u, password: p }
+                load: { isolation: read_committed }
+                """);
+        assertThat(loader.load(f).load().isolation()).isEqualTo("read_committed");
+        Path g = write(dir, """
+                source: { host: h, database: d, user: u, password: p }
+                target: { host: h, database: d, user: u, password: p }
+                load: { isolation: dirty }
+                """);
+        assertThatThrownBy(() -> loader.load(g)).hasMessageContaining("load.isolation").hasMessageContaining("snapshot | read_committed");
     }
 
     @Test

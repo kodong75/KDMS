@@ -1,5 +1,7 @@
 # 오픈소스 라이선스 확인
 
+> 상태: 진행 중 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: Maven Central POM(2026-10-01), license-maven-plugin 보고서(PR #2), PR #6·#9 추가분
+
 KDMS 가 쓸 예정인 오픈소스와 라이선스. [plan.md](plan.md) §1.2 의 구성 기준이다.
 
 - 확인일 **2026-10-01**. 출처는 Maven Central 의 각 라이브러리 POM(Project Object Model, Maven 설정 파일) `<licenses>` 항목(없으면 부모 POM). 버전은 그날의 최신 안정판이다.
@@ -17,6 +19,7 @@ KDMS 가 쓸 예정인 오픈소스와 라이선스. [plan.md](plan.md) §1.2 �
 | Debezium Embedded / API / Core | `io.debezium:debezium-embedded`, `-api`, `-core` | 3.7.0.Final | Apache-2.0 | 부모 `debezium-build-parent` POM |
 | Debezium SQL Server 커넥터 | `io.debezium:debezium-connector-sqlserver` | 3.7.0.Final | Apache-2.0 | 부모 POM |
 | Debezium JDBC 저장소(오프셋·스키마 이력) | `io.debezium:debezium-storage-jdbc` | 3.7.0.Final | Apache-2.0 | 부모 POM |
+| Debezium 저장소 공통(오프셋 읽기·쓰기) | `io.debezium:debezium-storage-common` | 3.7.0.Final | Apache-2.0 | 부모 POM. storage-jdbc 가 provided 로만 선언해 4단계에서 직접 넣었다(cdc.md §6) |
 | Kafka Connect API / Runtime / JSON / Transforms, Kafka Clients | `org.apache.kafka:connect-*`, `kafka-clients` | 4.3.1 (Debezium 3.7 이 쓰는 버전) | Apache-2.0 | POM |
 | PostgreSQL JDBC(PgJDBC) | `org.postgresql:postgresql` | 42.7.13 | BSD-2-Clause | POM |
 | Microsoft SQL Server JDBC | `com.microsoft.sqlserver:mssql-jdbc` | 13.6.0.jre11 | MIT | POM |

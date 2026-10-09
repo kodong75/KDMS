@@ -25,6 +25,11 @@ public class ConfigOptions {
             description = "비밀번호 등을 읽을 .env 파일. 환경 변수가 먼저다 (기본값: ${DEFAULT-VALUE})")
     Path envFile;
 
+    /** 같은 설정으로 다른 명령을 부를 때 넘길 옵션(웹 화면이 명령을 실행할 때) */
+    public java.util.List<String> args() {
+        return java.util.List.of("-c", config.toString(), "--env-file", envFile.toString());
+    }
+
     public KdmsConfig loadConfig() {
         return new ConfigLoader(EnvResolver.system(envFile)).load(config);
     }

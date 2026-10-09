@@ -1,12 +1,13 @@
-# KDMS 계획 (초안 1)
+# KDMS 계획 (개정 2)
+
+> 상태: 진행 중 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: WORKLOG, PR 이력
 
 MS-SQL 2019 → PostgreSQL 16 미니 DMS(Database Migration Service, 데이터 이관 서비스).
 폐쇄망 금융권에서 실행 중 외부 다운로드 없이 돌아가는 단일 jar 를 만든다.
 
-- 작성 2026-10-01. 이 문서가 승인되기 전에는 코드를 쓰지 않는다.
-- 참고 저장소 `kodong75/KIS`(이하 KIS)는 **읽기 전용**이다. 이 문서는 KIS 의 `docs/plan.md`, `zero-downtime.md`, `zero-downtime-rehearsal.md`, `issues.md`, `appcompat.md`, `normalization.md`, `datatype-pitfalls.md`, `sql/30_verify` 를 읽고 옮겨 왔다. KIS 문서를 가리킬 때는 `KIS:docs/issues.md A05` 처럼 쓴다.
-- 고객사 이름·도메인·업무 용어, 고객 문서 내용은 이 저장소에 쓰지 않는다.
-- 사용하는 오픈소스와 라이선스는 [licenses.md](licenses.md).
+- 개정 이력: 초안 1 작성 2026-10-01, PR #1 머지(2026-10-01)로 1단계부터 진행. 단계 PR(#4·#8·#9·#10)이 본문 일부를 고쳤다. 개정 2(2026-10-09): 단계 상태·완료 근거(§6), 결정을 [decisions.md](decisions.md) 로, 관리 테이블을 [database.md](database.md) 로, 작업 규칙을 [CLAUDE.md](../CLAUDE.md) 로 옮김.
+- 이 문서는 KIS(`kodong75/KIS`, 읽기 전용)의 `docs/plan.md`, `zero-downtime.md`, `zero-downtime-rehearsal.md`, `issues.md`, `appcompat.md`, `normalization.md`, `datatype-pitfalls.md`, `sql/30_verify` 를 읽고 옮겨 왔다. 작업 규칙(고객사 명칭 금지, KIS 읽기 전용, 비밀번호, 브랜치·PR)은 [CLAUDE.md](../CLAUDE.md) §2·§4.
+- 문서 목록 [README.md](README.md), 결정 [decisions.md](decisions.md), 이슈 [issues.md](issues.md), 오픈소스와 라이선스 [licenses.md](licenses.md).
 
 ---
 
@@ -35,30 +36,30 @@ MS-SQL 2019      │                                                            
 
 | 항목 | 결정 |
 |---|---|
-| 언어·빌드 | Java 17 이상, Spring Boot, Maven |
-| 실행 형태 | jar 하나에 엔진 + 내장 웹 화면(localhost). 화면 없는 CLI 모드 |
-| 변경분 반영 | CDC(Change Data Capture, 변경 데이터 캡처). Debezium Embedded Engine + SQL Server 커넥터, Kafka 없이. **포크하지 않고 Maven 의존성으로만** |
-| 전체 적재 | 자체 적재기. PG `COPY`, 테이블·구간 병렬 |
-| 순서 | 워터마크(CDC LSN(Log Sequence Number, 로그 순번)) 기록 → 전체 적재 → 변경분 반복 반영 → 마지막 반영·검증·전환 |
-| 변환 규칙 | 자료형·콜레이션·끝 공백·datetime 정밀도·money·bit·uniqueidentifier·IDENTITY→시퀀스 등을 설정 파일로 분리 |
-| 검증 | 건수·합계·해시 |
-| 상태 저장 | 워터마크·진행 상태를 대상 PG 관리 테이블에. 재시작하면 이어서 |
-| 폐쇄망 | 모든 라이브러리 jar 포함, 실행 중 외부 다운로드 0. 화면 JS·CSS 도 CDN(Content Delivery Network, 외부 배포망) 없이 포함. 나중에 jlink 로 JRE(Java Runtime Environment, 자바 실행 환경) 포함 설치본 |
+| 언어·빌드 | Java 17 이상, Spring Boot, Maven (DEC-01) |
+| 실행 형태 | jar 하나에 엔진 + 내장 웹 화면 + CLI(Command Line Interface, 명령줄) 모드 (DEC-02) |
+| 변경분 반영 | CDC(Change Data Capture, 변경 데이터 캡처), Debezium Embedded, Kafka 없이, 포크 없이 (DEC-03) |
+| 전체 적재 | 자체 적재기, PG `COPY`, 병렬 (DEC-04) |
+| 순서 | 워터마크(CDC LSN(Log Sequence Number, 로그 순번)) → 전체 적재 → 변경분 반복 반영 → 마지막 반영·검증·전환 (DEC-05) |
+| 변환 규칙 | 설정 파일로 분리 (DEC-06) |
+| 검증 | 건수·합계·해시 (DEC-07) |
+| 상태 저장 | 대상 PG 관리 테이블, 재시작하면 이어서 (DEC-08) |
+| 폐쇄망 | 외부 다운로드 0, CDN(Content Delivery Network, 외부 배포망) 없음, 나중에 jlink 설치본 (DEC-09) |
 
-### 1.2 이 계획에서 정한 기본값 (승인 때 바꿀 수 있음)
+### 1.2 이 계획에서 정한 기본값 (PR #1 머지로 채택)
 
-| 갈림길 | 기본값 | 이유 |
-|---|---|---|
-| Java 버전 | **Java 21 LTS(Long-Term Support, 장기 지원)** 로 빌드·실행. 바이트코드는 17 (`maven.compiler.release=17`) | Debezium 3.7 커넥터 jar 가 Java 17 바이트코드(클래스 버전 61, 2026-10-01 확인). 17 환경에서도 돌게 두고, 개발·jlink 는 21 |
-| Spring Boot | **4.1.x** (2026-10-01 최신 4.1.1) | 현재 지원 버전. 단, Boot 가 관리하는 Kafka 버전(4.2.1)과 Debezium 3.7 이 쓰는 Kafka(4.3.1)가 다르다 → `kafka.version` 을 Debezium 쪽에 맞춘다(§7 위험 R3) |
-| Debezium | **3.7.0.Final** (2026-10-01 최신 안정판) | |
-| CDC 이벤트 처리 | 수집과 반영을 분리: Debezium → 대상 PG `kdms.change_log` 에 그대로 저장 → 반영기가 순서대로 적용 | 전체 적재가 며칠 걸려도 원천 CDC 보존 기간(기본 3일)에 묶이지 않는다. 재시작·재반영이 쉽다(§4.4) |
-| Debezium 오프셋 저장 | Debezium 공식 `debezium-storage-jdbc`(`JdbcOffsetBackingStore`, `JdbcSchemaHistory`)로 대상 PG 에 | 파일 저장소를 쓰지 않아 "상태는 대상 PG 한 곳" 원칙을 지킨다. 포크 아님 |
-| 관리 테이블 생성 | 앱 시작 시 자체 DDL 스크립트(`schema_version` 표 포함) | Flyway 등 추가 의존성 없이. 테이블 수가 적다 |
-| 화면 | 서버 렌더링(Thymeleaf) + 직접 작성한 작은 JS·CSS. 외부 프런트엔드 라이브러리 없음 | 라이선스·CDN·보안 점검 대상을 줄인다 |
-| CLI 해석 | picocli | Apache 2.0, 의존성 없음 |
-| 시험용 원천 DB | KIS 의 `MIG_MOCK` 을 **백업·복원한 사본 `KDMS_MOCK`** (나중에 `MIG_SITE` → `KDMS_SITE`) | CDC 를 켠 테이블은 `TRUNCATE` 가 안 되고, 테이블을 지우면 캡처 인스턴스도 지워진다. KIS 스크립트가 쓰는 `MIG_*` DB 를 건드리지 않는다. 복원은 스키마·IDENTITY 현재값·계산 컬럼·트리거를 그대로 가져온다 |
-| 대상 PG DB | 노트북 PG 에 새 DB `kdms`, 전용 로그인 역할 `kdms_app` | KIS 의 `mig` DB 와 분리. superuser 를 쓰지 않는다 |
+| 갈림길 | 기본값 |
+|---|---|
+| Java 버전 | Java 21 LTS(Long-Term Support, 장기 지원) 빌드·실행, 바이트코드 17 (DEC-10) |
+| Spring Boot | 4.1.x, `kafka.version` 은 Debezium 기준 (DEC-11, §7 R3) |
+| Debezium | 3.7.0.Final (DEC-12) |
+| CDC 이벤트 처리 | 수집과 반영 분리: Debezium → `kdms.change_log` → 반영기 (DEC-13, §4.4) |
+| Debezium 오프셋 저장 | `debezium-storage-jdbc` 로 대상 PG 에 (DEC-14) |
+| 관리 테이블 생성 | 앱 시작 시 자체 DDL 스크립트, 버전 파일 추가 방식 (DEC-15) |
+| 화면 | Thymeleaf + 직접 작성한 작은 JS·CSS (DEC-16) |
+| CLI 해석 | picocli (DEC-17) |
+| 시험용 원천 DB | KIS `MIG_MOCK` 의 사본 `KDMS_MOCK` (DEC-18) |
+| 대상 PG DB | 새 DB `kdms`, 전용 역할 `kdms_app`(superuser 아님) (DEC-19) |
 
 ---
 
@@ -70,9 +71,8 @@ Mac (개발, kdms.jar 실행)  ───── 같은 LAN ─────>  Wind
                                                    └ PostgreSQL 16 (Docker) :5432
 ```
 
-- 비밀번호는 `.env` 에만. 저장소에는 `.env.example` 만 둔다. 앱은 환경 변수(`KDMS_SRC_PASSWORD` 등)로 읽고, 설정 파일에는 `${…}` 자리표시만 쓴다.
-- 클라우드 스레드는 노트북 DB 에 닿지 못한다. **DB 가 필요 없는 단위 테스트**만 클라우드에서 돌리고, 통합 테스트는 Mac 에서(사용자 또는 Remote Control 로) 돌려 결과를 `runs/` 에 남긴다. 실행 결과를 지어내지 않는다.
-- 노트북 자체 서명 인증서(KIS:docs/issues.md E03) 때문에 시험 환경 JDBC 는 `trustServerCertificate=true`. 운영 설정 예시는 인증서 검증을 켠 채로 둔다.
+- 앱은 비밀번호를 환경 변수(`KDMS_SRC_PASSWORD` 등)·`.env` 로 읽고, 설정 파일에는 `${…}` 자리표시만 쓴다. 비밀번호 규칙과 클라우드·Mac·노트북 분담은 [CLAUDE.md](../CLAUDE.md) §2·§3.
+- 시험 환경 JDBC 는 `trustServerCertificate=true`, 운영 설정 예시는 인증서 검증을 켠 채로 (DEC-21, [issues.md](issues.md) E03).
 
 ### 2.1 0단계 준비물 (노트북, 사람이 한 번)
 
@@ -96,7 +96,7 @@ Mac (개발, kdms.jar 실행)  ───── 같은 LAN ─────>  Wind
 
 | 영역 | 내용 |
 |---|---|
-| 대상 테이블 | `KDMS_MOCK` dbo 테이블 중 PK 가 있는 것 전부(KIS `sql/10_mssql/11_schema_pitfalls.sql` 정의, 8개 안팎). KIS 함정이 모여 있다: CI(Case-Insensitive, 대소문자 무시) UNIQUE, char 끝 공백, nvarchar·varchar(CP949) 한글, money, bit, uniqueidentifier, rowversion, datetime·datetime2(7), IDENTITY, SEQUENCE 기본값, 계산 컬럼, 트리거, nvarchar(max), NUL 문자 |
+| 대상 테이블 | `KDMS_MOCK` dbo 테이블 중 PK 가 있는 것 전부(KIS `sql/10_mssql/11_schema_pitfalls.sql` 정의, 8개 안팎. 실측 7개, DEC-43). KIS 함정이 모여 있다: CI(Case-Insensitive, 대소문자 무시) UNIQUE, char 끝 공백, nvarchar·varchar(CP949) 한글, money, bit, uniqueidentifier, rowversion, datetime·datetime2(7), IDENTITY, SEQUENCE 기본값, 계산 컬럼, 트리거, nvarchar(max), NUL 문자 |
 | 스키마 변환 | 테이블·컬럼·PK·UNIQUE·NOT NULL·IDENTITY → 대상 DDL(Data Definition Language, 정의 언어) 생성. 변환 규칙 파일 적용. FK 는 생성만 하고 전환 직전에 켠다 |
 | 전체 적재 | 워터마크 기록 후 SNAPSHOT 격리 수준으로 읽어 `COPY` 로 쓴다. 테이블 병렬 + 큰 테이블은 PK 구간 병렬 |
 | CDC | Debezium Embedded, `snapshot.mode=no_data`(데이터 스냅숏은 우리 적재기가 하므로 스키마만). 변경 이벤트를 `kdms.change_log` 에 저장, 반영기가 LSN 순서로 멱등(idempotent, 여러 번 적용해도 결과가 같음) 적용 |
@@ -140,25 +140,14 @@ Mac (개발, kdms.jar 실행)  ───── 같은 LAN ─────>  Wind
 
 ### 4.2 관리 테이블 (대상 PG `kdms` 스키마)
 
-| 테이블 | 내용 |
-|---|---|
-| `schema_version` | 관리 테이블 DDL 버전 |
-| `job` | 작업 1건 = 원천 DB 1개 → 대상 DB 1개. 상태(`PLANNED → SCHEMA_DONE → LOADING → SYNCING → CUTOVER → VERIFIED → DONE`/`FAILED`), 설정 파일 해시 |
-| `job_table` | 테이블별 상태, 원천·대상 이름, 건수 추정, 적재 시작·끝, 마지막 오류 |
-| `load_chunk` | PK 구간(하한·상한), 상태, 행 수, 소요 ms, 시도 횟수 |
-| `watermark` | 작업 시작 LSN(전체 적재 전에 기록), 마지막으로 **반영한** LSN, 시각 |
-| `change_log` | Debezium 이벤트 원문(JSON(JavaScript Object Notation)) + `commit_lsn`, `change_lsn`, `event_serial_no`, 연산(c/u/d), 테이블, 수신 시각. `(commit_lsn, change_lsn, event_serial_no)` UNIQUE 로 중복 수신 무시. 반영·검증이 끝나면 지운다(행 원문에 개인정보가 있으므로 남기지 않는다) |
-| `debezium_offset`, `debezium_schema_history` | `debezium-storage-jdbc` 가 쓰는 표 |
-| `verify_result` | 테이블·검사 항목(count/sum:컬럼/hash)·원천 값·대상 값·일치 여부·실행 시각 |
-| `verify_row_diff` | 불일치 PK, 쪽(missing/extra/diff) |
-| `event_log` | 단계 시작·끝·오류 원문(값·비밀번호는 남기지 않는다) |
+테이블 정의·관계도·코드값·상태 전이·버전 이력은 [database.md](database.md).
 
 ### 4.3 전체 적재기
 
 1. **워터마크 먼저**: Debezium 엔진을 `no_data` 모드로 띄워 스트리밍이 시작된 LSN 을 `watermark.start_lsn` 에 기록한다. 이 시점 이후 변경은 전부 `change_log` 로 들어온다.
 2. 그다음 원천을 **SNAPSHOT 격리 수준**으로 읽는다(테이블·구간마다 별도 트랜잭션이라 시점은 구간마다 다르다. 워터마크가 모든 구간 시작보다 앞이므로 빠지는 변경은 없다. 겹치는 변경은 반영기가 멱등으로 다시 적용해 수렴한다).
 3. 구간 분할: 단일 정수 PK 는 `MIN~MAX` 균등 분할, 그 밖의 PK 는 `NTILE` 로 경계값을 미리 뽑는다. 구간마다 `load_chunk` 행.
-4. 쓰기: PgJDBC `CopyManager` 로 `COPY … FROM STDIN (FORMAT text)`. 탭·줄바꿈·역슬래시는 COPY 텍스트 규칙으로 이스케이프(KIS:docs/issues.md D02 의 bcp 문제를 피한다). 구간 재시도 때는 그 구간을 먼저 `DELETE` 하고 다시 넣는다.
+4. 쓰기: PgJDBC `CopyManager` 로 `COPY … FROM STDIN (FORMAT text)`. 탭·줄바꿈·역슬래시는 COPY 텍스트 규칙으로 이스케이프(KIS:docs/issues.md D02 의 bcp 문제를 피한다). 구간 재시도 방식은 구현에서 바꿨다: 구간 행과 DONE 표시를 한 트랜잭션에 커밋해 DELETE 없이 다시 넣는다 (DEC-28).
 5. 대상 쪽 적재 중 설정: 인덱스(PK 제외)·FK 는 적재 뒤 생성, 트리거 없음, `synchronous_commit=off`(세션).
 6. 병렬도: 설정값(기본 테이블 4 × 구간 2). 원천 부하를 보며 조정한다.
 
@@ -178,11 +167,11 @@ Debezium Embedded (SQL Server 커넥터)
 ```
 
 - `net_changes` 가 아니라 모든 변경을 순서대로 적용한다. 그래야 "적재 중 입력 후 삭제된 행"이 유령으로 남지 않는다(KIS:docs/zero-downtime.md §4-3).
-- 대상 세션은 `session_replication_role = replica` 로 트리거·FK 를 끈 채 적용한다(KIS:docs/issues.md G13: 이관 행에 트리거가 또 돌면 이력 중복).
+- ~~대상 세션은 `session_replication_role = replica` 로 트리거·FK 를 끈 채 적용한다~~ → 대상 테이블에 트리거·FK 가 있으면 `kdms sync` 가 시작하지 않는다 (DEC-30, [cdc.md](cdc.md) §4)
 - 원천 트리거가 쓴 행(예: 이력 테이블)도 CDC 로 그대로 들어오므로 대상 트리거는 전환 뒤에만 켠다.
 - 계산 컬럼은 CDC 가 캡처하지 않는다(KIS:docs/zero-downtime.md §4-11) → 대상은 `GENERATED ALWAYS AS … STORED` 로 만들고 반영기는 그 컬럼을 쓰지 않는다. 식을 옮길 수 없는 컬럼은 변환 규칙에서 "값 컬럼 + 경고"로 명시해야 통과.
 - 보존 기간: 수집이 계속 돌기 때문에 원천 CDC 보존(기본 3일)은 "수집이 멈춰 있는 최대 시간"만 넘지 않으면 된다. 수집이 멈춘 채 보존 기간이 지나면 Debezium 이 오류로 멈추게 두고(조용히 틀리지 않게), 화면에 "전체 적재부터 다시"를 띄운다.
-- 지연 표시: `현재 원천 max LSN 시각 − 마지막 반영 이벤트의 커밋 시각`(초).
+- 지연 표시: ~~`현재 원천 max LSN 시각 − 마지막 반영 이벤트의 커밋 시각`(초)~~ → 5단계에서 정의를 바꿨다 (DEC-36, [cdc.md](cdc.md) §1).
 
 ### 4.5 전환 (컷오버)
 
@@ -190,7 +179,7 @@ KIS:docs/zero-downtime-rehearsal.md §4 를 자동화한다.
 
 1. 사용자가 원천 쓰기를 멈추고 화면·CLI 에서 "전환 시작" (KDMS 는 앱 중지를 대신하지 않는다).
 2. 원천 `sys.fn_cdc_map_lsn_to_time(sys.fn_cdc_get_max_lsn())` 이 전환 시작 시각보다 뒤가 될 때까지 기다린다(캡처 지연, §4-4).
-3. 수집·반영이 **0건으로 2회 연속**이 될 때까지 반복.
+3. 수집·반영이 **0건으로 2회 연속**이 될 때까지 반복. (구현은 2·3 을 drain 조건 하나로 한다: DEC-35, [cutover.md](cutover.md) §2)
 4. 검증(§4.7). 불일치가 있으면 멈추고 목록을 보여 준다(전환하지 않음).
 5. IDENTITY·SEQUENCE `setval`(원천 `IDENT_CURRENT`·`sys.sequences.current_value` 기준, KIS:docs/issues.md A09).
 6. FK 켜기(`NOT VALID` 없이 검사), 보조 인덱스 확인, 대상 트리거는 사용자가 KIS appcompat 방식으로 배포(목록만 출력).
@@ -209,7 +198,7 @@ KIS:docs/normalization.md 를 **그대로** 코드로 옮긴다(규칙을 바꾸
 - 해시: 행 = 컬럼 정규화 문자열을 `|` 로 잇고 NULL 은 `\N`, **UTF-8 바이트**의 MD5(Message Digest 5) 앞 8바이트를 부호 있는 bigint 로 → 테이블 = 합. 원천은 `COLLATE Latin1_General_100_BIN2_UTF8` 로 UTF-8 바이트를 만들어 `HASHBYTES('MD5', …)`.
   - `ISNULL` 대신 `COALESCE`(KIS D01), datetime = 121 형식, datetime2 는 `datetime2(6)` 으로 맞춤(A06), char 는 RTRIM(A10), money 는 decimal(19,4) 경유, uniqueidentifier 소문자, 바이너리 16진 대문자.
 - 원천·대상 계산은 각 DB 에서 하고 결과(숫자 몇 개)만 앱으로 가져와 비교한다. KIS 는 tds_fdw 로 PG 한 곳에서 비교했지만 KDMS 는 JDBC 두 개로 같은 일을 한다(대상 PG 에 확장 설치가 필요 없다).
-- 불일치 시: 같은 해시를 PK 구간별로 다시 계산해 좁히고, 마지막 구간은 PK 별 해시를 비교해 `verify_row_diff` 에 남긴다.
+- 불일치 시: 같은 해시를 PK 구간별로 다시 계산해 좁히고, 마지막 구간은 PK 별 해시를 비교해 `verify_row_diff` 에 남긴다. (구현은 구간 대신 PK 해시 묶음: DEC-29)
 - 해시가 같아도 조회 결과가 다를 수 있는 항목(KIS B01~B14: 대소문자·끝 공백·정렬·LEN 등)은 **이관 오류가 아니라 설계 결정**이다. 검증 보고서에 "주의" 절로 따로 낸다(§5 규칙 파일의 결정값과 함께).
 
 ---
@@ -270,19 +259,20 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 
 ## 6. 단계별 계획
 
-각 단계 = 브랜치 하나 + draft PR 하나 + 스레드 하나(동시 최대 2개). 머지는 사용자가 한다. 단계 끝마다 "완료 기준"을 Mac 에서 실행한 결과 파일(`runs/YYYYMMDD_HHMM_<단계>.txt`)로 보인다.
+단계를 나누고 머지하는 규칙(단계 = 브랜치 + draft PR, 완료 기준은 Mac 의 `runs/` 파일, 머지는 사용자)은 [CLAUDE.md](../CLAUDE.md) §4.
+완료 근거의 시각은 WORKLOG 항목 시각(KST, DEC-45. 클라우드 runs 파일 이름은 UTC), 단계 요약은 [WORKLOG.md](../WORKLOG.md) 의 "단계 요약" 항목.
 
-| 단계 | 내용 | 완료 기준 |
-|---|---|---|
-| **0. 환경 준비** | §2.1. 노트북에서 사람이 실행할 SQL·명령을 1단계 PR 에 함께 넣는다 | Mac 에서 1433·5432 접속, `KDMS_MOCK` CDC 켜짐, `kdms_app` 로 로그인 |
-| **1. 골격** | Maven 프로젝트, Spring Boot 4.1, 패키지 구조, 설정 파일·`.env.example`·`.gitignore`, 관리 테이블 DDL, CLI 뼈대(`kdms status`), 웹 첫 화면, 라이선스 보고서 자동 생성(`license-maven-plugin`, SBOM(Software Bill of Materials, 구성 요소 명세) `cyclonedx-maven-plugin`), 의존성 버전 고정(Kafka 버전 정렬), 시험 준비 SQL | `mvn -o package`(오프라인) 성공, 네트워크를 끊고 `java -jar kdms.jar status` 가 두 DB 버전을 출력, 라이선스 보고서에 미확인 라이선스 0 |
-| **2. 스키마 변환** | 원천 카탈로그 읽기, 규칙 엔진, DDL 생성·적용, `kdms plan` 보고서 (구현: [schema-conversion.md](schema-conversion.md)) | `KDMS_MOCK` 의 대상 DDL 이 KIS `sql/20_pg/gen/mock.sql` 의 테이블 정의와 같은 타입(차이는 규칙 파일 결정으로 설명) |
-| **3. 전체 적재 + 검증** | 구간 분할, COPY 적재, 재시작, 건수·합계·해시 검증, 행 단위 차이 | 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치(KIS 76/76 처럼 항목 수로 보고). 적재 도중 프로세스를 죽였다 다시 실행해 이어서 끝나고 검증 일치 |
-| **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 |
-| **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | §8 시나리오 S1~S4 통과, 전환 소요 시간 보고 |
-| **6. MVP 리허설** | §8 전체를 처음부터 2회. 문서(운영 절차서) | 두 번 모두 합격, 절차서만 보고 다시 할 수 있음 |
-| 7. 설치본 | jlink 로 JRE 포함 압축본(Windows·Linux), 시작 스크립트 | 자바가 없는 PC 에서 실행 |
-| 8. 확장 | `KDMS_SITE`(22테이블), PK 없는 테이블, DDL 변경 감지 후 캡처 인스턴스 교체, 대용량 성능 | 별도 계획 |
+| 단계 | 내용 | 완료 기준 | 상태 | 완료 근거(WORKLOG 시각·runs 파일·PR 번호) |
+|---|---|---|---|---|
+| **0. 환경 준비** | §2.1. 노트북에서 사람이 실행할 SQL·명령을 1단계 PR 에 함께 넣는다 | Mac 에서 1433·5432 접속, `KDMS_MOCK` CDC 켜짐, `kdms_app` 로 로그인 | 완료 | 0단계만의 기록은 없다. 간접 근거: WORKLOG 2026-10-08 11:00(Mac → 노트북 1433·5432, `kdms_app`, `runs/20261008_1056_p3_*.txt`), 2026-10-08 12:26(CDC 7개 테이블 스트리밍, `runs/20261008_1226_p4_sync1.txt`). 준비 SQL 은 PR #2·#3 |
+| **1. 골격** | Maven 프로젝트, Spring Boot 4.1, 패키지 구조, 설정 파일·`.env.example`·`.gitignore`, 관리 테이블 DDL, CLI 뼈대(`kdms status`), 웹 첫 화면, 라이선스 보고서 자동 생성(`license-maven-plugin`, SBOM(Software Bill of Materials, 구성 요소 명세) `cyclonedx-maven-plugin`), 의존성 버전 고정(Kafka 버전 정렬), 시험 준비 SQL | `mvn -o package`(오프라인) 성공, 네트워크를 끊고 `java -jar kdms.jar status` 가 두 DB 버전을 출력, 라이선스 보고서에 미확인 라이선스 0 | 완료 | PR #2·#3·#5 머지(2026-10-01). WORKLOG 2026-10-01 1단계(클라우드: 단위 시험 31, 오프라인 빌드, 라이선스 검사). runs 파일 없음. Mac 에서 네트워크를 끊고 `status` 를 실행한 기록은 없다(6단계 T-N01 로 남음) |
+| **2. 스키마 변환** | 원천 카탈로그 읽기, 규칙 엔진, DDL 생성·적용, `kdms plan` 보고서 (구현: [schema-conversion.md](schema-conversion.md)) | `KDMS_MOCK` 의 대상 DDL 이 KIS `sql/20_pg/gen/mock.sql` 의 테이블 정의와 같은 타입(차이는 규칙 파일 결정으로 설명) | 완료 | PR #4 머지(2026-10-06). WORKLOG 2026-10-01 2단계(클라우드). Mac 2026-10-06 `SourceCatalogIT`·`TargetDdlIT` 5개 통과(PR #4 설명, runs 파일 없음). 노트북 PG 적용 `runs/20261008_1056_p3_schema.txt` |
+| **3. 전체 적재 + 검증** | 구간 분할, COPY 적재, 재시작, 건수·합계·해시 검증, 행 단위 차이 (구현: [load-verify.md](load-verify.md), [normalization.md](normalization.md)) | 쓰기 없는 상태에서 MVP 테이블 전부 검증 일치(KIS 76/76 처럼 항목 수로 보고). 적재 도중 프로세스를 죽였다 다시 실행해 이어서 끝나고 검증 일치 | 완료 | PR #8 머지(2026-10-08). WORKLOG 2026-10-06 23:40(클라우드 30/30, `runs/20261006_1440_p3_cloud_load_verify.txt`), 2026-10-08 11:00(Mac→노트북 48,053행 30/30, kill -9 뒤 30/30, `runs/20261008_1056_p3_{build,schema,load,verify,kill,integration}.txt`) |
+| **4. CDC 수집·반영** | Debezium Embedded, `change_log`, 반영기, 워터마크, 지연 표시 (구현: [cdc.md](cdc.md)) | 쓰기 부하(KIS `sql/50_cdc/11_mssql_writes.sql` 와 같은 방식의 KDMS 시험 스크립트)를 넣는 동안 적재 → 반영, 쓰기 중지 후 검증 일치 | 완료 | PR #9 머지(2026-10-08). WORKLOG 2026-10-08 11:57(클라우드 30/30, `runs/20261008_0257_p4_cloud_e2e.txt` 외 3개), 2026-10-08 12:26(Mac→노트북 30/30, `runs/20261008_1226_p4_*.txt` 9개) |
+| **5. 전환 + 화면·CLI 마무리** | 전환 상태 기계, `setval`, FK, 다운타임 측정, 웹 화면(진행률·지연·검증), CLI 전 명령 | 시나리오 S1~S4(정의는 [cutover.md](cutover.md) §6, DEC-38) 통과, 전환 소요 시간 보고 | 완료 | PR #10 머지(2026-10-08). WORKLOG 2026-10-08 13:10(클라우드 S1~S4·웹, `runs/20261008_0410_p5_cloud_scenarios.txt`·`_0424_p5_cloud_s4.txt`·`_0425_p5_cloud_web.txt`), 2026-10-08 15:44(Mac→노트북 S1 13.0초·30/30·S4, `runs/20261008_1547_p5_*.txt`·`runs/20261008_1603_p5_s4.txt`). S2·S3 은 클라우드로 갈음 |
+| **6. MVP 리허설** | §8 전체를 처음부터 2회. 문서(운영 절차서) | 두 번 모두 합격, 절차서만 보고 다시 할 수 있음 | 남음 | PR #11 draft(머지 전) |
+| 7. 설치본 | jlink 로 JRE 포함 압축본(Windows·Linux), 시작 스크립트 | 자바가 없는 PC 에서 실행 | 남음 | |
+| 8. 확장 | `KDMS_SITE`(22테이블), PK 없는 테이블, DDL 변경 감지 후 캡처 인스턴스 교체, 대용량 성능 | 별도 계획 | 남음 | |
 
 ---
 
@@ -290,13 +280,13 @@ tables:                       # 테이블·컬럼 단위 덮어쓰기
 
 | ID | 위험 | 대응 |
 |---|---|---|
-| R1 | Debezium 이 요구하는 원천 권한이 금융권 DBA 승인 범위를 넘을 수 있다 | 1단계에서 최소 권한 목록을 문서화. CDC 켜기는 DBA 가 하고 KDMS 로그인은 읽기만 |
+| R1 | Debezium 이 요구하는 원천 권한이 금융권 DBA 승인 범위를 넘을 수 있다 | 1단계에서 최소 권한 목록을 문서화. CDC 켜기는 DBA 가 하고 KDMS 로그인은 읽기만. 4단계 실측으로 확인한 목록: [cdc.md](cdc.md) §7 |
 | R2 | CDC 캡처가 멈추면 원천 로그가 잘리지 않아 디스크가 찬다(`log_reuse_wait_desc = REPLICATION`) | 화면에 원천 로그 사용률·`log_reuse_wait_desc`·캡처 지연 표시, 임계값 경고 |
 | R3 | Spring Boot 와 Debezium 이 서로 다른 Kafka·Jackson 버전을 끌어온다. Kafka Connect 런타임이 Jetty·Jersey 를 함께 끌어온다 | `kafka.version` 을 Debezium 기준으로 고정, `mvn dependency:tree` 를 1단계 결과에 남김. 쓰지 않는 Jetty·Jersey 는 제외를 시도하고 엔진이 뜨는지 시험 |
 | R4 | 전체 적재 경로와 CDC 경로의 값 표현 차이(datetime 시간대, datetime2 나노초, uniqueidentifier 대소문자, money 스케일) | 같은 행을 두 경로로 넣어 해시가 같은지 확인하는 시험(T-C05) |
-| R5 | LOB 컬럼(nvarchar(max) 등)이 UPDATE 에서 바뀌지 않았을 때 CDC 이벤트 값이 어떻게 오는지 미확인 | 4단계 시험 T-C06 으로 확인. NULL 로 덮어쓸 위험이면 해당 컬럼만 원천 재조회 |
+| R5 | LOB 컬럼(nvarchar(max) 등)이 UPDATE 에서 바뀌지 않았을 때 CDC 이벤트 값이 어떻게 오는지 미확인 | 4단계 실측: 값 대신 `__debezium_unavailable_value` 가 온다. 그 컬럼만 빼고 UPDATE 한다(원천 재조회 불필요, [cdc.md](cdc.md) §2) |
 | R6 | 원천 DDL 변경(컬럼 추가)이 동기화 중에 일어남 | MVP 는 스키마 동결 전제. 감지하면 반영을 멈추고 알림 |
-| R7 | `change_log` 가 크게 늘어난다 | 반영 끝난 행은 주기적으로 삭제, 크기 표시 |
+| R7 | `change_log` 가 크게 늘어난다 | 반영 끝난 행은 반영 트랜잭션에서 바로 삭제(4단계), 반영 대기 건수 표시 |
 | R8 | 이관 중 로그·임시 데이터에 개인정보 평문 | 로그에 행 값을 쓰지 않는다(PK 만, 설정으로도 못 켜게). `change_log` 는 반영 후 삭제 |
 | R9 | 시험 환경 1대(노트북)라 부하·시간 수치가 운영과 다르다 | 수치는 "건수 대비 비율"로만 보고. KIS 처럼 AC 전원·절전 해제에서 측정 |
 
@@ -359,6 +349,8 @@ KIS `sql/30_verify/90_behavior_diff.sql` 의 B01~B14 를 KDMS 검증 보고서�
 
 ## 9. 저장소 구조 (1단계에서 만들 것)
 
+초안 1 당시의 계획이다. 지금 구조는 [../README.md](../README.md) 의 "구조" 절(기본 규칙 파일은 `config/` 가 아니라 `src/main/resources/kdms-rules.yml`, 관리 테이블은 버전마다 파일 하나).
+
 ```
 KDMS/
 ├ pom.xml
@@ -385,6 +377,6 @@ KDMS/
 
 ## 10. 승인 때 정할 것
 
-1. §1.2 기본값(특히 Java 21 빌드·17 바이트코드, Spring Boot 4.1, 시험 원천을 `KDMS_MOCK` 사본으로 두는 것).
-2. MVP 테이블 범위(§3.1: `KDMS_MOCK` 의 PK 있는 테이블 전부).
-3. 0단계 노트북 작업(복원·CDC 켜기·PG 역할 생성)을 사용자가 직접 할지, Remote Control 로 노트북 세션에 맡길지.
+1. §1.2 기본값(특히 Java 21 빌드·17 바이트코드, Spring Boot 4.1, 시험 원천을 `KDMS_MOCK` 사본으로 두는 것). → DEC-10~DEC-19 (PR #1 머지로 채택, 그대로 구현됨. 사용자가 항목별로 승인한 기록은 없다)
+2. MVP 테이블 범위(§3.1: `KDMS_MOCK` 의 PK 있는 테이블 전부). → DEC-43 (실측 7개 테이블)
+3. 0단계 노트북 작업(복원·CDC 켜기·PG 역할 생성)을 사용자가 직접 할지, Remote Control 로 노트북 세션에 맡길지. → DEC-44 (사용자가 직접)

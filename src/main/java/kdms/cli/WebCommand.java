@@ -1,6 +1,5 @@
 package kdms.cli;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -34,21 +33,26 @@ public class WebCommand implements Callable<Integer> {
             spec.commandLine().getErr().println("주의: 웹 화면을 " + cfg.web().address()
                     + " 에 엽니다. 인증이 없으므로 신뢰하는 망에서만 쓴다.");
         }
-        start(cfg, rules);
+        start(cfg, rules, options.args());
         spec.commandLine().getOut().println("웹 화면: http://" + cfg.web().address() + ":" + cfg.web().port() + "/");
         return RUNNING;
     }
 
+    /** 시험용: 화면에서 명령을 실행하지 않는다 */
     public static org.springframework.context.ConfigurableApplicationContext start(KdmsConfig cfg, Rules rules) {
+        return start(cfg, rules, null);
+    }
+
+    /** @param cliArgs 화면 버튼이 명령을 실행할 때 붙일 설정 옵션. null 이면 버튼을 쓰지 않는다 */
+    public static org.springframework.context.ConfigurableApplicationContext start(KdmsConfig cfg, Rules rules, java.util.List<String> cliArgs) {
+        // 기본 속성(properties)은 application.yml 보다 우선순위가 낮아 web.port 가 무시됐다 → 명령줄 인자로 넘긴다
         return new SpringApplicationBuilder(KdmsWebApplication.class)
-                .properties(Map.of(
-                        "server.address", cfg.web().address(),
-                        "server.port", String.valueOf(cfg.web().port())))
                 .initializers(ctx -> {
                     ctx.getBeanFactory().registerSingleton("kdmsConfig", cfg);
                     ctx.getBeanFactory().registerSingleton("kdmsRulesSummary",
                             new KdmsWebApplication.RulesSummary(StatusCommand.rulesSummary(cfg, rules)));
+                    ctx.getBeanFactory().registerSingleton("kdmsTasks", new kdms.web.TaskService(cliArgs));
                 })
-                .run();
+                .run("--server.address=" + cfg.web().address(), "--server.port=" + cfg.web().port());
     }
 }

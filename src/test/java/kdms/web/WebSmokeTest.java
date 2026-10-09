@@ -29,7 +29,7 @@ class WebSmokeTest {
     @BeforeAll
     static void start() {
         KdmsConfig.Endpoint nowhere = new KdmsConfig.Endpoint("127.0.0.1", 1, "db", "u", "never-shown", Map.of());
-        KdmsConfig cfg = new KdmsConfig("smoke", nowhere, nowhere, new KdmsConfig.LoadSettings(1, 1),
+        KdmsConfig cfg = new KdmsConfig("smoke", nowhere, nowhere, new KdmsConfig.LoadSettings(1, 1, "snapshot"), new KdmsConfig.SyncSettings(1000, 500, 10),
                 new KdmsConfig.TableSelection(List.of("dbo.*"), List.of()), "", new KdmsConfig.WebSettings("127.0.0.1", 0));
         ctx = WebCommand.start(cfg, RulesLoader.load(null));
         int port = ((WebServerApplicationContext) ctx).getWebServer().getPort();
@@ -65,5 +65,34 @@ class WebSmokeTest {
         assertThat(r.statusCode()).isEqualTo(200);
         assertThat(r.headers().firstValue("Content-Type")).hasValueSatisfying(v -> assertThat(v).contains("json"));
         assertThat(r.body()).contains("\"connected\":false").contains("\"jobName\":\"smoke\"").doesNotContain("never-shown");
+    }
+
+    private static HttpResponse<String> post(String path, String token) throws Exception {
+        HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(base + path)).POST(HttpRequest.BodyPublishers.noBody());
+        if (token != null) {
+            b.header("X-KDMS-Token", token);
+        }
+        return http.send(b.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    @Test
+    void 작업_API_는_대상에_못_붙으면_오류를_싣는다() throws Exception {
+        HttpResponse<String> r = get("/api/job");
+        assertThat(r.statusCode()).isEqualTo(200);
+        assertThat(r.body()).contains("\"error\":\"대상").contains("\"view\":null").doesNotContain("never-shown");
+        assertThat(get("/api/tasks").body()).isEqualTo("[]");
+    }
+
+    @Test
+    void 명령_실행은_화면_토큰이_있어야_한다() throws Exception {
+        assertThat(post("/api/tasks/sync", null).statusCode()).isEqualTo(403);
+        assertThat(post("/api/tasks/sync", "wrong").statusCode()).isEqualTo(403);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("name=\"kdms-token\" content=\"([0-9a-f]+)\"").matcher(get("/").body());
+        assertThat(m.find()).isTrue();
+        // 시험 화면은 명령 실행 없이 띄웠다 → 토큰이 맞아도 409
+        HttpResponse<String> r = post("/api/tasks/sync", m.group(1));
+        assertThat(r.statusCode()).isEqualTo(409);
+        assertThat(r.body()).contains("명령을 실행하지 않도록");
+        assertThat(post("/api/tasks/reset", m.group(1)).statusCode()).isEqualTo(409);
     }
 }

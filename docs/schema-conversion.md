@@ -1,5 +1,7 @@
 # 스키마 변환 (2단계)
 
+> 상태: 완료 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: PR #4(2단계 머지 2026-10-06), WORKLOG 2026-10-01 2단계
+
 [plan.md](plan.md) §6 2단계: 원천 카탈로그 읽기 → 변환 규칙 적용 → 대상 DDL(Data Definition Language, 정의 언어) 생성·적용 → `kdms plan` 보고서.
 규칙 파일 형식은 [plan.md](plan.md) §5, 기본값은 `src/main/resources/kdms-rules.yml`(주석에 키·허용 값), KDMS_MOCK 용 덮어쓰기는 `config/kdms-rules.yml`.
 
@@ -70,7 +72,7 @@
 
 예상 경고 9건(트리거 `trg_rating_audit`, uniqueidentifier·rowversion 타입, `getdate()`·`sysdatetime()`·`newsequentialid()`·`suser_sname()` 기본값, 자동 변환 안 하는 객체 6개)과
 주의 3건(CI 비교 B01·B03·B06, 끝 공백 B02·B04, CP949 바이트 B05·A03).
-`--scan` 을 붙이면 KIS 가 심은 NUL(`dbo.issuer.issuer_nm`) 때문에 오류 1건으로 막힌다. NUL 을 어떻게 처리할지(`text.nul_char: fail | strip | replace`)는 3단계 적재 전에 정한다.
+`--scan` 을 붙이면 KIS 가 심은 NUL(`dbo.issuer.issuer_nm`) 때문에 오류 1건으로 막힌다. 3단계에서 `config/kdms-rules.yml` 에 이 컬럼만 `nul_char: replace`(U+FFFD) 로 정했다(2026-10-06, [load-verify.md](load-verify.md) §4). 기본 규칙 그대로면 여전히 막힌다.
 
 ## 5. 원천 권한
 

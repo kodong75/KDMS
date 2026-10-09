@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="kdms-token" th:content="${token}">
+    <meta name="kdms-actions" th:content="${actions}">
     <title>KDMS</title>
     <!-- 외부 CDN 없음: CSS·JS 는 jar 안 static/ 에서만 읽는다(plan.md T-N02) -->
     <link rel="stylesheet" th:href="@{/kdms.css}">
@@ -12,16 +14,80 @@
 <header>
     <h1>KDMS</h1>
     <span class="sub">MS-SQL → PostgreSQL 데이터 이관</span>
+    <span class="job">작업 <b th:text="${report.jobName}">job</b> <span id="job-status" class="badge">확인 중</span></span>
     <span class="meta" th:text="|버전 ${report.kdmsVersion}|">버전</span>
 </header>
 
 <main>
-    <section class="summary">
-        <div><span class="label">작업</span> <span th:text="${report.jobName}">job</span></div>
-        <div><span class="label">변환 규칙</span> <span th:text="${report.rulesSummary}">rules</span></div>
-        <div><span class="label">확인 시각</span>
-            <span th:text="${#temporals.format(report.checkedAt, 'yyyy-MM-dd HH:mm:ss')}">time</span>
-            <button type="button" id="refresh">다시 확인</button>
+    <ol id="flow" class="flow" aria-label="이관 단계">
+        <li data-s="SCHEMA_DONE">스키마</li>
+        <li data-s="LOADING">전체 적재</li>
+        <li data-s="SYNCING">변경분 반영</li>
+        <li data-s="CUTOVER">전환</li>
+        <li data-s="VERIFIED">검증 통과</li>
+        <li data-s="DONE">완료</li>
+    </ol>
+
+    <p id="job-error" class="error" hidden></p>
+
+    <section class="cards">
+        <article class="card" id="card-sync">
+            <h2>변경분 반영(CDC)</h2>
+            <p class="big"><span id="lag">-</span><small>지연</small></p>
+            <dl>
+                <dt>수집 · 반영 · 대기</dt><dd id="sync-counts">-</dd>
+                <dt>원천 마지막 변경</dt><dd id="sync-src">-</dd>
+                <dt>kdms sync</dt><dd id="sync-state">-</dd>
+            </dl>
+        </article>
+        <article class="card" id="card-load">
+            <h2>전체 적재</h2>
+            <p class="big"><span id="load-done">-</span><small>테이블</small></p>
+            <div class="bar"><span id="load-bar"></span></div>
+            <dl>
+                <dt>적재한 행</dt><dd id="load-rows">-</dd>
+            </dl>
+        </article>
+        <article class="card" id="card-verify">
+            <h2>검증</h2>
+            <p class="big"><span id="verify-result">-</span><small>일치 항목</small></p>
+            <dl>
+                <dt>마지막 검증</dt><dd id="verify-at">-</dd>
+            </dl>
+        </article>
+        <article class="card" id="card-cutover">
+            <h2>전환</h2>
+            <p class="big"><span id="cutover-time">-</span><small>예상 다운타임</small></p>
+            <ol id="cutover-steps" class="steps"></ol>
+        </article>
+    </section>
+
+    <section class="panel" id="actions">
+        <h2>실행</h2>
+        <p class="hint" id="actions-off" hidden>이 화면은 명령 실행 없이 띄웠다. 명령줄에서 실행한다.</p>
+        <div class="buttons">
+            <button type="button" data-run="sync" title="원천 변경을 받아 적재가 끝난 테이블에 반영한다. 처음이면 워터마크를 기록한다">동기화 시작</button>
+            <button type="button" data-stop="sync" title="진행 중 배치를 마치고 멈춘다(Ctrl+C 와 같다)">동기화 중지</button>
+            <button type="button" data-run="load" title="워터마크가 기록된 뒤에 전체 적재한다. 끝난 구간은 건너뛴다">전체 적재</button>
+            <button type="button" data-run="verify" title="건수·합계·해시를 비교한다. 데이터는 바꾸지 않는다">검증</button>
+            <button type="button" data-run="cutover" class="primary"
+                    data-confirm="원천 앱 쓰기를 멈췄습니까? 전환은 마지막 반영 → 검증 → IDENTITY·SEQUENCE → FK 순서로 진행합니다. 이 화면에서 띄운 동기화는 먼저 멈춥니다."
+                    title="원천 쓰기를 멈춘 뒤에 누른다">전환 시작</button>
+            <button type="button" data-stop="cutover" title="진행 중 단계를 마치고 멈춘다">전환 중지</button>
+        </div>
+        <p class="hint">지우는 명령(<code>kdms reset</code>, <code>kdms schema --replace</code>)은 명령줄에서만 한다.</p>
+        <div id="tasks"></div>
+    </section>
+
+    <section class="panel">
+        <h2>테이블</h2>
+        <div class="scroll">
+            <table class="grid">
+                <thead>
+                <tr><th>원천 → 대상</th><th>상태</th><th>적재</th><th class="num">적재 행</th><th class="num">반영</th><th class="num">대기</th><th>검증</th></tr>
+                </thead>
+                <tbody id="tables"><tr><td colspan="7" class="muted">확인 중</td></tr></tbody>
+            </table>
         </div>
     </section>
 
@@ -50,11 +116,17 @@
         </article>
     </section>
 
-    <section class="next">
-        <h2>다음 단계</h2>
-        <p>1단계(골격)는 접속·버전 확인까지다. 스키마 변환(2단계), 전체 적재·검증(3단계), CDC 반영(4단계), 전환(5단계)은 차례로 이 화면에 붙는다.</p>
-        <p>상태 JSON: <a th:href="@{/api/status}">/api/status</a></p>
+    <section class="panel">
+        <h2>기록</h2>
+        <ul id="events" class="events"><li class="muted">확인 중</li></ul>
     </section>
+
+    <footer class="next">
+        <span th:text="|변환 규칙 ${report.rulesSummary}|">rules</span> ·
+        <span th:text="|접속 확인 ${#temporals.format(report.checkedAt, 'yyyy-MM-dd HH:mm:ss')}|">time</span>
+        <button type="button" id="refresh">다시 확인</button> ·
+        JSON <a th:href="@{/api/job}">/api/job</a> · <a th:href="@{/api/status}">/api/status</a>
+    </footer>
 </main>
 </body>
 </html>

@@ -32,8 +32,11 @@ public final class SchemaApplier {
     public record Job(String jobName, String srcServer, String srcDatabase, String tgtDatabase, String configSha256) {
     }
 
-    /** @param dropped --replace 로 지운 대상 테이블·시퀀스 */
-    public record Result(long jobId, int statements, List<String> dropped) {
+    /**
+     * @param dropped --replace 로 지운 대상 테이블·시퀀스
+     * @param skipped 적재 뒤·전환 단계에서 이미 있어 건너뛴 인덱스·제약 수(다시 실행해도 안전하게)
+     */
+    public record Result(long jobId, int statements, List<String> dropped, int skipped) {
     }
 
     /** 사람이 고칠 수 있는 이유로 적용하지 않음(이미 있는 테이블 등) */
@@ -59,6 +62,10 @@ public final class SchemaApplier {
                 ps.execute();
             }
             String status = jobStatus(c, job.jobName());
+            String running = phase == Phase.PRE_LOAD ? kdms.cdc.CaptureStore.running(c, job.jobName()) : null;
+            if (running != null) {
+                throw new Refused(running + " 이 작업 " + job.jobName() + " 을 실행하고 있다. 멈춘 뒤 다시 한다");
+            }
             if (phase == Phase.PRE_LOAD && status != null && STARTED.contains(status)) {
                 throw new Refused("작업 " + job.jobName() + " 은 이미 " + status + " 단계다. 테이블을 다시 만들지 않는다");
             }
@@ -85,7 +92,15 @@ public final class SchemaApplier {
                 }
             }
 
-            List<String> stmts = DdlWriter.statements(plan, phase);
+            List<String> stmts = new ArrayList<>();
+            int skipped = 0;
+            for (String sql : DdlWriter.statements(plan, phase)) {
+                if (phase != Phase.PRE_LOAD && alreadyThere(c, sql)) {
+                    skipped++;
+                } else {
+                    stmts.add(sql);
+                }
+            }
             for (String sql : stmts) {
                 try {
                     st.execute(sql);
@@ -97,16 +112,50 @@ public final class SchemaApplier {
             long jobId = phase == Phase.PRE_LOAD ? registerJob(c, plan, job) : existingJobId(c, job.jobName());
             if (jobId > 0) {
                 log(c, jobId, "schema " + phase.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-') + " 적용: 문장 " + stmts.size()
-                        + "개, 테이블 " + plan.tables().size() + "개" + (dropped.isEmpty() ? "" : ", 다시 만든 것 " + dropped.size() + "개"));
+                        + "개, 테이블 " + plan.tables().size() + "개" + (dropped.isEmpty() ? "" : ", 다시 만든 것 " + dropped.size() + "개")
+                        + (skipped > 0 ? ", 이미 있어 건너뜀 " + skipped + "개" : ""));
             }
             c.commit();
-            return new Result(jobId, stmts.size(), List.copyOf(dropped));
+            return new Result(jobId, stmts.size(), List.copyOf(dropped), skipped);
         } catch (SQLException | RuntimeException e) {
             c.rollback();
             throw e;
         } finally {
             c.setAutoCommit(auto);
         }
+    }
+
+    private static final java.util.regex.Pattern CREATE_INDEX = java.util.regex.Pattern.compile(
+            "^CREATE (?:UNIQUE )?INDEX (\"(?:[^\"]|\"\")*\") ON (\"(?:[^\"]|\"\")*\")\\.");
+    private static final java.util.regex.Pattern ADD_CONSTRAINT = java.util.regex.Pattern.compile(
+            "^ALTER TABLE (\"(?:[^\"]|\"\")*\"\\.\"(?:[^\"]|\"\")*\") ADD CONSTRAINT (\"(?:[^\"]|\"\")*\")");
+
+    /** 적재 뒤·전환 DDL 이 만드는 인덱스·제약이 이미 있나(kdms load 가 끝에 적용하고 사람이 다시 실행해도 안전하게) */
+    static boolean alreadyThere(Connection c, String sql) throws SQLException {
+        java.util.regex.Matcher m = CREATE_INDEX.matcher(sql);
+        if (m.find()) {
+            try (PreparedStatement ps = c.prepareStatement("SELECT to_regclass(?) IS NOT NULL")) {
+                ps.setString(1, m.group(2) + "." + m.group(1));
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getBoolean(1);
+                }
+            }
+        }
+        m = ADD_CONSTRAINT.matcher(sql);
+        if (m.find()) {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = to_regclass(?) AND conname = ?)")) {
+                ps.setString(1, m.group(1));
+                String q = m.group(2);
+                ps.setString(2, q.substring(1, q.length() - 1).replace("\"\"", "\""));
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getBoolean(1);
+                }
+            }
+        }
+        return false;
     }
 
     /** 대상에 이미 있는 테이블·시퀀스("스키마"."이름") */
@@ -167,6 +216,8 @@ public final class SchemaApplier {
                 jobId = rs.getLong(1);
             }
         }
+        // 같은 job_id 를 다시 쓰므로 이전 워터마크·변경·Debezium 오프셋도 지운다(테이블을 새로 만들면 그 위치는 의미가 없다)
+        kdms.cdc.CaptureStore.clear(c, jobId);
         // 적재 전이므로 테이블 목록을 새로 쓴다(load_chunk 도 함께 지워진다)
         try (PreparedStatement ps = c.prepareStatement("DELETE FROM kdms.job_table WHERE job_id = ?")) {
             ps.setLong(1, jobId);
