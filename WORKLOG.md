@@ -156,3 +156,22 @@
 - 이슈 ID: B06(해결 확인), B07, C01, C02, C03, C04, C05, D07, E04
 - 남은 일: C04(load 끝 안내) 수정 뒤 DB 재실행 안 함. 노트북에서 S2·S3 은 하지 않았다. 6단계 리허설은 PR #11(draft).
 - runs 파일: `runs/20261008_0410_p5_cloud_scenarios.txt`, `runs/20261008_0424_p5_cloud_s4.txt`, `runs/20261008_0425_p5_cloud_web.txt`, `runs/20261008_1547_p5_{build,reset,schema,sync,load,cutover,status}.txt`, `runs/20261008_1603_p5_s4.txt`
+
+## 2026-10-10 11:25 · 6단계 · MVP 리허설 2회 · Mac(노트북 DB)
+- 목적: plan.md §6 6단계 완료 기준(§8 시험 32개를 처음부터 2회, 두 번 모두 합격, 절차서만 보고 다시 할 수 있음)을 노트북 원천 MS-SQL·대상 PG 로 확인.
+- 환경: Mac(Java 21.0.12.1, Darwin arm64, 브랜치 claude/stage6-lis0lo 4d8c706 / 2회차 다시는 8b98bf9) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK, 로그인 kodong_ms, SQL Agent Running / PG 5432 kdms, kdms_app). Mac 창 main(rehearsal.sh)·sub(인터넷 차단), 노트북 PowerShell 7 창 1·2. 인터넷은 Mac pf 방화벽으로 끊음(LAN·루프백만 허용, DEC-49).
+- 실행: docs/rehearsal.md 순서. Mac `bash scripts/rehearsal.sh 1`, `… 2`, 노트북 단계마다 `./scripts/Invoke-KdmsRehearsal.ps1 -Step restore|writes -Sec 20|tc10|writes -Sec 300|capture-stop|capture-start`.
+- 결과:
+
+| 회차 | 시작 | 결과 | 예상 다운타임 | 전환 검증 | 수집·반영 | 걸린 시간 | runs |
+|---|---|---|---|---|---|---|---|
+| 1 | 11:44 | **합격 32/32** | 15.0초 | 30/30 | 9,383 | 12분 42초 | `runs/20261010_1144_p6_r1_{log,score}.txt` |
+| 2(첫 시도) | 11:59 | 불합격 17/32 | 2.2초(전환 실패) | 30/30(L) | 792 | 13분 9초 | `runs/20261010_1159_p6_r2_{log,score}.txt` |
+| 2(다시) | 12:58 | **합격 32/32** | 16.2초 | 30/30 | 9,555 | 10분 31초 | `runs/20261010_1258_p6_r2_{log,score}.txt` |
+
+  두 합격 회차 모두 오프라인 빌드·단위 시험 107개 통과, `kdms check --probe` 실패 0(L: 통과 33·경고 2·건너뜀 1, C: 통과 34·경고 2), T-N01 인터넷 차단(시작·끝) 확인, T-N03 외부 연결은 192.168.0.12:1433·5432 뿐.
+- 오류 → 원인 → 해결(issues.md):
+  1. 11:25 1회차 첫 시도: T-N01 확인이 "인터넷이 연결돼 있다" → `sudo route -n delete default` 로 지운 기본 경로를 macOS 가 다시 만듦(E06) → pf 방화벽으로 바꿈(DEC-49).
+  2. 같은 시도의 오프라인 빌드 실패: `WebSmokeTest` 5개 `Connect` 오류 → pf 규칙이 127.0.0.1 까지 막음(E07) → `set skip on lo0`. 결과 원문 `runs/20261010_1125_p6_r1_log.txt`.
+  3. 방화벽이 리허설 중 저절로 꺼짐(E08, 원인 미확인). `-E` 로 켠 뒤에도 13:10 에 `pf not enabled`. 합격 두 회차는 시작·끝 모두 차단 확인이었다.
+  4. 2회차 첫 시도 12:04:32~33 Mac→노트북 1433·5432 `Connect timed out` → `reset` 실패 → 대상이 초기화되지 않아 C 단계 15개 불합격(E09). 코드 문제 아님 → reset 실패 시 회차를 멈추게 함(8b98bf9) 뒤 2회차 다시.
