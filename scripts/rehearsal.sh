@@ -244,6 +244,15 @@ mon_stop() {
 
 net_blocked() { ! curl -s -m 5 -o /dev/null https://repo.maven.apache.org/maven2/ 2>/dev/null; }
 
+# kd_reset 이름 : reset 이 실패하면(노트북 접속 끊김 등) 대상이 초기화되지 않은 채 다음 시험이 이어져 줄줄이 틀린다 → 회차를 멈춘다
+kd_reset() {
+    kd "$1" reset --yes && return 0
+    say "reset 실패(종료 코드 위). 대상이 처음 상태가 아니라 이 회차를 멈춘다. 접속 확인: nc -vz ${SRC_EP%:*} ${SRC_EP##*:}; nc -vz ${TGT_EP%:*} ${TGT_EP##*:}"
+    say "회차를 처음부터 다시 한다(docs/rehearsal.md §6)"
+    mon_stop
+    exit 1
+}
+
 # ================================================================= 시작
 
 : > "$LOG"
@@ -263,7 +272,7 @@ elif [ -z "$HOOK" ]; then
     echo ""
     echo "  인터넷이 연결돼 있다. T-N01 은 인터넷을 끊고(LAN 은 그대로) 해야 한다. docs/rehearsal.md §2 의 명령:"
     echo "    printf 'set skip on lo0\\npass out quick inet from any to 192.168.0.0/24\\nblock drop out quick all\\n' > /tmp/kdms-offline.pf"
-    echo "    sudo pfctl -f /tmp/kdms-offline.pf -e      # LAN(192.168.0.x)·자기 자신만 열고 나머지 차단. 되돌리기: sudo pfctl -f /etc/pf.conf; sudo pfctl -d"
+    echo "    sudo pfctl -f /tmp/kdms-offline.pf -E      # LAN(192.168.0.x)·자기 자신만 열고 나머지 차단. 되돌리기: sudo pfctl -f /etc/pf.conf; sudo pfctl -d"
     echo "  끊었으면 Enter. 끊지 않고 진행하려면 s Enter (T-N01 미시행)"
     read -r a
     if net_blocked; then NET0=1; say "인터넷 연결 안 됨(사람이 끊음)"; else NET0=0; say "인터넷 연결됨(T-N01 미시행)"; fi
@@ -310,7 +319,7 @@ kd plan_nulfail plan --scan -c "$NULCFG" -o "$W/plan_nulfail"
 
 # ================================================================= L. 원천 쓰기 없는 적재·검증·전환(T-L01~T-L16)
 head_line "L. 원천 쓰기 없음: 적재 → 검증 → 전환 → 점검"
-kd l_reset reset --yes
+kd_reset l_reset
 kd l_schema schema --replace
 kd l_load_nulfail load --no-cdc -c "$NULCFG"
 
@@ -328,7 +337,7 @@ kd l_check check --probe
 
 # ================================================================= C. 원천 쓰기 중 적재·반영·전환(T-C01~T-C12)
 head_line "C. 원천 쓰기 중: 동기화 → 적재 → 강제 종료·캡처 중지 → 전환 → 점검"
-kd c_reset reset --yes
+kd_reset c_reset
 kd c_schema schema --replace
 kd c_load_nowm load      # T-C02: 워터마크 없이 적재하면 거부
 
@@ -346,7 +355,7 @@ kd_bg c_sync_tc10 sync
 P=$BG_PID
 wait_pid "$P" 120
 bg_done c_sync_tc10 $?
-kd c_reset2 reset --yes
+kd_reset c_reset2
 
 # 본 시험
 kd_bg c_sync1 sync

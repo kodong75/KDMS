@@ -54,12 +54,13 @@ git fetch origin && git checkout claude/stage6-lis0lo
 
 ```bash
 printf 'set skip on lo0\npass out quick inet from any to 192.168.0.0/24\nblock drop out quick all\n' > /tmp/kdms-offline.pf
-sudo pfctl -f /tmp/kdms-offline.pf -e      # 규칙 적용 + 방화벽 켜기(ALTQ 경고는 무시)
+sudo pfctl -f /tmp/kdms-offline.pf -E      # 규칙 적용 + 방화벽 켜기(참조 토큰 방식, ALTQ 경고는 무시)
 curl -m 5 -s -o /dev/null -w '%{http_code}\n' https://repo.maven.apache.org/maven2/   # 000 이면 끊긴 것
 nc -vz 192.168.0.12 1433; nc -vz 192.168.0.12 5432      # 노트북은 succeeded
 ```
 
 - 첫 줄 `set skip on lo0` 을 빼면 Mac 안의 127.0.0.1 연결까지 막혀 빌드의 웹 시험(`WebSmokeTest`)이 `Connect` 오류로 실패한다(issues.md E07).
+- `-e` 가 아니라 `-E` 로 켠다. `-e` 로 켜면 macOS 의 다른 서비스가 자기 참조를 풀 때 방화벽이 함께 꺼질 수 있다(10-10 리허설 중 두 번 꺼짐, 추정. issues.md E08). 회차 사이에 `sudo pfctl -s info | head -1` 이 `Enabled` 인지 본다.
 - 기본 경로를 지우는 방법(`sudo route -n delete default`)은 macOS 가 몇 분 안에 경로를 다시 만들어 쓰지 않는다(issues.md E06).
 
 되돌리기(두 회차가 끝난 뒤): `sudo pfctl -f /etc/pf.conf; sudo pfctl -d`.
@@ -142,5 +143,6 @@ git push
 | 1. 빌드 `Cannot access central … in offline mode` | 인터넷을 되돌리고 §2 의 `./mvnw -B clean package -DskipTests` 한 번 → 다시 끊고 처음부터 |
 | `워터마크 기록이 120초 안에 나오지 않음` | 노트북 SQL Agent·CDC(1번 되돌림 결과 파일). `out/rehearsal/<시각>_r<회차>/c_sync1.txt` |
 | T-C10 의 `sync` 가 120초 뒤 강제 종료됨 | 3번 `tc10` 이 실패했거나 Enter 를 먼저 눌렀다. 노트북 `runs\…_p6_tc10.txt` |
+| `reset 실패 … 이 회차를 멈춘다` | Mac↔노트북 접속이 잠깐 끊겼다(issues.md E09). 화면의 `nc -vz` 두 줄이 succeeded 인지 보고 그 회차를 처음부터 |
 | T-C09 불합격(경고가 안 나옴) | 5번을 Enter 전에 실행하지 않았다. 다음 회차에서 순서대로 |
 | 그 밖 | [runbook.md](runbook.md) §9, [test-env.md](test-env.md) §7 |
