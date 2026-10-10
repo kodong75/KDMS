@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" role="img" aria-label="KDMS SW 아키텍처">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS SW 아키텍처">
 <style>@font-face{font-family:'Pretendard Variable';font-weight:45 920;src:url('../assets/fonts/PretendardVariable.woff2') format('woff2-variations');}</style>
 <defs>
-<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#164B8C"/></marker>
-<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F74C4"/></marker>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E6B4F"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E9E6E"/></marker>
 <symbol id="i-account_tree" viewBox="0 -960 960 960"><path d="M604-120v-125H450v-410h-93v130H80v-315h277v125h247v-125h276v315H604v-130h-94v350h94v-130h276v315H604ZM140-780v195-195Zm524 405v195-195Zm0-405v195-195Zm0 195h156v-195H664v195Zm0 405h156v-195H664v195ZM140-585h157v-195H140v195Z"/></symbol>
 <symbol id="i-cable" viewBox="0 -960 960 960"><path d="M190-120q-13 0-21.5-8.5T160-150v-50h-40v-150q0-13 8.5-21.5T150-380h50v-310q0-64 47-107t113-43q63 0 106.5 43.5T510-690v420q0 38 26 64t64 26q41 0 70.5-25.5T700-270v-310h-50q-13 0-21.5-8.5T620-610v-150h40v-50q0-13 8.5-21.5T690-840h80q13 0 21.5 8.5T800-810v50h40v150q0 13-8.5 21.5T810-580h-50v310q0 64-47 107t-113 43q-63 0-106.5-43.5T450-270v-420q0-38-26-64t-64-26q-41 0-70.5 25.5T260-690v310h50q13 0 21.5 8.5T340-350v150h-40v50q0 13-8.5 21.5T270-120h-80Z"/></symbol>
 <symbol id="i-database_upload" viewBox="0 -960 960 960"><path d="M506-120v-.5.5q-33 1-97.5-5T280-148.5q-64-17.5-112-49T120-280q0 51 48 82.5t112 49Q344-131 408.5-125t97.5 5Zm-27-214v-1 1q-52 0-95-4.5T305-352q-36-9-67-21.5T180-402q27 16 58 28.5t67 21.5q36 9 79 13.5t95 4.5Zm1-274q86 0 176.5-26.5T773-694q-27-32-117.5-59T480-780q-88 0-177 26t-117 60q28 35 116 60.5T480-608Zm235 492h30v-171l77 77 21-21-113-113-113 113 21 21 77-77v171ZM596-95.5Q540-151 540-229q0-79 56-135t134-56q78 0 134 56t56 135q0 78-56 133.5T730-40q-78 0-134-55.5ZM485-180q3 16 8.5 31t12.5 29q-33 1-97.5-5T280-148.5q-64-17.5-112-49T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v226q-14-7-29-12.5t-31-8.5v-143q-59 33-138 51.5T479-548q-85 0-164.5-18.5T180-618v155q54 32 133 50.5T479-394q17 0 33-.5t33-2.5q-13 14-23 30t-18 33h-25q-105 0-174.5-18T180-402v126q5 17 35 34.5t73.5 31q43.5 13.5 95.5 22t101 8.5Z"/></symbol>
@@ -22,127 +22,127 @@
 <symbol id="i-web" viewBox="0 -960 960 960"><path d="M140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm0-60h461v-163H140v163Zm521 0h159v-386H661v386ZM140-443h461v-163H140v163Z"/></symbol>
 </defs>
 <rect width="1600" height="900" fill="#FFFFFF"/>
-<rect x="50" y="38" width="7" height="44" rx="3.5" fill="#164B8C"/>
-<text x="70" y="68" font-size="30" font-weight="800" fill="#0A2342">KDMS SW 아키텍처</text>
-<text x="70" y="96" font-size="16" font-weight="500" fill="#3F4E61">Maven 단일 모듈 · 패키지 계층 · 위 계층만 아래 계층을 쓴다</text>
-<text x="1550" y="68" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D02 · v0.1 · 2026-10-06</text>
-<rect x="100" y="112" width="1450" height="146" rx="18" fill="#F1F6FC" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="122" y="146" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">진입 계층</text>
-<text x="122" y="169" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">같은 기능을</text>
-<text x="122" y="189" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">두 입구로</text>
-<rect x="100" y="272" width="1450" height="160" rx="18" fill="#E8F1FB" stroke="#164B8C" stroke-width="2"/>
-<text x="122" y="306" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">이관 엔진</text>
-<text x="122" y="329" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">단계마다 채운다</text>
-<text x="122" y="349" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">(아래 줄 = 구현 단계)</text>
-<rect x="100" y="446" width="1450" height="160" rx="18" fill="#F1F6FC" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="122" y="480" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">공통 계층</text>
-<text x="122" y="503" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">모든 엔진이</text>
-<text x="122" y="523" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">함께 쓴다</text>
-<rect x="100" y="620" width="1450" height="160" rx="18" fill="#F1F6FC" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="122" y="654" font-size="20" font-weight="800" fill="#0A2342" text-anchor="start">외부 라이브러리</text>
-<text x="122" y="677" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">모두 jar 에 포함</text>
-<text x="122" y="697" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="start">실행 중 다운로드 0</text>
-<line x1="70" y1="120" x2="70" y2="360" stroke="#164B8C" stroke-width="2.4"/>
-<line x1="70" y1="500" x2="70" y2="776" stroke="#164B8C" stroke-width="2.4" marker-end="url(#arrow-sync)"/>
-<path d="M1082.0,352.0 L1142.0,352.0" fill="none" stroke="#1F74C4" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
-<rect x="290" y="126" width="400" height="118" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-deployed_code" x="470.0" y="129.0" width="40" height="40" fill="#164B8C"/>
-<text x="490.0" y="197.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">Kdms (main)</text>
-<text x="490.0" y="218.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">단일 jar 시작점</text>
-<text x="490.0" y="237.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">--no-web 이면 CLI 만</text>
-<rect x="710" y="126" width="400" height="118" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-terminal" x="890.0" y="129.0" width="40" height="40" fill="#164B8C"/>
-<text x="910.0" y="197.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.cli</text>
-<text x="910.0" y="218.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">picocli 명령 · status · init · web</text>
-<text x="910.0" y="237.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">plan · load · sync · cutover · verify</text>
-<rect x="1130" y="126" width="400" height="118" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-web" x="1310.0" y="129.0" width="40" height="40" fill="#164B8C"/>
-<text x="1330.0" y="197.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.web</text>
-<text x="1330.0" y="218.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">Spring MVC · Thymeleaf · 상태 REST</text>
-<text x="1330.0" y="237.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">127.0.0.1 에만 바인딩</text>
-<rect x="290" y="291" width="186" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-schema" x="363.0" y="296.0" width="40" height="40" fill="#164B8C"/>
-<text x="383.0" y="364.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.ddl</text>
-<text x="383.0" y="385.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">대상 DDL 생성·적용</text>
-<text x="383.0" y="404.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">2단계</text>
-<rect x="492" y="291" width="186" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-database_upload" x="565.0" y="296.0" width="40" height="40" fill="#164B8C"/>
-<text x="585.0" y="364.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.load</text>
-<text x="585.0" y="385.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">구간 분할 · COPY</text>
-<text x="585.0" y="404.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">3단계</text>
-<rect x="694" y="291" width="186" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-fact_check" x="767.0" y="296.0" width="40" height="40" fill="#164B8C"/>
-<text x="787.0" y="364.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.verify</text>
-<text x="787.0" y="385.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">건수 · 합계 · 해시</text>
-<text x="787.0" y="404.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">3단계</text>
-<rect x="896" y="291" width="186" height="122" rx="12" fill="#D3E5F8" stroke="#0F3C78" stroke-width="2.4"/>
-<use href="#i-sync" x="969.0" y="296.0" width="40" height="40" fill="#164B8C"/>
-<text x="989.0" y="364.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.cdc</text>
-<text x="989.0" y="385.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">Debezium Embedded</text>
-<text x="989.0" y="404.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">4단계</text>
-<rect x="1142" y="291" width="186" height="122" rx="12" fill="#D3E5F8" stroke="#0F3C78" stroke-width="2.4"/>
-<use href="#i-published_with_changes" x="1215.0" y="296.0" width="40" height="40" fill="#164B8C"/>
-<text x="1235.0" y="364.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.apply</text>
-<text x="1235.0" y="385.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">LSN 순서 멱등 반영</text>
-<text x="1235.0" y="404.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">4단계</text>
-<rect x="1344" y="291" width="186" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-swap_horiz" x="1417.0" y="296.0" width="40" height="40" fill="#164B8C"/>
-<text x="1437.0" y="364.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.cutover</text>
-<text x="1437.0" y="385.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">전환 상태 기계</text>
-<text x="1437.0" y="404.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">5단계</text>
-<rect x="290" y="465" width="295" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-manage_search" x="417.5" y="470.0" width="40" height="40" fill="#164B8C"/>
-<text x="437.5" y="538.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.catalog</text>
-<text x="437.5" y="559.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">원천·대상 메타데이터</text>
-<text x="437.5" y="578.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">접속 확인 1단계 · 카탈로그 2단계</text>
-<rect x="605" y="465" width="295" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-rule_settings" x="732.5" y="470.0" width="40" height="40" fill="#164B8C"/>
-<text x="752.5" y="538.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.rules</text>
-<text x="752.5" y="559.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">kdms-rules.yml 읽기·검사</text>
-<text x="752.5" y="578.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">타입·값 변환기 선택</text>
-<rect x="920" y="465" width="295" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-account_tree" x="1047.5" y="470.0" width="40" height="40" fill="#164B8C"/>
-<text x="1067.5" y="538.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.state</text>
-<text x="1067.5" y="559.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">관리 테이블 · 작업 상태 기계</text>
-<text x="1067.5" y="578.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">pg_advisory_lock 동시 실행 방지</text>
-<rect x="1235" y="465" width="295" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-settings" x="1362.5" y="470.0" width="40" height="40" fill="#164B8C"/>
-<text x="1382.5" y="538.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">kdms.config</text>
-<text x="1382.5" y="559.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">YAML 설정 · .env 치환</text>
-<text x="1382.5" y="578.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">JDBC 연결</text>
-<rect x="290" y="639" width="235" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-package_2" x="387.5" y="644.0" width="40" height="40" fill="#164B8C"/>
-<text x="407.5" y="712.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">Spring Boot 4.1</text>
-<text x="407.5" y="733.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">내장 Tomcat · MVC</text>
-<text x="407.5" y="752.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">Thymeleaf</text>
-<rect x="541" y="639" width="235" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-extension" x="638.5" y="644.0" width="40" height="40" fill="#164B8C"/>
-<text x="658.5" y="712.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">Debezium 3.7</text>
-<text x="658.5" y="733.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">Embedded · SQL Server</text>
-<text x="658.5" y="752.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">JDBC 오프셋 저장소</text>
-<rect x="792" y="639" width="235" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-cable" x="889.5" y="644.0" width="40" height="40" fill="#164B8C"/>
-<text x="909.5" y="712.0" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">JDBC 드라이버</text>
-<text x="909.5" y="733.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">PgJDBC</text>
-<text x="909.5" y="752.0" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">mssql-jdbc</text>
-<rect x="1043" y="639" width="235" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-terminal" x="1140.5" y="653.5" width="40" height="40" fill="#164B8C"/>
-<text x="1160.5" y="721.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">picocli 4.7</text>
-<text x="1160.5" y="742.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">명령줄 해석</text>
-<rect x="1294" y="639" width="235" height="122" rx="12" fill="#FFFFFF" stroke="#6F9BD1" stroke-width="1.6"/>
-<use href="#i-description" x="1391.5" y="653.5" width="40" height="40" fill="#164B8C"/>
-<text x="1411.5" y="721.5" font-size="19" font-weight="700" fill="#0A2342" text-anchor="middle">SnakeYAML · Logback</text>
-<text x="1411.5" y="742.5" font-size="14.5" font-weight="500" fill="#3F4E61" text-anchor="middle">설정 읽기 · 로그</text>
-<text x="70" y="392" font-size="19" font-weight="700" fill="#164B8C" text-anchor="middle">의</text>
-<text x="70" y="422" font-size="19" font-weight="700" fill="#164B8C" text-anchor="middle">존</text>
-<text x="70" y="452" font-size="19" font-weight="700" fill="#164B8C" text-anchor="middle">방</text>
-<text x="70" y="482" font-size="19" font-weight="700" fill="#164B8C" text-anchor="middle">향</text>
-<rect x="50" y="828" width="451.75" height="52" rx="10" fill="#FFFFFF" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="68" y="859.0" font-size="15" font-weight="800" fill="#0A2342">범례</text>
-<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#164B8C" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
-<text x="176" y="859.0" font-size="15" font-weight="600" fill="#16202C">실시간 질의</text>
-<line x1="289.25" y1="854.0" x2="335.25" y2="854.0" stroke="#1F74C4" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
-<text x="345.25" y="859.0" font-size="15" font-weight="600" fill="#16202C">비동기 데이터 흐름</text>
-<text x="1550" y="854" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">점선: CDC 가 대상 PG 의 kdms.change_log 에 쌓고 반영기가 따로 읽는다(수집과 반영 분리)</text>
-<text x="1550" y="876" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">강조: 무중단의 핵심(CDC 수집·반영) · 엔진 사이 순서는 kdms.state 의 작업 상태로 정한다</text>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS SW 아키텍처</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">Maven 단일 모듈 · 패키지 계층 · 위 계층만 아래 계층을 쓴다</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D02 · v0.2 · 2026-10-09</text>
+<rect x="100" y="120" width="1450" height="164" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="122" y="154" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">진입 계층</text>
+<text x="122" y="180" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">같은 기능을</text>
+<text x="122" y="202" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">두 입구로</text>
+<rect x="100" y="296" width="1450" height="164" rx="18" fill="#EEF8F3" stroke="#1E6B4F" stroke-width="2"/>
+<text x="122" y="330" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">이관 엔진</text>
+<text x="122" y="356" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">단계마다 채운다</text>
+<text x="122" y="378" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">(아래 줄 = 구현 단계)</text>
+<rect x="100" y="472" width="1450" height="164" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="122" y="506" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">공통 계층</text>
+<text x="122" y="532" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">모든 엔진이</text>
+<text x="122" y="554" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">함께 쓴다</text>
+<rect x="100" y="648" width="1450" height="164" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="122" y="682" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">외부 라이브러리</text>
+<text x="122" y="708" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">모두 jar 에 포함</text>
+<text x="122" y="730" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">실행 중 다운로드 0</text>
+<line x1="70" y1="128" x2="70" y2="382" stroke="#1E6B4F" stroke-width="2.4"/>
+<line x1="70" y1="530" x2="70" y2="806" stroke="#1E6B4F" stroke-width="2.4" marker-end="url(#arrow-sync)"/>
+<path d="M1082.0,378.0 L1142.0,378.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="290" y="134" width="400" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-deployed_code" x="470.0" y="142.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="490.0" y="211.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">Kdms (main)</text>
+<text x="490.0" y="235.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">단일 jar 시작점</text>
+<text x="490.0" y="257.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">--no-web 이면 CLI 만</text>
+<rect x="710" y="134" width="400" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-terminal" x="890.0" y="142.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="910.0" y="211.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.cli</text>
+<text x="910.0" y="235.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">picocli 명령 10개</text>
+<text x="910.0" y="257.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">plan · load · sync · cutover 등</text>
+<rect x="1130" y="134" width="400" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-web" x="1310.0" y="142.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1330.0" y="211.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.web</text>
+<text x="1330.0" y="235.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">Spring MVC · Thymeleaf · REST</text>
+<text x="1330.0" y="257.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">127.0.0.1 에만 바인딩</text>
+<rect x="290" y="310" width="186" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-schema" x="363.0" y="318.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="383.0" y="387.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.ddl</text>
+<text x="383.0" y="411.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">대상 DDL 생성·적용</text>
+<text x="383.0" y="433.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">2단계</text>
+<rect x="492" y="310" width="186" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-database_upload" x="565.0" y="318.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="585.0" y="387.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.load</text>
+<text x="585.0" y="411.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">구간 분할 · COPY</text>
+<text x="585.0" y="433.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">3단계</text>
+<rect x="694" y="310" width="186" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-fact_check" x="767.0" y="318.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="787.0" y="387.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.verify</text>
+<text x="787.0" y="411.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">건수 · 합계 · 해시</text>
+<text x="787.0" y="433.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">3단계</text>
+<rect x="896" y="310" width="186" height="136" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<use href="#i-sync" x="969.0" y="318.0" width="40" height="40" fill="#FFFFFF"/>
+<text x="989.0" y="387.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">kdms.cdc</text>
+<text x="989.0" y="411.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">Debezium Embedded</text>
+<text x="989.0" y="433.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">4단계</text>
+<rect x="1142" y="310" width="186" height="136" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<use href="#i-published_with_changes" x="1215.0" y="318.0" width="40" height="40" fill="#FFFFFF"/>
+<text x="1235.0" y="387.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">kdms.apply</text>
+<text x="1235.0" y="411.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">LSN 순서 멱등 반영</text>
+<text x="1235.0" y="433.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">4단계</text>
+<rect x="1344" y="310" width="186" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-swap_horiz" x="1417.0" y="318.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1437.0" y="387.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.cutover</text>
+<text x="1437.0" y="411.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">전환 상태 기계</text>
+<text x="1437.0" y="433.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">5단계</text>
+<rect x="290" y="486" width="295" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-manage_search" x="417.5" y="494.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="437.5" y="563.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.catalog</text>
+<text x="437.5" y="587.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">원천·대상 메타데이터</text>
+<text x="437.5" y="609.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">접속 확인 · 카탈로그</text>
+<rect x="605" y="486" width="295" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-rule_settings" x="732.5" y="494.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="752.5" y="563.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.rules</text>
+<text x="752.5" y="587.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">kdms-rules.yml 읽기·검사</text>
+<text x="752.5" y="609.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">타입·값 변환기 선택</text>
+<rect x="920" y="486" width="295" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-account_tree" x="1047.5" y="494.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1067.5" y="563.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.state</text>
+<text x="1067.5" y="587.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">관리 테이블 · 상태 기계</text>
+<text x="1067.5" y="609.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">pg_advisory_lock 잠금</text>
+<rect x="1235" y="486" width="295" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-settings" x="1362.5" y="494.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1382.5" y="563.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms.config</text>
+<text x="1382.5" y="587.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">YAML 설정 · .env 치환</text>
+<text x="1382.5" y="609.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">JDBC 연결</text>
+<rect x="290" y="662" width="235" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-package_2" x="387.5" y="670.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="407.5" y="739.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">Spring Boot 4.1</text>
+<text x="407.5" y="763.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">내장 Tomcat · MVC</text>
+<text x="407.5" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">Thymeleaf</text>
+<rect x="541" y="662" width="235" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-extension" x="638.5" y="670.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="658.5" y="739.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">Debezium 3.7</text>
+<text x="658.5" y="763.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">Embedded · SQL Server</text>
+<text x="658.5" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">JDBC 오프셋 저장소</text>
+<rect x="792" y="662" width="235" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-cable" x="889.5" y="670.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="909.5" y="739.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">JDBC 드라이버</text>
+<text x="909.5" y="763.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">PgJDBC</text>
+<text x="909.5" y="785.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">mssql-jdbc</text>
+<rect x="1043" y="662" width="235" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-terminal" x="1140.5" y="681.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1160.5" y="750.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">picocli 4.7</text>
+<text x="1160.5" y="774.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">명령줄 해석</text>
+<rect x="1294" y="662" width="235" height="136" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-description" x="1391.5" y="681.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1411.5" y="750.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">SnakeYAML · Logback</text>
+<text x="1411.5" y="774.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">설정 읽기 · 로그</text>
+<text x="70" y="416" font-size="20" font-weight="700" fill="#1E6B4F" text-anchor="middle">의</text>
+<text x="70" y="446" font-size="20" font-weight="700" fill="#1E6B4F" text-anchor="middle">존</text>
+<text x="70" y="476" font-size="20" font-weight="700" fill="#1E6B4F" text-anchor="middle">방</text>
+<text x="70" y="506" font-size="20" font-weight="700" fill="#1E6B4F" text-anchor="middle">향</text>
+<rect x="50" y="828" width="481.04999999999995" height="52" rx="10" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B3D2E">범례</text>
+<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#1E6B4F" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<text x="176" y="860.0" font-size="17" font-weight="600" fill="#16202C">실시간 질의</text>
+<line x1="300.35" y1="854.0" x2="346.35" y2="854.0" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
+<text x="356.35" y="860.0" font-size="17" font-weight="600" fill="#16202C">비동기 데이터 흐름</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">점선: CDC 가 대상 PG 의 kdms.change_log 에 쌓고 반영기가 따로 읽는다(수집과 반영 분리)</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">강조: 무중단의 핵심(CDC 수집·반영) · 엔진 사이 순서는 kdms.state 의 작업 상태로 정한다</text>
 </svg>

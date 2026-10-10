@@ -10,7 +10,7 @@
 #   KDMS_REH_WRITE_SEC   본 시험 원천 쓰기 시간(초, 기본 300)
 #   KDMS_REH_SKIP_BUILD  1 이면 빌드를 건너뛴다(T-L17 은 미시행)
 #   KDMS_REH_LAPTOP      노트북 단계를 대신 실행할 명령(클라우드 시험용). "<명령> <단계> [초]" 로 부른다. 없으면 사람에게 묻는다
-#   KDMS_REH_STAMP       결과 파일 시각(기본 지금 yyyyMMdd_HHmm)
+#   KDMS_REH_STAMP       결과 파일 시각(기본 지금 KST yyyyMMdd_HHmm, DEC-45)
 #
 # macOS 기본 bash 3.2 에서 돈다(연관 배열·wait -n 을 쓰지 않는다). 비밀번호는 출력하지 않는다(.env 는 kdms.jar 가 읽는다).
 
@@ -25,7 +25,7 @@ cd "$ROOT" || exit 2
 
 JAR=target/kdms.jar
 CFG=config/kdms.yml
-S=${KDMS_REH_STAMP:-$(date +%Y%m%d_%H%M)}
+S=${KDMS_REH_STAMP:-$(TZ=Asia/Seoul date +%Y%m%d_%H%M)}
 W=out/rehearsal/${S}_r${R}
 LOG=runs/${S}_p6_r${R}_log.txt
 SCORE=runs/${S}_p6_r${R}_score.txt

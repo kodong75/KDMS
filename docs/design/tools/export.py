@@ -1,4 +1,4 @@
-"""배포본 만들기: build.py 결과에서 PNG(미리보기), PDF(문서), PPTX(발표용 한 장).
+"""배포본 만들기: build.py 결과에서 PNG(미리보기), PDF(문서), PPTX(발표용, 그림 한 장마다 슬라이드 하나).
 
     python3 docs/design/tools/build.py
     python3 docs/design/tools/export.py
@@ -49,19 +49,21 @@ def chrome(args: list[str]) -> None:
 
 
 def export_doc(doc_id: str, module: str) -> None:
-    svg = DESIGN_DIR / "diagrams" / f"{doc_id}.svg"
+    mod = importlib.import_module(module)
+    pages = build.diagrams(mod)
     html = DESIGN_DIR / f"{doc_id}.html"
-    png = DIST / f"{doc_id}.png"
     pdf = DIST / f"{doc_id}.pdf"
-    chrome([f"--screenshot={png}", "--window-size=1600,900", f"--force-device-scale-factor={SCALE}", svg.as_uri()])
+    for name in build.page_names(doc_id, len(pages)):   # 장마다 PNG 하나
+        svg = DESIGN_DIR / "diagrams" / f"{name}.svg"
+        png = DIST / f"{name}.png"
+        chrome([f"--screenshot={png}", "--window-size=1600,900", f"--force-device-scale-factor={SCALE}", svg.as_uri()])
     chrome(["--no-pdf-header-footer", f"--print-to-pdf={pdf}", html.as_uri()])
     try:
         import pptx_export
     except ImportError:
         print("python-pptx 없음: PPTX 건너뜀")
         return
-    mod = importlib.import_module(module)
-    pptx_export.build(mod.build(), DIST / f"{doc_id}.pptx", f"KDMS {mod.TITLE}")
+    pptx_export.build(pages, DIST / f"{doc_id}.pptx", f"KDMS {mod.TITLE}")
 
 
 def main() -> None:

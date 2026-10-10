@@ -1,5 +1,7 @@
 # MVP 리허설 (6단계)
 
+> 상태: 진행 중 · 최종 갱신: 2026-10-10 · d142fde · 근거: PR #11, WORKLOG 2026-10-08 16:38(`runs/20261008_0738_p6_cloud_r1_*.txt`·`_0745_p6_cloud_r2_*.txt`), Mac→노트북 2회는 아직
+
 [plan.md](plan.md) §6 6단계: **§8 시험 전체를 처음부터 2회, 두 번 모두 합격, 절차서만 보고 다시 할 수 있음.**
 절차서는 [runbook.md](runbook.md). 리허설은 그 절차(§3~§7)를 시험 환경에서 그대로 밟으면서 §8 의 시험(T-L01~17, T-C01~12, T-N01~03)을 한 번에 채점한다.
 
@@ -23,7 +25,7 @@ Mac (scripts/rehearsal.sh, kdms.jar)  ──LAN──>  노트북 192.168.0.12
 | L | 원천 쓰기 없이: `reset` → `schema --replace` → NUL fail 설정으로 `load --no-cdc`(종료 코드 5) → `load --no-cdc --reset --throttle-ms 1000` 6초 뒤 **kill -9** → `load --no-cdc`(끝난 구간 건너뜀) → `verify` → `cutover --yes --no-cdc` → `check --probe` | T-L01~T-L16 |
 | C | 원천 쓰기 중(§5~§7): `reset` → `schema --replace` → 워터마크 없이 `load`(거부) | T-C02 |
 |   | 보존 기간 초과: `sync` → 노트북 쓰기 20초 → `sync` 중지 → 노트북 `tc10`(변경 몇 건 → 모든 변경 기록 정리) → `sync`(종료 코드 5, reset 안내) → `reset` | T-C10 |
-|   | 본 시험: `sync` → 노트북 쓰기 5분 시작 → `load --throttle-ms 2000` → 적재 중 `sync` **kill -9** → 다시 `sync` → 적재 끝 20초 뒤 반영 중 `sync` **kill -9** → 다시 `sync` → 노트북 캡처 Job 60초 중지·다시 시작 → 쓰기 끝 → `sync` 중지 → `cutover --yes` → `check --probe` → `status` | T-C01, T-C03~T-C09, T-C11, T-C12, T-L05·T-L06·T-L12 |
+|   | 본 시험: `sync` → 노트북 쓰기 5분 시작 → `load --throttle-ms 2000` → 적재 중 `sync` **kill -9** → 다시 `sync` → 적재 끝 20초 뒤 반영 중 `sync` **kill -9** → 다시 `sync` → 노트북 캡처 Job 60초 중지·다시 시작(DEC-48) → 쓰기 끝 → `sync` 중지 → `cutover --yes` → `check --probe` → `status` | T-C01, T-C03~T-C09, T-C11, T-C12, T-L05·T-L06·T-L12 |
 | 채점 | 단계 출력·종료 코드로 시험마다 합격·불합격·미시행(§4) | |
 
 결과 파일: `runs/<시각>_p6_r<회차>_log.txt`(모든 명령 출력 원문, 비밀번호 없음), `runs/<시각>_p6_r<회차>_score.txt`(채점표). 중간 파일은 `out/rehearsal/`(커밋하지 않음).
@@ -48,7 +50,7 @@ git fetch origin && git checkout claude/stage6-lis0lo
 ./mvnw -B clean package -DskipTests                       # 인터넷이 있을 때 한 번: 오프라인 빌드에 필요한 플러그인을 받아 둔다
 ```
 
-**인터넷 끊기(T-N01)**: 노트북(같은 LAN)은 닿고 인터넷만 끊는다. 기본 경로(default route)만 지우면 된다.
+**인터넷 끊기(T-N01)**: 노트북(같은 LAN)은 닿고 인터넷만 끊는다. 기본 경로(default route)만 지우면 된다(DEC-49).
 
 ```bash
 route -n get default | grep gateway        # 공유기 주소(예: 192.168.0.1)를 적어 둔다

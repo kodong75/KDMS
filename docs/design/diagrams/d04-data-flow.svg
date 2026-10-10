@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS 데이터 흐름도">
+<style>@font-face{font-family:'Pretendard Variable';font-weight:45 920;src:url('../assets/fonts/PretendardVariable.woff2') format('woff2-variations');}</style>
+<defs>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E6B4F"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E9E6E"/></marker>
+<symbol id="i-database" viewBox="0 -960 960 960"><path d="M480-120q-151 0-255.5-46.5T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v400q0 67-104.5 113.5T480-120Zm0-488q86 0 176.5-26.5T773-694q-27-32-117.5-59T480-780q-88 0-177 26t-117 60q28 35 116 60.5T480-608Zm-1 214q42 0 84-4.5t80.5-13.5q38.5-9 73.5-22t63-29v-155q-29 16-64 29t-74 22q-39 9-80 14t-83 5q-42 0-84-5t-80.5-14q-38.5-9-73-22T180-618v155q27 16 61 29t72.5 22q38.5 9 80.5 13.5t85 4.5Zm1 214q48 0 99-8.5t93.5-22.5q42.5-14 72-31t35.5-35v-125q-28 16-63 28.5T643.5-352q-38.5 9-80 13.5T479-334q-43 0-85-4.5T313.5-352q-38.5-9-72.5-21.5T180-402v126q5 17 34 34.5t72 31q43 13.5 94 22t100 8.5Z"/></symbol>
+<symbol id="i-database_upload" viewBox="0 -960 960 960"><path d="M506-120v-.5.5q-33 1-97.5-5T280-148.5q-64-17.5-112-49T120-280q0 51 48 82.5t112 49Q344-131 408.5-125t97.5 5Zm-27-214v-1 1q-52 0-95-4.5T305-352q-36-9-67-21.5T180-402q27 16 58 28.5t67 21.5q36 9 79 13.5t95 4.5Zm1-274q86 0 176.5-26.5T773-694q-27-32-117.5-59T480-780q-88 0-177 26t-117 60q28 35 116 60.5T480-608Zm235 492h30v-171l77 77 21-21-113-113-113 113 21 21 77-77v171ZM596-95.5Q540-151 540-229q0-79 56-135t134-56q78 0 134 56t56 135q0 78-56 133.5T730-40q-78 0-134-55.5ZM485-180q3 16 8.5 31t12.5 29q-33 1-97.5-5T280-148.5q-64-17.5-112-49T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v226q-14-7-29-12.5t-31-8.5v-143q-59 33-138 51.5T479-548q-85 0-164.5-18.5T180-618v155q54 32 133 50.5T479-394q17 0 33-.5t33-2.5q-13 14-23 30t-18 33h-25q-105 0-174.5-18T180-402v126q5 17 35 34.5t73.5 31q43.5 13.5 95.5 22t101 8.5Z"/></symbol>
+<symbol id="i-manage_history" viewBox="0 -960 960 960"><path d="M142-607v-208h60v106q52-61 123.5-96T477-840q151 0 257 104t106 254v10h-60v-13q0-124-89-209.5T477-780q-68 0-127.5 31T246-667h105v60H142Zm-22 126h60q0 125 86 213t211 88h12l34 57q-11 2-22.5 2.5t-23.5.5q-149 0-253-105.5T120-481Zm440 119L451-469v-214h60v189l81 79-32 53ZM735-10l-10-66q-18-5-34-13.5T661-112l-55 12-25-42 47-44q-3-12-3-25t3-25l-47-44 25-42 55 12q14-14 30-22.5t34-13.5l10-66h54l10 66q18 5 34 13.5t30 22.5l55-12 25 42-47 44q3 12 3 25t-3 25l47 44-25 42-55-12q-14 14-30 22.5T799-76l-10 66h-54Zm85-143q22-22 22-58t-22-58q-22-22-58-22t-58 22q-22 22-22 58t22 58q22 22 58 22t58-22Z"/></symbol>
+<symbol id="i-published_with_changes" viewBox="0 -960 960 960"><path d="M430-82q-72-9-134.5-43t-108-86.5Q142-264 116-332.5T90-480q0-88 41.5-168T243-790H121v-60h229v229h-60v-129q-64 51-102 121.5T150-480q0 132 80 225.5T430-143v61Zm-7-228L268-465l42-42 113 113 227-227 42 42-269 269Zm187 200v-229h60v129q64-52 102-122t38-148q0-132-80-225.5T530-817v-61q146 18 243 129t97 269q0 88-41.5 168T717-170h122v60H610Z"/></symbol>
+<symbol id="i-receipt_long" viewBox="0 -960 960 960"><path d="M222-80q-43.75 0-74.37-30.63Q117-141.25 117-185v-125h127v-570l59.8 60 59.8-60 59.8 60 59.8-60 59.8 60 60-60 60 60 60-60 60 60 60-60v695q0 43.75-30.62 74.37Q781.75-80 738-80H222Zm516-60q20 0 32.5-12.5T783-185v-595H304v470h389v125q0 20 12.5 32.5T738-140ZM357-622v-60h240v60H357Zm0 134v-60h240v60H357Zm333-134q-12 0-21-9t-9-21q0-12 9-21t21-9q12 0 21 9t9 21q0 12-9 21t-21 9Zm0 129q-12 0-21-9t-9-21q0-12 9-21t21-9q12 0 21 9t9 21q0 12-9 21t-21 9ZM221-140h412v-110H177v65q0 20 12.65 32.5T221-140Zm-44 0v-110 110Z"/></symbol>
+<symbol id="i-rule_settings" viewBox="0 -960 960 960"><path d="M132-160v-60h123l-14-14q-60-60-86.5-121.5T128-476q0-109 62.5-195T355-790v62q-76 30-121.5 99T188-476q0 52 17.5 98.5T265-293l30 27v-117h60v223H132Zm699-334h-60q-2-51-20-94.5T695-667l-30-27v117h-60v-223h223v60H704l15 14q58 55 84 115t28 117ZM696-40l-5-48q-20-6-41-17.5T616-131l-42 20-35-54 38-30q-5-23-5-41.5t5-41.5l-38-30 35-55 42 20q13-12 34-24t41-18l5-49h60l6 49q20 6 41 18t34 24l42-20 35 55-38 30q5 23 5 41.5t-5 41.5l38 30-35 54-42-20q-13 14-34 25.5T762-88l-6 48h-60Zm30-95q44 0 73-29t29-73q0-44-29-73t-73-29q-44 0-73 29t-29 73q0 44 29 73t73 29Z"/></symbol>
+<symbol id="i-sync" viewBox="0 -960 960 960"><path d="M167-160v-60h130l-15-12q-64-51-93-111t-29-134q0-106 62.5-190.5T387-784v62q-75 29-121 96.5T220-477q0 63 23.5 109.5T307-287l30 21v-124h60v230H167Zm407-15v-63q76-29 121-96.5T740-483q0-48-23.5-97.5T655-668l-29-26v124h-60v-230h230v60H665l15 14q60 56 90 120t30 123q0 106-62 191T574-175Z"/></symbol>
+<symbol id="i-table" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm270-250H180v190h270v-190Zm60 0v190h270v-190H510Zm-60-60v-190H180v190h270Zm60 0h270v-190H510v190ZM180-680h600v-100H180v100Z"/></symbol>
+<symbol id="i-upload" viewBox="0 -960 960 960"><path d="M450-313v-371L330-564l-43-43 193-193 193 193-43 43-120-120v371h-60ZM220-160q-24 0-42-18t-18-42v-143h60v143h520v-143h60v143q0 24-18 42t-42 18H220Z"/></symbol>
+</defs>
+<rect width="1600" height="900" fill="#FFFFFF"/>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS 데이터 흐름도</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">전체 적재 경로와 CDC 경로 · 두 경로 모두 같은 값 변환 · 워터마크·오프셋 기록 시점</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D04 · v0.1 · 2026-10-09</text>
+<rect x="44" y="126" width="300" height="664" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="66" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">원천 · MS-SQL 2019</text>
+<text x="66" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">읽기만 (쓰기 권한 없음)</text>
+<rect x="370" y="126" width="834" height="664" rx="18" fill="#EEF8F3" stroke="#1E6B4F" stroke-width="2"/>
+<text x="392" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">kdms.jar</text>
+<text x="392" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">1 sync 가 워터마크 기록 → 2 load → 3 반영</text>
+<rect x="1230" y="126" width="326" height="664" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="1252" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">대상 · PostgreSQL 16</text>
+<text x="1252" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">대상 테이블 + kdms 스키마</text>
+<path d="M194.0,340.0 L194.0,470.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="200.0" y="392.5" width="83.4" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="241.7" y="412.5" font-size="17" font-weight="600" fill="#2E9E6E" text-anchor="middle">캡처 Job</text>
+<path d="M322.0,280.0 L395.0,280.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="335.5" y="251.0" width="46.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="358.5" y="271.0" font-size="17" font-weight="600" fill="#1E6B4F" text-anchor="middle">읽기</text>
+<path d="M635.0,280.0 L670.0,280.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M900.0,280.0 L935.0,280.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M322.0,530.0 L395.0,530.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="335.5" y="501.0" width="46.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="358.5" y="521.0" font-size="17" font-weight="600" fill="#2E9E6E" text-anchor="middle">수집</text>
+<path d="M635.0,530.0 L670.0,530.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<path d="M900.0,530.0 L935.0,530.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<path d="M1180.0,280.0 L1252.0,280.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="1191.3" y="251.0" width="49.4" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="1216.0" y="271.0" font-size="17" font-weight="600" fill="#1E6B4F" text-anchor="middle">COPY</text>
+<path d="M1180.0,530.0 L1252.0,530.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="1193.0" y="501.0" width="46.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="1216.0" y="521.0" font-size="17" font-weight="600" fill="#2E9E6E" text-anchor="middle">반영</text>
+<path d="M515.0,590.0 L515.0,696.0 L1252.0,696.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="782.3" y="667.0" width="202.4" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="883.5" y="687.0" font-size="17" font-weight="600" fill="#1E6B4F" text-anchor="middle">워터마크 · 오프셋 기록</text>
+<rect x="66" y="220" width="256" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-table" x="174.0" y="231.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="194.0" y="300.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">업무 테이블</text>
+<text x="194.0" y="324.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">dbo.* · PK 구간</text>
+<rect x="66" y="470" width="256" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-manage_history" x="174.0" y="481.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="194.0" y="550.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">CDC 변경 테이블</text>
+<text x="194.0" y="574.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">cdc.*_CT · LSN 순</text>
+<rect x="395" y="220" width="240" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-database_upload" x="495.0" y="231.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="515.0" y="300.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">구간 읽기</text>
+<text x="515.0" y="324.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">SNAPSHOT · 구간 병렬</text>
+<circle cx="416" cy="241" r="14" fill="#1E6B4F"/>
+<text x="416" y="247" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+<rect x="670" y="220" width="230" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-rule_settings" x="765.0" y="231.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="785.0" y="300.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">값 변환</text>
+<text x="785.0" y="324.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">CopyValues</text>
+<rect x="935" y="220" width="245" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-upload" x="1037.5" y="231.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1057.5" y="300.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">COPY 적재</text>
+<text x="1057.5" y="324.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">구간 + DONE 한 트랜잭션</text>
+<rect x="395" y="470" width="240" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-sync" x="495.0" y="481.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="515.0" y="550.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">Debezium 수집</text>
+<text x="515.0" y="574.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">no_data · 하트비트 1초</text>
+<circle cx="416" cy="491" r="14" fill="#1E6B4F"/>
+<text x="416" y="497" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="670" y="470" width="230" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-receipt_long" x="765.0" y="481.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="785.0" y="550.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">변경 버퍼</text>
+<text x="785.0" y="574.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">kdms.change_log</text>
+<rect x="935" y="470" width="245" height="120" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<use href="#i-published_with_changes" x="1037.5" y="481.0" width="40" height="40" fill="#FFFFFF"/>
+<text x="1057.5" y="550.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">반영기</text>
+<text x="1057.5" y="574.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">값 변환 → 멱등 반영</text>
+<circle cx="956" cy="491" r="14" fill="#FFFFFF"/>
+<text x="956" y="497" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="middle">3</text>
+<rect x="1252" y="220" width="282" height="370" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-table" x="1373.0" y="334.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1393.0" y="403.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">대상 테이블</text>
+<text x="1393.0" y="427.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">COPY 로 적재</text>
+<text x="1393.0" y="449.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">INSERT ON CONFLICT</text>
+<text x="1393.0" y="471.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">DELETE WHERE pk</text>
+<rect x="1252" y="626" width="282" height="140" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<use href="#i-database" x="1373.0" y="636.0" width="40" height="40" fill="#1E6B4F"/>
+<text x="1393.0" y="705.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">kdms 관리 기록</text>
+<text x="1393.0" y="729.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">watermark · load_chunk</text>
+<text x="1393.0" y="751.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">Debezium 오프셋</text>
+<rect x="395" y="716" width="785" height="52" rx="26.0" fill="#FFFFFF" stroke="#1E6B4F" stroke-width="2"/>
+<use href="#i-rule_settings" x="478.4" y="729.0" width="26" height="26" fill="#1E6B4F"/>
+<text x="514.4" y="748.5" font-size="18" font-weight="700" fill="#0B3D2E">같은 행이 두 경로로 들어와도 값 변환이 같아 해시가 같다 (T-C05)</text>
+<rect x="50" y="828" width="481.04999999999995" height="52" rx="10" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B3D2E">범례</text>
+<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#1E6B4F" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<text x="176" y="860.0" font-size="17" font-weight="600" fill="#16202C">실시간 질의</text>
+<line x1="300.35" y1="854.0" x2="346.35" y2="854.0" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
+<text x="356.35" y="860.0" font-size="17" font-weight="600" fill="#16202C">비동기 데이터 흐름</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">워터마크를 적재보다 먼저 기록 → 적재 중 생긴 변경은 모두 change_log 에 있다 · 반영은 LOADED 테이블만</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">change_log 는 대상 PG 의 kdms 스키마 · payload(행 값)는 반영하면 바로 지운다</text>
+</svg>

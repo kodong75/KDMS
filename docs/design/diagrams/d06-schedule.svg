@@ -1,103 +1,89 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" role="img" aria-label="KDMS 개발 일정">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS 개발 일정">
 <style>@font-face{font-family:'Pretendard Variable';font-weight:45 920;src:url('../assets/fonts/PretendardVariable.woff2') format('woff2-variations');}</style>
 <defs>
-<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#164B8C"/></marker>
-<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F74C4"/></marker>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E6B4F"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E9E6E"/></marker>
 </defs>
 <rect width="1600" height="900" fill="#FFFFFF"/>
-<rect x="50" y="38" width="7" height="44" rx="3.5" fill="#164B8C"/>
-<text x="70" y="68" font-size="30" font-weight="800" fill="#0A2342">KDMS 개발 일정</text>
-<text x="70" y="96" font-size="16" font-weight="500" fill="#3F4E61">단계별 기간(안) · 단계 끝 = Mac 에서 완료 기준을 확인한 날 · 오늘 2026-10-06</text>
-<text x="1550" y="68" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D06 · v0.1 · 2026-10-06</text>
-<rect x="50" y="126" width="1500" height="64" rx="8" fill="#164B8C"/>
-<rect x="50" y="258" width="1500" height="62" rx="0" fill="#F1F6FC"/>
-<rect x="50" y="382" width="1500" height="62" rx="0" fill="#F1F6FC"/>
-<rect x="50" y="506" width="1500" height="62" rx="0" fill="#F1F6FC"/>
-<rect x="50" y="630" width="1500" height="62" rx="0" fill="#F1F6FC"/>
-<rect x="469.5" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="552.5769230769231" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="635.6538461538462" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="718.7307692307693" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="801.8076923076924" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="884.8846153846154" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="967.9615384615385" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1051.0384615384614" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1134.1153846153848" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1217.1923076923076" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1300.2692307692307" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1383.3461538461538" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1466.423076923077" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="1549.5" y="190" width="1" height="564" rx="0" fill="#D6E3F2"/>
-<rect x="569.8791208791209" y="190" width="2" height="578" rx="0" fill="#0A2342"/>
-<rect x="505.6043956043956" y="211" width="71.20879120879118" height="32" rx="8" fill="#164B8C"/>
-<rect x="505.6043956043956" y="273" width="71.20879120879118" height="32" rx="8" fill="#164B8C"/>
-<rect x="505.6043956043956" y="335" width="106.81318681318686" height="32" rx="8" fill="#1F74C4"/>
-<text x="559.0109890109891" y="355.7" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">10/1 ~ 10/9</text>
-<rect x="636.1538461538462" y="397" width="142.41758241758237" height="32" rx="8" fill="#D3E5F8" stroke="#164B8C" stroke-width="1.2"/>
-<text x="707.3626373626373" y="417.7" font-size="13" font-weight="700" fill="#164B8C" text-anchor="middle">10/12 ~ 10/23</text>
-<rect x="802.3076923076924" y="459" width="225.49450549450557" height="32" rx="8" fill="#D3E5F8" stroke="#164B8C" stroke-width="1.2"/>
-<text x="915.0549450549452" y="479.7" font-size="13" font-weight="700" fill="#164B8C" text-anchor="middle">10/26 ~ 11/13</text>
-<rect x="1051.5384615384614" y="521" width="142.41758241758248" height="32" rx="8" fill="#D3E5F8" stroke="#164B8C" stroke-width="1.2"/>
-<text x="1122.7472527472528" y="541.7" font-size="13" font-weight="700" fill="#164B8C" text-anchor="middle">11/16 ~ 11/27</text>
-<rect x="1217.6923076923076" y="583" width="59.340659340659386" height="32" rx="8" fill="#D3E5F8" stroke="#164B8C" stroke-width="1.2"/>
-<rect x="1300.7692307692307" y="645" width="59.340659340659386" height="32" rx="8" fill="#D3E5F8" stroke="#164B8C" stroke-width="1.2"/>
-<rect x="1383.8461538461538" y="707" width="59.340659340659386" height="32" rx="8" fill="#D3E5F8" stroke="#164B8C" stroke-width="1.2"/>
-<line x1="50" y1="754" x2="1550" y2="754" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="70" y="166" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="start">단계</text>
-<text x="683.6263736263736" y="152" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">10월</text>
-<text x="1045.6043956043954" y="152" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">11월</text>
-<text x="1383.8461538461538" y="152" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">12월</text>
-<text x="511.53846153846155" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">9/28</text>
-<text x="594.6153846153846" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">10/5</text>
-<text x="677.6923076923077" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">10/12</text>
-<text x="760.7692307692308" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">10/19</text>
-<text x="843.8461538461539" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">10/26</text>
-<text x="926.9230769230769" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">11/2</text>
-<text x="1010.0" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">11/9</text>
-<text x="1093.0769230769229" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">11/16</text>
-<text x="1176.1538461538462" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">11/23</text>
-<text x="1259.230769230769" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">11/30</text>
-<text x="1342.3076923076922" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">12/7</text>
-<text x="1425.3846153846152" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">12/14</text>
-<text x="1508.4615384615383" y="178" font-size="13" font-weight="500" fill="#D3E5F8" text-anchor="middle">12/21</text>
-<text x="570.8791208791209" y="788" font-size="14" font-weight="700" fill="#0A2342" text-anchor="middle">오늘 10/6</text>
-<text x="70" y="224" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">0. 환경 준비</text>
-<text x="70" y="245" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">노트북 DB · CDC 켜기 · 전용 계정</text>
-<text x="586.8131868131868" y="232" font-size="13" font-weight="700" fill="#0A2342" text-anchor="start">10/1 ~ 10/6</text>
-<text x="70" y="286" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">1. 골격</text>
-<text x="70" y="307" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">Maven · CLI · 웹 · 관리 테이블</text>
-<text x="586.8131868131868" y="294" font-size="13" font-weight="700" fill="#0A2342" text-anchor="start">10/1 ~ 10/6</text>
-<text x="679.4631868131868" y="294" font-size="13.5" font-weight="700" fill="#164B8C" text-anchor="start">D01 D02 D03 D06</text>
-<text x="70" y="348" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">2. 스키마 변환</text>
-<text x="70" y="369" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">kdms plan · DDL (Mac 확인 대기)</text>
-<text x="622.4175824175825" y="356" font-size="13.5" font-weight="700" fill="#164B8C" text-anchor="start">D07</text>
-<text x="70" y="410" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">3. 전체 적재 + 검증</text>
-<text x="70" y="431" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">COPY · 재시작 · 건수·합계·해시</text>
-<text x="788.5714285714286" y="418" font-size="13.5" font-weight="700" fill="#164B8C" text-anchor="start">D05 D08</text>
-<text x="70" y="472" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">4. CDC 수집·반영</text>
-<text x="70" y="493" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">Debezium · change_log · 반영기</text>
-<text x="1037.802197802198" y="480" font-size="13.5" font-weight="700" fill="#164B8C" text-anchor="start">D04</text>
-<text x="70" y="534" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">5. 전환 + 화면·CLI</text>
-<text x="70" y="555" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">상태 기계 · setval · 화면 마무리</text>
-<text x="1203.956043956044" y="542" font-size="13.5" font-weight="700" fill="#164B8C" text-anchor="start">D09</text>
-<text x="70" y="596" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">6. MVP 리허설</text>
-<text x="70" y="617" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">처음부터 2회 · 운영 절차서</text>
-<text x="1287.032967032967" y="604" font-size="13" font-weight="700" fill="#0A2342" text-anchor="start">11/30 ~ 12/4</text>
-<text x="1386.832967032967" y="604" font-size="13.5" font-weight="700" fill="#164B8C" text-anchor="start">D10 D11</text>
-<text x="70" y="658" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">7. 설치본</text>
-<text x="70" y="679" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">jlink 로 JRE 포함 압축본</text>
-<text x="1370.10989010989" y="666" font-size="13" font-weight="700" fill="#0A2342" text-anchor="start">12/7 ~ 12/11</text>
-<text x="70" y="720" font-size="17" font-weight="700" fill="#0A2342" text-anchor="start">8. 확장</text>
-<text x="70" y="741" font-size="13.5" font-weight="500" fill="#3F4E61" text-anchor="start">22테이블 · 대용량 · 별도 계획</text>
-<text x="1453.1868131868132" y="728" font-size="13" font-weight="700" fill="#0A2342" text-anchor="start">12/14 ~ 12/18</text>
-<rect x="50" y="828" width="365.25" height="52" rx="10" fill="#FFFFFF" stroke="#A9C3E2" stroke-width="1.4"/>
-<text x="68" y="859.0" font-size="15" font-weight="800" fill="#0A2342">범례</text>
-<rect x="120" y="845.0" width="24" height="18" rx="4" fill="#164B8C" stroke="#6F9BD1" stroke-width="1"/>
-<text x="154" y="859.0" font-size="15" font-weight="600" fill="#16202C">완료</text>
-<rect x="214.0" y="845.0" width="24" height="18" rx="4" fill="#1F74C4" stroke="#6F9BD1" stroke-width="1"/>
-<text x="248.0" y="859.0" font-size="15" font-weight="600" fill="#16202C">진행 중</text>
-<rect x="331.25" y="845.0" width="24" height="18" rx="4" fill="#D3E5F8" stroke="#6F9BD1" stroke-width="1"/>
-<text x="365.25" y="859.0" font-size="15" font-weight="600" fill="#16202C">예정</text>
-<text x="1550" y="854" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">막대 오른쪽 D 번호: 그 단계에서 함께 만드는 설계 문서 · 3단계 이후 날짜는 안(案)으로 단계가 끝날 때마다 고친다</text>
-<text x="1550" y="876" font-size="14" font-weight="500" fill="#3F4E61" text-anchor="end">단계마다 브랜치 하나 + draft PR 하나 · 머지는 사용자가 한다(plan §6)</text>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS 개발 일정</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">0 ~ 5단계는 실제(PR 머지일) · 6단계부터 안(案) · 오늘 2026-10-09</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D06 · v0.2 · 2026-10-09</text>
+<rect x="50" y="126" width="1500" height="64" rx="8" fill="#1E6B4F"/>
+<rect x="50" y="260" width="1500" height="68" rx="0" fill="#EEF8F3"/>
+<rect x="50" y="396" width="1500" height="68" rx="0" fill="#EEF8F3"/>
+<rect x="50" y="532" width="1500" height="68" rx="0" fill="#EEF8F3"/>
+<rect x="50" y="668" width="1500" height="68" rx="0" fill="#EEF8F3"/>
+<rect x="469.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="649.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="829.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="1009.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="1189.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="1369.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="1549.5" y="190" width="1" height="614" rx="0" fill="#D7EDE2"/>
+<rect x="764.7142857142858" y="190" width="2" height="638" rx="0" fill="#0B3D2E"/>
+<rect x="547.1428571428571" y="208" width="154.28571428571433" height="36" rx="8" fill="#1E6B4F"/>
+<text x="624.2857142857142" y="232.1" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">10/1 ~ 10/6</text>
+<rect x="547.1428571428571" y="276" width="154.28571428571433" height="36" rx="8" fill="#1E6B4F"/>
+<text x="624.2857142857142" y="300.1" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">10/1 ~ 10/6</text>
+<rect x="547.1428571428571" y="344" width="154.28571428571433" height="36" rx="8" fill="#1E6B4F"/>
+<text x="624.2857142857142" y="368.1" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">10/1 ~ 10/6</text>
+<rect x="701.4285714285714" y="412" width="51.428571428571445" height="36" rx="8" fill="#1E6B4F"/>
+<rect x="727.1428571428571" y="480" width="25.71428571428578" height="36" rx="8" fill="#1E6B4F"/>
+<rect x="727.1428571428571" y="548" width="25.71428571428578" height="36" rx="8" fill="#1E6B4F"/>
+<rect x="752.8571428571429" y="616" width="205.71428571428567" height="36" rx="8" fill="#2E9E6E"/>
+<text x="855.7142857142858" y="640.1" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">10/9 ~ 10/16</text>
+<rect x="1010.0" y="684" width="128.57142857142844" height="36" rx="8" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="1.2"/>
+<rect x="1190.0" y="752" width="128.57142857142844" height="36" rx="8" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="1.2"/>
+<line x1="50" y1="804" x2="1550" y2="804" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="70" y="166" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="start">단계</text>
+<text x="508.57142857142856" y="152" font-size="18" font-weight="700" fill="#FFFFFF" text-anchor="middle">9월</text>
+<text x="945.7142857142857" y="152" font-size="18" font-weight="700" fill="#FFFFFF" text-anchor="middle">10월</text>
+<text x="1447.142857142857" y="152" font-size="18" font-weight="700" fill="#FFFFFF" text-anchor="middle">11월</text>
+<text x="560.0" y="178" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">9/28</text>
+<text x="740.0" y="178" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">10/5</text>
+<text x="920.0" y="178" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">10/12</text>
+<text x="1100.0" y="178" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">10/19</text>
+<text x="1280.0" y="178" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">10/26</text>
+<text x="1460.0" y="178" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">11/2</text>
+<text x="773.7142857142858" y="828" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="start">오늘 10/9</text>
+<text x="70" y="221" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">0. 환경 준비</text>
+<text x="70" y="246" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">노트북 DB · CDC 켜기 · 전용 계정</text>
+<text x="70" y="289" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">1. 골격</text>
+<text x="70" y="314" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">Maven · CLI · 웹 · 관리 테이블</text>
+<text x="777.7142857142858" y="300" font-size="17" font-weight="700" fill="#1E6B4F" text-anchor="start">D01 D02 D03 D06</text>
+<text x="70" y="357" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">2. 스키마 변환</text>
+<text x="70" y="382" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">kdms plan · 세 단계 DDL</text>
+<text x="711.4285714285714" y="368" font-size="17" font-weight="700" fill="#1E6B4F" text-anchor="start">D07</text>
+<text x="70" y="425" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">3. 전체 적재 + 검증</text>
+<text x="70" y="450" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">COPY · 재시작 · 건수·합계·해시</text>
+<text x="777.7142857142858" y="436" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="start">10/7 ~ 10/8</text>
+<text x="894.5642857142858" y="436" font-size="17" font-weight="700" fill="#1E6B4F" text-anchor="start">D05 D08</text>
+<text x="70" y="493" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">4. CDC 수집·반영</text>
+<text x="70" y="518" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">Debezium · change_log · 반영기</text>
+<text x="777.7142857142858" y="504" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="start">10/8</text>
+<text x="829.1142857142858" y="504" font-size="17" font-weight="700" fill="#1E6B4F" text-anchor="start">D04</text>
+<text x="70" y="561" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">5. 전환 + 화면·CLI</text>
+<text x="70" y="586" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">상태 기계 · setval · 화면</text>
+<text x="777.7142857142858" y="572" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="start">10/8</text>
+<text x="829.1142857142858" y="572" font-size="17" font-weight="700" fill="#1E6B4F" text-anchor="start">D09</text>
+<text x="70" y="629" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">6. MVP 리허설</text>
+<text x="70" y="654" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">처음부터 2회 · 운영 절차서</text>
+<text x="968.5714285714286" y="640" font-size="17" font-weight="700" fill="#1E6B4F" text-anchor="start">D10 D11</text>
+<text x="70" y="697" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">7. 설치본</text>
+<text x="70" y="722" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">jlink 로 JRE 포함 압축본</text>
+<text x="1148.5714285714284" y="708" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="start">10/19 ~ 10/23</text>
+<text x="70" y="765" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="start">8. 확장</text>
+<text x="70" y="790" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">22테이블 · 대용량 · 별도 계획</text>
+<text x="1328.5714285714284" y="776" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="start">10/26 ~ 10/30</text>
+<rect x="50" y="828" width="380.35" height="52" rx="10" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B3D2E">범례</text>
+<rect x="120" y="845.0" width="24" height="18" rx="4" fill="#1E6B4F" stroke="#9DD3B8" stroke-width="1"/>
+<text x="154" y="860.0" font-size="17" font-weight="600" fill="#16202C">완료</text>
+<rect x="218.0" y="845.0" width="24" height="18" rx="4" fill="#2E9E6E" stroke="#9DD3B8" stroke-width="1"/>
+<text x="252.0" y="860.0" font-size="17" font-weight="600" fill="#16202C">진행 중</text>
+<rect x="342.35" y="845.0" width="24" height="18" rx="4" fill="#D5EFE2" stroke="#9DD3B8" stroke-width="1"/>
+<text x="376.35" y="860.0" font-size="17" font-weight="600" fill="#16202C">예정</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">막대 오른쪽 D 번호: 그 단계에 맞춰 만드는 설계 문서 · 6단계부터 날짜는 안(案)</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">단계마다 브랜치 하나 + draft PR 하나 · 머지는 사용자가 한다(CLAUDE.md §4)</text>
 </svg>

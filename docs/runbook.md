@@ -1,5 +1,7 @@
 # KDMS 운영 절차서
 
+> 상태: 진행 중 · 최종 갱신: 2026-10-10 · d142fde · 근거: PR #11, WORKLOG 2026-10-08 16:38(클라우드 리허설 2회), plan.md §6·§8
+
 MS-SQL 2019 → PostgreSQL 16 이관을 KDMS 로 처음부터 끝까지 하는 순서다. [plan.md](plan.md) §6 6단계 완료 기준 "절차서만 보고 다시 할 수 있음" 의 그 절차서.
 명령의 자세한 뜻은 각 단계 문서([schema-conversion.md](schema-conversion.md), [load-verify.md](load-verify.md), [cdc.md](cdc.md), [cutover.md](cutover.md))에 있고, 여기서는 **누가, 언제, 무엇을 실행하고, 무엇을 보고 다음으로 가는지**만 적는다.
 시험 환경(Mac + 노트북)에서 이 절차를 그대로 두 번 해 보는 리허설은 [rehearsal.md](rehearsal.md).
