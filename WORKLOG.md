@@ -137,8 +137,41 @@
 - 오류: 없음. 관찰: `load` 끝 안내가 4단계 방식(`schema --phase post-load`, `다음: kdms verify`)이라 혼동 → CDC 모드면 "kdms cutover 가 마지막 반영 뒤 적용", "다음: … kdms cutover --yes" 로 고침(437d1dd, 단위 시험 102 통과, DB 재실행 안 함).
 - 다운타임 13.0초가 클라우드(8.8초)보다 긴 것은 Mac↔노트북 네트워크 왕복 때문으로 추정(측정 안 함).
 
+## 2026-10-08 16:38 · 6단계 · MVP 리허설 2회 · 클라우드
+- 목적: plan.md §6 6단계 완료 기준(§8 시험 전체를 처음부터 2회, 절차서만 보고 다시 할 수 있음)을 Mac 에서 돌릴 스크립트로 먼저 확인.
+- 환경: **클라우드 컨테이너**(노트북 아님). SQL Server 2019 CU32 Linux 컨테이너(서버 콜레이션 기본값: Korean_Wansung_CI_AS 로 설치하면 Linux 에서 CDC 캡처 Job 이 안 만들어진다, 4단계 기록과 같음. KDMS_MOCK 은 Korean_Wansung_CI_AS) · PostgreSQL 16.15 · OpenJDK 21. CU32-GDR(15.0.4490.9) 이미지는 서버 콜레이션과 상관없이 같은 오류였다.
+- 실행: `bash scripts/rehearsal.sh 1`, `… 2` 를 **사람 모드**로 돌리고, 화면 안내(노트북 PowerShell 명령)를 읽어 같은 SQL(00·10·20·30·40·50)을 컨테이너 sqlcmd 로 실행한 뒤 Enter 를 치는 보조 스크립트로 진행. 원천 쓰기 300초.
+  결과 원문: `runs/20261008_0738_p6_cloud_r1_{log,score}.txt`, `runs/20261008_0745_p6_cloud_r2_{log,score}.txt`.
+- 결과: 두 회차 모두 **시험 32개 중 합격 31 · 불합격 0 · 미시행 1(T-N01, 클라우드는 인터넷을 끊을 수 없다)**. 회차당 7분 남짓.
+  C 단계 수집·반영 13,166 / 13,388건, 전환 검증 30/30, 예상 다운타임 8.8초 / 10.9초. T-C09 캡처 Job 60초 중지 때 "N초째 로그를 읽지 않음" 경고와 지연 증가 → 다시 시작 뒤 지연 0.0초.
+  T-C10 정리 뒤 sync 종료 코드 5 와 reset 안내. `kdms check --probe` 두 회차 모두 실패 0(L: 통과 32·건너뜀 2, C: 통과 34).
+  단위 시험 107개 통과(오프라인 빌드).
+- 오류 → 원인 → 해결:
+  1. 첫 시험 실행에서 오프라인 빌드 `maven-clean-plugin … not downloaded` → 새 컨테이너라 clean 플러그인이 없었다 → 온라인 `./mvnw clean` 한 번(rehearsal.md §2 에 준비 명령으로 적음).
+  2. 채점 줄의 한글 결과 칸이 어긋남(printf 폭이 바이트) → 직접 맞춤.
+- 노트북 원천·PG 에서의 리허설 2회는 Mac 에서 한다(docs/rehearsal.md). 실행 결과를 지어내지 않는다.
+
 ## 2026-10-09 13:55 · 5단계 · 단계 요약 · 클라우드
 - 결과: PR #10 머지(2026-10-08). 노트북 DB 로 S1(종료 코드 0, 30/30, 예상 다운타임 13.0초)·S4 통과(2026-10-08 15:44). S2·S3·웹 버튼 흐름은 클라우드(2026-10-08 13:10)로 갈음.
 - 이슈 ID: B06(해결 확인), B07, C01, C02, C03, C04, C05, D07, E04
 - 남은 일: C04(load 끝 안내) 수정 뒤 DB 재실행 안 함. 노트북에서 S2·S3 은 하지 않았다. 6단계 리허설은 PR #11(draft).
 - runs 파일: `runs/20261008_0410_p5_cloud_scenarios.txt`, `runs/20261008_0424_p5_cloud_s4.txt`, `runs/20261008_0425_p5_cloud_web.txt`, `runs/20261008_1547_p5_{build,reset,schema,sync,load,cutover,status}.txt`, `runs/20261008_1603_p5_s4.txt`
+
+## 2026-10-10 11:25 · 6단계 · MVP 리허설 2회 · Mac(노트북 DB)
+- 목적: plan.md §6 6단계 완료 기준(§8 시험 32개를 처음부터 2회, 두 번 모두 합격, 절차서만 보고 다시 할 수 있음)을 노트북 원천 MS-SQL·대상 PG 로 확인.
+- 환경: Mac(Java 21.0.12.1, Darwin arm64, 브랜치 claude/stage6-lis0lo 4d8c706 / 2회차 다시는 8b98bf9) → 노트북 192.168.0.12 (MSSQL 1433 KDMS_MOCK, 로그인 kodong_ms, SQL Agent Running / PG 5432 kdms, kdms_app). Mac 창 main(rehearsal.sh)·sub(인터넷 차단), 노트북 PowerShell 7 창 1·2. 인터넷은 Mac pf 방화벽으로 끊음(LAN·루프백만 허용, DEC-49).
+- 실행: docs/rehearsal.md 순서. Mac `bash scripts/rehearsal.sh 1`, `… 2`, 노트북 단계마다 `./scripts/Invoke-KdmsRehearsal.ps1 -Step restore|writes -Sec 20|tc10|writes -Sec 300|capture-stop|capture-start`.
+- 결과:
+
+| 회차 | 시작 | 결과 | 예상 다운타임 | 전환 검증 | 수집·반영 | 걸린 시간 | runs |
+|---|---|---|---|---|---|---|---|
+| 1 | 11:44 | **합격 32/32** | 15.0초 | 30/30 | 9,383 | 12분 42초 | `runs/20261010_1144_p6_r1_{log,score}.txt` |
+| 2(첫 시도) | 11:59 | 불합격 17/32 | 2.2초(전환 실패) | 30/30(L) | 792 | 13분 9초 | `runs/20261010_1159_p6_r2_{log,score}.txt` |
+| 2(다시) | 12:58 | **합격 32/32** | 16.2초 | 30/30 | 9,555 | 10분 31초 | `runs/20261010_1258_p6_r2_{log,score}.txt` |
+
+  두 합격 회차 모두 오프라인 빌드·단위 시험 107개 통과, `kdms check --probe` 실패 0(L: 통과 33·경고 2·건너뜀 1, C: 통과 34·경고 2), T-N01 인터넷 차단(시작·끝) 확인, T-N03 외부 연결은 192.168.0.12:1433·5432 뿐.
+- 오류 → 원인 → 해결(issues.md):
+  1. 11:25 1회차 첫 시도: T-N01 확인이 "인터넷이 연결돼 있다" → `sudo route -n delete default` 로 지운 기본 경로를 macOS 가 다시 만듦(E06) → pf 방화벽으로 바꿈(DEC-49).
+  2. 같은 시도의 오프라인 빌드 실패: `WebSmokeTest` 5개 `Connect` 오류 → pf 규칙이 127.0.0.1 까지 막음(E07) → `set skip on lo0`. 결과 원문 `runs/20261010_1125_p6_r1_log.txt`.
+  3. 방화벽이 리허설 중 저절로 꺼짐(E08, 원인 미확인). `-E` 로 켠 뒤에도 13:10 에 `pf not enabled`. 합격 두 회차는 시작·끝 모두 차단 확인이었다.
+  4. 2회차 첫 시도 12:04:32~33 Mac→노트북 1433·5432 `Connect timed out` → `reset` 실패 → 대상이 초기화되지 않아 C 단계 15개 불합격(E09). 코드 문제 아님 → reset 실패 시 회차를 멈추게 함(8b98bf9) 뒤 2회차 다시.

@@ -1,6 +1,6 @@
 # KDMS 문서 목록
 
-> 상태: 진행 중 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: 저장소 docs/·루트 문서, PR #1~#10
+> 상태: 진행 중 · 최종 갱신: 2026-10-10 · d142fde · 근거: 저장소 docs/·루트 문서, PR #1~#13, PR #11(6단계)
 
 문서를 새로 만들거나 상태가 바뀌면 이 표를 함께 고친다. 상태 뜻과 머리 줄 형식은 [CLAUDE.md](../CLAUDE.md) §6.
 
@@ -30,13 +30,14 @@
 | [schema-conversion.md](schema-conversion.md) | 단계(2) | 완료 | `kdms plan`·`schema`, 세 단계 DDL, 규칙이 DDL 에 들어가는 곳, KIS mock.sql 비교 |
 | [load-verify.md](load-verify.md) | 단계(3) | 완료 | `kdms load`·`verify`, 구간·재시작, 값 변환, 검증·행 차이, NUL 결정 |
 | [cdc.md](cdc.md) | 단계(4) | 완료 | `kdms sync`·`reset`, 워터마크와 적재, 반영 규칙, drain 조건, Debezium 설정, 원천 권한 |
-| [cutover.md](cutover.md) | 단계(5) | 완료 | `kdms cutover`·`status`·`web`, 전환 6단계, IDENTITY·SEQUENCE, 시나리오 S1~S4 |
+| [cutover.md](cutover.md) | 단계(5) | 완료 | `kdms cutover`·`status`·`web`, 전환 6단계, IDENTITY·SEQUENCE, 시나리오 S1~S4. 전환 뒤 점검 `kdms check`(§2.3, 6단계에서 더함) |
+| [rehearsal.md](rehearsal.md) | 단계(6) | 진행 중 | MVP 리허설: `scripts/rehearsal.sh <회차>` 로 §8 시험 32개를 한 번에 채점, 노트북 명령, 인터넷 차단, 채점 기준 |
 
 ## 4. 환경·운영
 
 | 문서 | 종류 | 상태 | 한 줄 설명 |
 |---|---|---|---|
-| [test-env.md](test-env.md) | 절차 | 진행 중 | 노트북·Mac 준비와 단계별(1~5) 확인 명령, 자주 막히는 곳(§7) |
+| [runbook.md](runbook.md) | 절차 | 진행 중 | 운영 절차서: 실제 이관 순서(준비 → 계획 검토 → 스키마·동기화·적재 → 전환 → 점검), 역할, 종료 코드별 대응, 되돌리기 |
+| [test-env.md](test-env.md) | 절차 | 진행 중 | 노트북·Mac 준비와 단계별(1~6) 확인 명령, 자주 막히는 곳(§7) |
 | [licenses.md](licenses.md) | 점검 | 진행 중 | 오픈소스 라이선스, 자동 보고서 결과, 뺀 의존성 |
 
-6단계 문서(`runbook.md`·`rehearsal.md`)는 PR #11(draft)에 있고 main 에는 아직 없다.

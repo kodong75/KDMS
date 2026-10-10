@@ -1,6 +1,6 @@
 # 이슈 목록 (1~5단계, 2026-10-01~08)
 
-> 상태: 진행 중 · 최종 갱신: 2026-10-09 · a43a5f8 · 근거: WORKLOG.md 의 "오류 원문 / 원인 → 해결" 항목, runs/, PR #3·#4·#5 설명
+> 상태: 진행 중 · 최종 갱신: 2026-10-10 · d142fde · 근거: WORKLOG.md 의 "오류 원문 / 원인 → 해결" 항목, runs/, PR #3·#4·#5 설명
 
 [WORKLOG.md](../WORKLOG.md) 의 오류·관찰을 다시 볼 수 있게 묶었다. 근거는 WORKLOG 항목 시각(KST, DEC-45)과 `runs/` 파일(클라우드 파일 이름은 UTC). 결정은 [decisions.md](decisions.md), 함정 근거는 KIS 이슈(`KIS:docs/issues.md A02` 처럼).
 형식은 KIS:docs/issues.md 와 같다.
@@ -62,3 +62,8 @@
 | E02 | 쓰기 시험 뒤 `SourceCatalogIT`(NUL 행)·`LoadVerifyIT`(rating_id 5 변조 검출) 실패 | `30_writes.sql` 이 원천 KDMS_MOCK 의 해당 행을 바꾸거나 지움(코드 문제 아님) → `00_restore` REPLACE=1 로 원천을 되돌린 뒤 시험(test-env.md §10) | 운영 | 10-08 11:57 |
 | E03 | 노트북 자체 서명 인증서로 원천 접속 `PKIX path building failed` | 시험 환경만 `trustServerCertificate=true`(DEC-21, KIS:docs/issues.md E03) | 운영 | plan.md §2, test-env.md §7 |
 | E04 | KIS `00_login_mig` 가 sa 를 꺼서 클라우드에서 원천 쓰기 스크립트를 돌릴 계정이 없음 | 시험용 sysadmin 로그인을 따로 만들어 `30_writes.sql` 에 사용(클라우드 컨테이너만) | 운영(클라우드 한정) | 10-08 13:10 |
+| E05 | 새 클라우드 컨테이너에서 오프라인 빌드 `./mvnw -o clean package` 가 `maven-clean-plugin … has not been downloaded` | 로컬 저장소에 clean 플러그인이 없었다 → 온라인으로 `./mvnw clean` 한 번 뒤 오프라인 빌드(rehearsal.md §2 준비 명령) | 해결 | 10-08 16:38 |
+| E06 | Mac 에서 `sudo route -n delete default` 로 인터넷을 끊었는데 3분쯤 뒤 리허설의 T-N01 확인이 "인터넷이 연결돼 있다" | macOS 가 IPv4 기본 경로(`default 192.168.0.1 en0`)를 다시 만들었다(`netstat -rn`) → pf 방화벽으로 차단(DEC-49) | 해결 | 10-10 리허설 1회차 준비 |
+| E07 | pf 로 인터넷을 끊은 뒤 오프라인 빌드에서 `WebSmokeTest` 5개가 `Connect` 오류(각 15초) | 규칙에 `set skip on lo0` 이 없어 127.0.0.1 내장 웹서버 연결까지 pf 가 걸렀다 → 규칙 첫 줄에 `set skip on lo0`(rehearsal.md §2) | 해결(10-10 1회차 빌드 통과) | 10-10 리허설 1회차 첫 시도 |
+| E08 | `sudo pfctl -e` 로 켠 Mac 방화벽이 리허설 중 저절로 꺼짐(10-10 11:41 무렵 `Status: Disabled for … 00:02:24`, 2회차 뒤 `pf not enabled`) | 원인 미확인. macOS pf 는 참조 토큰으로 켜고 끄는데 `-e` 는 토큰 없이 켜서, 다른 서비스가 자기 토큰을 풀 때 함께 꺼지는 것으로 추정 → `-E`(토큰)로 켜고 회차 사이에 `Enabled` 확인(rehearsal.md §2). `-E` 로 켠 뒤에도 13:10 에 `pf not enabled` 라 막지 못했다. 합격한 두 회차(11:44·12:58)의 시작·끝 인터넷 차단 확인은 모두 차단 | 남음(원인 미확인) | runs/20261010_1144_p6_r1_log.txt, 20261010_1159_p6_r2_log.txt |
+| E09 | 리허설 2회차 12:04:32~33 Mac→노트북 원천 1433·대상 5432 접속이 모두 `Connect timed out`(5초) → T-C10 sync 종료 코드 2, `reset` 종료 코드 1 → 대상이 초기화되지 않은 채 C 단계가 이어져 15개 불합격. 5초 뒤 sync 는 다시 접속됨 | Mac↔노트북 네트워크가 몇 초 끊김(원인 미확인: Wi-Fi·절전 등 추정). 코드 문제 아님 → `rehearsal.sh` 가 reset 실패 시 회차를 멈추게 함(`kd_reset`), 2회차 다시 | 조치함 | runs/20261010_1159_p6_r2_log.txt |

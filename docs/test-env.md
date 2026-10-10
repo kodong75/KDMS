@@ -345,6 +345,10 @@ ROLLBACK;
 - ④ 가 종료 코드 5(검증 불일치)면 `runs/${S}_p5_*.txt` 전부와 노트북 `runs\…_p5_writes.txt` 를 보내 준다.
 - 웹 화면 버튼으로 해 보려면 ① 부터 다시 한 뒤 ③ 의 `sync`·`load` 대신 화면의 "동기화 시작"·"전체 적재", ④ 대신 "전환 시작" 을 누른다(화면에서 띄운 동기화는 전환이 먼저 멈춘다).
 
+## 12. Mac + 노트북: 6단계(MVP 리허설)
+
+[rehearsal.md](rehearsal.md) 순서대로 한다. Mac 창 main 에서 `bash scripts/rehearsal.sh 1` → `… 2`, 노트북은 스크립트가 알려 주는 `./scripts/Invoke-KdmsRehearsal.ps1 -Step …` 를 실행한다(원천 되돌림까지 스크립트 안에 있다). 운영 절차는 [runbook.md](runbook.md).
+
 ## 7. 자주 막히는 곳
 
 | 증상 | 원인 → 해결 |

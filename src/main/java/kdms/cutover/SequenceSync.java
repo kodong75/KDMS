@@ -37,8 +37,52 @@ public final class SequenceSync {
     private SequenceSync() {
     }
 
+    /**
+     * 전환 뒤 점검(kdms check): 대상 시퀀스의 지금 다음 값이 원천 기준 기대값과 같은지. 시퀀스는 바꾸지 않는다(nextval 없음).
+     *
+     * @param expected 원천 IDENT_CURRENT·current_value 로 고른 다음 값(setval 이 넣었어야 할 값)
+     * @param actual   대상 시퀀스의 지금 다음 값
+     * @param tgtMax   대상 MAX(증가값이 음수면 MIN), SEQUENCE 이거나 행이 없으면 null
+     */
+    public record Check(String kind, String target, BigInteger srcValue, BigInteger expected, BigInteger actual, BigInteger inc,
+            BigInteger tgtMax) {
+        /** 다음 값이 기대값과 같고, 대상에 이미 있는 값과 겹치지 않는다 */
+        public boolean ok() {
+            boolean ahead = tgtMax == null || (inc.signum() >= 0 ? actual.compareTo(tgtMax) > 0 : actual.compareTo(tgtMax) < 0);
+            return expected.equals(actual) && ahead;
+        }
+    }
+
+    /** setval 할 대상 하나(원천에서 읽은 값으로 고른 값) */
+    private record Target(String kind, String where, String seq, BigInteger srcValue, Value value, BigInteger inc, BigInteger tgtMax) {
+    }
+
     public static List<Item> run(SchemaPlan plan, Connection src, Connection tgt) throws SQLException {
         List<Item> out = new ArrayList<>();
+        for (Target t : targets(plan, src, tgt)) {
+            setval(tgt, t.seq(), t.value());
+            out.add(new Item(t.kind(), t.where(), t.srcValue(), t.value().next(t.inc()), t.value().note()));
+        }
+        return out;
+    }
+
+    public static List<Check> check(SchemaPlan plan, Connection src, Connection tgt) throws SQLException {
+        List<Check> out = new ArrayList<>();
+        for (Target t : targets(plan, src, tgt)) {
+            BigInteger actual;
+            // 시퀀스 relation 을 직접 읽는다(pg_sequences.last_value 는 is_called = false 면 NULL 이라 다음 값을 알 수 없다)
+            try (PreparedStatement ps = tgt.prepareStatement("SELECT last_value::text, is_called FROM " + t.seq());
+                    ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                actual = new Value(big(rs.getString(1)), rs.getBoolean(2), null).next(t.inc());
+            }
+            out.add(new Check(t.kind(), t.where(), t.srcValue(), t.value().next(t.inc()), actual, t.inc(), t.tgtMax()));
+        }
+        return out;
+    }
+
+    private static List<Target> targets(SchemaPlan plan, Connection src, Connection tgt) throws SQLException {
+        List<Target> out = new ArrayList<>();
         for (TablePlan t : plan.tables()) {
             for (ColumnPlan c : t.columns()) {
                 if (c.identity() != null) {
@@ -47,7 +91,7 @@ public final class SequenceSync {
             }
         }
         for (SchemaPlan.SequencePlan s : plan.sequences()) {
-            out.add(sequence(s, src, tgt));
+            out.add(sequence(s, src));
         }
         return out;
     }
@@ -56,7 +100,7 @@ public final class SequenceSync {
         return "[" + schema.replace("]", "]]") + "].[" + name.replace("]", "]]") + "]";
     }
 
-    private static Item identity(TablePlan t, ColumnPlan c, Connection src, Connection tgt) throws SQLException {
+    private static Target identity(TablePlan t, ColumnPlan c, Connection src, Connection tgt) throws SQLException {
         BigInteger last;
         BigInteger seed;
         BigInteger inc;
@@ -95,12 +139,10 @@ public final class SequenceSync {
             throw new SQLException("대상 " + t.tgtQualified() + "." + col + " 에 IDENTITY 시퀀스가 없다");
         }
         String where = t.tgtQualified() + "." + col;
-        Value v = choose(last, seed, inc, tgtMax);
-        setval(tgt, seq, v);
-        return new Item("IDENTITY", where, last, v.next(inc), v.note);
+        return new Target("IDENTITY", where, seq, last, choose(last, seed, inc, tgtMax), inc, tgtMax);
     }
 
-    private static Item sequence(SchemaPlan.SequencePlan s, Connection src, Connection tgt) throws SQLException {
+    private static Target sequence(SchemaPlan.SequencePlan s, Connection src) throws SQLException {
         BigInteger current;
         BigInteger lastUsed;
         BigInteger start;
@@ -122,8 +164,7 @@ public final class SequenceSync {
         }
         String seq = Names.quote(s.tgtSchema()) + "." + Names.quote(s.tgtName());
         Value v = lastUsed == null ? new Value(start, false, null) : new Value(current, true, null);
-        setval(tgt, seq, v);
-        return new Item("SEQUENCE", seq, lastUsed == null ? null : current, v.next(inc), null);
+        return new Target("SEQUENCE", seq, seq, lastUsed == null ? null : current, v, inc, null);
     }
 
     /** setval 에 넣을 값. called = true 면 다음 값은 value + 증가값, false 면 value */

@@ -15,6 +15,7 @@ kdms load                       원천 쓰기가 있는 동안 전체 적재. �
 원천 앱 쓰기 중지(사람)          ← 여기서부터 다운타임
 kdms sync 중지(Ctrl+C)
 kdms cutover --yes              마지막 반영 → PK 없는 테이블 재적재 → UNIQUE·인덱스 → 검증 → setval → FK
+kdms check --probe              전환 뒤 점검(6단계, §2.3)
 앱을 대상 PG 로 전환(사람)       ← 여기까지 다운타임. kdms 가 재는 것은 cutover 시작~끝
 ```
 
@@ -61,6 +62,21 @@ kdms cutover --yes              마지막 반영 → PK 없는 테이블 재적�
 - `kdms.cutover_run`: 전환 한 번(시작·끝·`elapsed_ms` = 예상 다운타임·검증 run_id·오류), `kdms.cutover_step`: 단계별 상태·소요 ms·요약(숫자와 이름만, 행 값 없음). 관리 스키마 버전 3.
 - 출력 끝의 표와 `소요 시간(예상 다운타임) N초`. 실제 다운타임은 여기에 "앱 쓰기 중지 → cutover 시작" 과 "cutover 끝 → 앱 전환" 의 사람 작업 시간이 더해진다.
 - 끝나면 "전환 뒤 사람이 할 일" 로 원천 트리거(PL/pgSQL 로 배포, 반영이 끝났으므로 지금 켜도 이력이 두 번 생기지 않는다, G13)와 뷰·SP·함수·SYNONYM 목록을 낸다(KIS:docs/appcompat.md, plan.md §3.2).
+
+### 2.3 전환 뒤 점검 `kdms check` (6단계)
+
+전환이 끝난 대상이 앱을 받을 준비가 됐는지 따로 본다(운영 절차 [runbook.md](runbook.md) §7 ④). 원천·대상 데이터는 바꾸지 않는다(DEC-47).
+
+| 묶음 | 통과 조건 |
+|---|---|
+| 작업 | 작업 `DONE`, 마지막 `cutover_run` `DONE`, 그 검증 run 의 불일치 0 |
+| 다음 값 IDENTITY·SEQUENCE | 대상 시퀀스의 지금 다음 값(`last_value`·`is_called` 를 직접 읽음, nextval 안 함) = 원천을 다시 읽어 §2.1 규칙으로 고른 값, 그리고 대상 MAX 보다 큼(T-L05·T-L06) |
+| 제약·인덱스 | 테이블마다 PK, 계획의 적재 뒤 UNIQUE·인덱스가 있고 `indisvalid`, FK 가 있고 `convalidated`(T-C11) |
+| 계산 컬럼 | 계획의 GENERATED 컬럼이 `attgenerated = 's'`(T-L13) |
+| 입력 시험(`--probe`) | 한 트랜잭션 안에서 있는 행을 복사해 ① lower() 유일 인덱스의 컬럼 대소문자만 바꿔 넣으면 그 인덱스 위반(23505, T-L12) ② FK 컬럼을 부모에 없는 값(부모 MIN − 1,000,000)으로 넣으면 그 FK 위반(23503, T-C11). 끝에 ROLLBACK. 복사 행의 PK 는 `MAX + 1,000,000` 을 직접 넣어(`OVERRIDING SYSTEM VALUE`) 시퀀스를 쓰지 않는다. `lock_timeout 5s`. 복사할 행이 없거나 여러 컬럼·문자 PK 면 건너뜀 |
+| 사람이 할 일 | 트리거·뷰·SP 등(전환 끝 목록과 같음)을 경고로 |
+
+종료 코드: 0 실패 없음, 1 설정 오류, 2 접속 실패, 3 계획에 오류, 5 실패 있음. 실패 줄마다 할 일을 적는다(예: `대상 다음 값 501 ≠ 기대 1003 … → 전환 뒤 원천에 쓰기가 있었거나 setval 이 빠졌다`).
 
 ## 3. `kdms status`
 

@@ -1,0 +1,61 @@
+# KDMS 6단계 MVP 리허설 1회차 · 2026-10-10 11:25:30 · 절차 docs/rehearsal.md
+# 저장소 claude/stage6-lis0lo 4d8c706 · Darwin arm64 · openjdk version "21.0.12.1" 2026-08-18
+# 원천 192.168.0.12:1433 · 대상 192.168.0.12:5432 (비밀번호는 .env 에만) · 노트북 단계: 사람이 노트북에서
+# 원천 쓰기 300초 · 중간 파일 out/rehearsal/20261010_1125_r1
+
+===== 2026-10-10 11:25:31 [r1] 0. 인터넷 차단 확인(T-N01)
+인터넷 연결 안 됨(사람이 끊음)
+
+===== 2026-10-10 11:29:18 [r1] 노트북: restore 
+사람: 노트북 restore 끝
+
+===== 2026-10-10 11:31:59 [r1] 1. 빌드(오프라인, 단위 시험 포함): ./mvnw -o -B clean package
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.079 s -- in kdms.apply.ApplySqlTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in kdms.cdc.CdcValuesTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.056 s -- in kdms.cdc.LsnAndOffsetTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in kdms.cdc.LagTest
+2026-10-10 11:32:11.089 ERROR [debezium-sqlserverconnector-kdms-connection-validation] i.d.c.sqlserver.SqlServerConnector - Failed testing connection for {connector.class=io.debezium.connector.sqlserver.SqlServerConnector, record.processing.shutdown.timeout.ms=1000, bootstrap.servers=localhost:9092, record.processing.order=ORDERED, topic.prefix=kdms, offset.storage.file.filename=, record.processing.threads=, errors.retry.delay.initial.ms=300, value.converter=org.apache.kafka.connect.json.JsonConverter, key.converter=org.apache.kafka.connect.json.JsonConverter, database.encrypt=false, database.user=u, database.names=KDMS_MOCK, offset.storage=org.apache.kafka.connect.storage.MemoryOffsetBackingStore, offset.flush.timeout.ms=5000, errors.retry.delay.max.ms=10000, database.port=1, offset.flush.interval.ms=60000, internal.task.management.timeout.ms=40000, schema.history.internal=io.debezium.relational.history.MemorySchemaHistory, record.processing.with.serial.consumer=false, errors.max.retries=0, database.hostname=127.0.0.1, database.password=********, name=kdms-classpath-smoke, snapshot.mode=no_data} with user '[database.user,null,[],[],true]'
+2026-10-10 11:32:11.105 ERROR [pool-4-thread-1] i.d.e.async.AsyncEmbeddedEngine - Engine has failed with 
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.250 s -- in kdms.cdc.DebeziumClasspathTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.031 s -- in kdms.verify.NormalizerTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in kdms.config.EnvResolverTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.025 s -- in kdms.config.ConfigLoaderTest
+2026-10-10 11:33:35.275 ERROR [http-nio-127.0.0.1-auto-1-Acceptor] org.apache.tomcat.util.net.Acceptor - Socket accept failed
+[ERROR] Tests run: 5, Failures: 0, Errors: 5, Skipped: 0, Time elapsed: 84.12 s <<< FAILURE! -- in kdms.web.WebSmokeTest
+[ERROR] kdms.web.WebSmokeTest.명령_실행은_화면_토큰이_있어야_한다 -- Time elapsed: 15.65 s <<< ERROR!
+[ERROR] kdms.web.WebSmokeTest.작업_API_는_대상에_못_붙으면_오류를_싣는다 -- Time elapsed: 15.57 s <<< ERROR!
+[ERROR] kdms.web.WebSmokeTest.첫화면 -- Time elapsed: 15.58 s <<< ERROR!
+[ERROR] kdms.web.WebSmokeTest.정적파일 -- Time elapsed: 15.57 s <<< ERROR!
+[ERROR] kdms.web.WebSmokeTest.상태_API -- Time elapsed: 15.57 s <<< ERROR!
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in kdms.web.StaticAssetsTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in kdms.ddl.DefaultTranslatorTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.044 s -- in kdms.ddl.SchemaPlannerTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.662 s -- in kdms.cli.CliTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in kdms.state.SchemaScriptTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in kdms.cutover.AfterCutoverCheckTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in kdms.cutover.CutoverTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in kdms.load.CopyValuesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in kdms.load.ChunksTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in kdms.load.SafeMessageTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in kdms.rules.RulesLoaderTest
+[ERROR] Errors: 
+[ERROR]   WebSmokeTest.명령_실행은_화면_토큰이_있어야_한다:88->post:75 » Connect
+[ERROR]   WebSmokeTest.상태_API:64->get:45 » Connect
+[ERROR]   WebSmokeTest.작업_API_는_대상에_못_붙으면_오류를_싣는다:80->get:45 » Connect
+[ERROR]   WebSmokeTest.정적파일:58->get:45 » Connect
+[ERROR]   WebSmokeTest.첫화면:50->get:45 » Connect
+[ERROR] Tests run: 107, Failures: 0, Errors: 5, Skipped: 0
+[INFO] BUILD FAILURE
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project kdms: 
+[ERROR] 
+[ERROR] See /Users/kodong/Projects/KDMS/target/surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+exit 1
+빌드 실패. out/rehearsal/20261010_1125_r1/build.txt 를 본다. 리허설을 멈춘다

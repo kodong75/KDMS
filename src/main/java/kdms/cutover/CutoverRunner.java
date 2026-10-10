@@ -234,7 +234,7 @@ public final class CutoverRunner {
             out.println();
             out.println(summary(steps, elapsed, error));
             if (error == null) {
-                List<String> manual = manualWork();
+                List<String> manual = manualWork(plan);
                 if (!manual.isEmpty()) {
                     out.println();
                     out.println("전환 뒤 사람이 할 일(자동 변환하지 않음, KIS:docs/appcompat.md):");
@@ -281,8 +281,8 @@ public final class CutoverRunner {
         };
     }
 
-    /** 원천 트리거·뷰·SP 등 사람이 PG 에 옮길 것(계획 보고서의 목록) */
-    List<String> manualWork() {
+    /** 원천 트리거·뷰·SP 등 사람이 PG 에 옮길 것(계획 보고서의 목록). 전환 끝과 kdms check 가 보여 준다 */
+    public static List<String> manualWork(SchemaPlan plan) {
         List<String> out = new ArrayList<>();
         plan.allIssues().stream().filter(i -> i.message().startsWith("트리거 "))
                 .forEach(i -> out.add(i.where() + " " + i.message().substring(0, i.message().indexOf(':') < 0 ? i.message().length()
