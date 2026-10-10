@@ -262,8 +262,8 @@ if net_blocked; then
 elif [ -z "$HOOK" ]; then
     echo ""
     echo "  인터넷이 연결돼 있다. T-N01 은 인터넷을 끊고(LAN 은 그대로) 해야 한다. docs/rehearsal.md §2 의 명령:"
-    echo "    route -n get default | grep gateway        # 공유기 주소를 적어 둔다(되돌릴 때 씀)"
-    echo "    sudo route -n delete default               # 기본 경로만 지운다. 같은 LAN 의 노트북(192.168.0.x)은 그대로 닿는다"
+    echo "    printf 'set skip on lo0\\npass out quick inet from any to 192.168.0.0/24\\nblock drop out quick all\\n' > /tmp/kdms-offline.pf"
+    echo "    sudo pfctl -f /tmp/kdms-offline.pf -e      # LAN(192.168.0.x)·자기 자신만 열고 나머지 차단. 되돌리기: sudo pfctl -f /etc/pf.conf; sudo pfctl -d"
     echo "  끊었으면 Enter. 끊지 않고 진행하려면 s Enter (T-N01 미시행)"
     read -r a
     if net_blocked; then NET0=1; say "인터넷 연결 안 됨(사람이 끊음)"; else NET0=0; say "인터넷 연결됨(T-N01 미시행)"; fi

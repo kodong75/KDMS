@@ -50,16 +50,19 @@ git fetch origin && git checkout claude/stage6-lis0lo
 ./mvnw -B clean package -DskipTests                       # 인터넷이 있을 때 한 번: 오프라인 빌드에 필요한 플러그인을 받아 둔다
 ```
 
-**인터넷 끊기(T-N01)**: 노트북(같은 LAN)은 닿고 인터넷만 끊는다. 기본 경로(default route)만 지우면 된다(DEC-49).
+**인터넷 끊기(T-N01)**: 노트북(같은 LAN)은 닿고 인터넷만 끊는다. Mac 방화벽 pf(packet filter)로 LAN 과 자기 자신만 열고 나머지 나가는 연결을 막는다(DEC-49). 이 동안 Mac 의 채팅 앱도 끊기므로 결과는 휴대폰·노트북으로 보낸다.
 
 ```bash
-route -n get default | grep gateway        # 공유기 주소(예: 192.168.0.1)를 적어 둔다
-sudo route -n delete default               # 인터넷 끊김. 192.168.0.x 는 그대로
-curl -m 5 -sI https://repo.maven.apache.org | head -1   # 아무것도 안 나오면 끊긴 것
+printf 'set skip on lo0\npass out quick inet from any to 192.168.0.0/24\nblock drop out quick all\n' > /tmp/kdms-offline.pf
+sudo pfctl -f /tmp/kdms-offline.pf -e      # 규칙 적용 + 방화벽 켜기(ALTQ 경고는 무시)
+curl -m 5 -s -o /dev/null -w '%{http_code}\n' https://repo.maven.apache.org/maven2/   # 000 이면 끊긴 것
 nc -vz 192.168.0.12 1433; nc -vz 192.168.0.12 5432      # 노트북은 succeeded
 ```
 
-되돌리기: `sudo route -n add default <공유기 주소>` 또는 Wi-Fi 를 껐다 켠다. 리허설 중에 macOS 가 경로를 다시 만들면(네트워크 변경) 끝의 확인에서 T-N01 이 미시행으로 남는다.
+- 첫 줄 `set skip on lo0` 을 빼면 Mac 안의 127.0.0.1 연결까지 막혀 빌드의 웹 시험(`WebSmokeTest`)이 `Connect` 오류로 실패한다(issues.md E07).
+- 기본 경로를 지우는 방법(`sudo route -n delete default`)은 macOS 가 몇 분 안에 경로를 다시 만들어 쓰지 않는다(issues.md E06).
+
+되돌리기(두 회차가 끝난 뒤): `sudo pfctl -f /etc/pf.conf; sudo pfctl -d`.
 
 ---
 

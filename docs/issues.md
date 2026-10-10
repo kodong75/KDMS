@@ -63,3 +63,5 @@
 | E03 | 노트북 자체 서명 인증서로 원천 접속 `PKIX path building failed` | 시험 환경만 `trustServerCertificate=true`(DEC-21, KIS:docs/issues.md E03) | 운영 | plan.md §2, test-env.md §7 |
 | E04 | KIS `00_login_mig` 가 sa 를 꺼서 클라우드에서 원천 쓰기 스크립트를 돌릴 계정이 없음 | 시험용 sysadmin 로그인을 따로 만들어 `30_writes.sql` 에 사용(클라우드 컨테이너만) | 운영(클라우드 한정) | 10-08 13:10 |
 | E05 | 새 클라우드 컨테이너에서 오프라인 빌드 `./mvnw -o clean package` 가 `maven-clean-plugin … has not been downloaded` | 로컬 저장소에 clean 플러그인이 없었다 → 온라인으로 `./mvnw clean` 한 번 뒤 오프라인 빌드(rehearsal.md §2 준비 명령) | 해결 | 10-08 16:38 |
+| E06 | Mac 에서 `sudo route -n delete default` 로 인터넷을 끊었는데 3분쯤 뒤 리허설의 T-N01 확인이 "인터넷이 연결돼 있다" | macOS 가 IPv4 기본 경로(`default 192.168.0.1 en0`)를 다시 만들었다(`netstat -rn`) → pf 방화벽으로 차단(DEC-49) | 해결 | 10-10 리허설 1회차 준비 |
+| E07 | pf 로 인터넷을 끊은 뒤 오프라인 빌드에서 `WebSmokeTest` 5개가 `Connect` 오류(각 15초) | 규칙에 `set skip on lo0` 이 없어 127.0.0.1 내장 웹서버 연결까지 pf 가 걸렀다 → 규칙 첫 줄에 `set skip on lo0`(rehearsal.md §2) | 조치함(재확인 대기) | 10-10 리허설 1회차 첫 시도 |
