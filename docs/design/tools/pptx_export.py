@@ -1,7 +1,8 @@
-"""다이어그램 모델 → 편집 가능한 PowerPoint 한 장(python-pptx, MIT).
+"""다이어그램 모델 → 편집 가능한 PowerPoint(python-pptx, MIT). 그림 한 장 = 슬라이드 하나.
 
 그림을 이미지로 넣지 않는다. 영역·블록은 둥근 사각형(글은 도형 안), 아이콘은 자유형 도형,
 선은 블록에 붙인 연결선(꺾인·직선 연결선)이라 블록을 옮기면 PowerPoint 가 선을 다시 잇는다.
+ERD 엔터티·관계선은 도형·글상자를 묶은 그룹이다(엔터티 하나 = 그룹 하나, 컬럼 글은 열마다 글상자).
 좌표는 diagram.py 의 1600x900 캔버스를 16:9 슬라이드에 그대로 옮긴다.
 """
 
@@ -16,7 +17,7 @@ from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Emu, Pt
 
-from diagram import C, FONT_PPTX, T, Diagram, text_width, icon_paths
+from diagram import C, E_HEAD, E_ROW, FONT_PPTX, LINE_KINDS, T, Diagram, Entity, Rel, ie_marks, text_width, icon_paths
 from svgpath import flatten
 
 SLIDE_W, SLIDE_H = 12192000, 6858000      # 16:9
@@ -153,9 +154,102 @@ def connector(slide, kind, p1, p2, color, dashed, name, a=None, a_side=None, b=N
     return c
 
 
-def build(d: Diagram, out_path, title: str) -> None:
+def _line(slide, p1, p2, color, width, name, dashed=False):
+    return connector(slide, MSO_CONNECTOR.STRAIGHT, p1, p2, color, dashed, name, arrow=False, width=width)
+
+
+def _marks(slide, marks) -> None:
+    for m in marks:
+        if m[0] == "line":
+            _line(slide, (m[1], m[2]), (m[3], m[4]), C["primary"], 2, "관계 기호")
+        else:
+            o = slide.shapes.add_shape(MSO_SHAPE.OVAL, E(m[1] - m[3]), E(m[2] - m[3]), E(2 * m[3]), E(2 * m[3]))
+            _plain(o)
+            o.fill.solid()
+            o.fill.fore_color.rgb = rgb(C["white"])
+            o.line.color.rgb = rgb(C["primary"])
+            o.line.width = Pt(2 * PT)
+            o.name = "관계 기호 0"
+
+
+def _col_box(slide, x, y, w, texts, size, bold, color, align, name):
+    """컬럼 한 열(줄 높이 E_ROW 고정). texts 의 빈 글은 빈 줄."""
+    tb = slide.shapes.add_textbox(E(x), E(y), E(w), E(E_ROW * len(texts)))
+    tf = tb.text_frame
+    _margins(tf)
+    tf.vertical_anchor = MSO_ANCHOR.TOP
+    lines = [(t, size, bold, c, E_ROW) for t, c in texts] if isinstance(texts[0], tuple) else \
+        [(t, size, bold, color, E_ROW) for t in texts]
+    _paras(tf, lines, align)
+    tb.name = name
+    return tb
+
+
+def entity(slide, e: Entity) -> None:
+    g = slide.shapes.add_group_shape()
+    line = C["block_line"] if e.ref else C["primary"]
+    box = rrect(g, e.x, e.y, e.w, e.h, C["white"], line, 1.8, 10, "테두리")
+    if e.ref:
+        box.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+    hd = g.shapes.add_shape(MSO_SHAPE.ROUND_2_SAME_RECTANGLE, E(e.x + 1), E(e.y + 1), E(e.w - 2), E(E_HEAD - 1))
+    _plain(hd)
+    hd.adjustments[0] = 9 / (E_HEAD - 1)
+    hd.adjustments[1] = 0
+    hd.fill.solid()
+    hd.fill.fore_color.rgb = rgb(C["zone_fill"] if e.ref else C["tint_fill"])
+    hd.line.fill.background()
+    hd.name = "머리"
+    _line(g, (e.x, e.y + E_HEAD), (e.x + e.w, e.y + E_HEAD), line, 1.4, "머리 선")
+    textbox(g, e.x + 14, e.y, e.w / 2, E_HEAD, [(e.name, T["block_title"], True, C["navy"], None)], name="테이블 이름")
+    textbox(g, e.x + e.w / 2, e.y, e.w / 2 - 14, E_HEAD, [(e.label, T["label"], True, C["muted"], None)],
+            PP_ALIGN.RIGHT, name="한글 이름")
+    _line(g, (e.x + 10, e.sep_y()), (e.x + e.w - 10, e.sep_y()), C["block_line"], 1.4, "PK 구분선")
+    cx = e.col_x()
+    f = T["label"]
+    rows = e.rows()
+    for part, cols in (("PK", rows[:len(e.pk)]), ("컬럼", rows[len(e.pk):])):
+        if not cols:
+            continue
+        y0 = cols[0][0]
+        keys = [c[0] for _, c in cols]
+        names = [(c[1], C["muted"] if not c[0] and not c[2] else C["text"]) for _, c in cols]
+        if any(keys):
+            _col_box(g, cx["key"], y0, 34, keys, f, True, C["primary"], PP_ALIGN.LEFT, f"{part} 키")
+        _col_box(g, cx["name"], y0, e.w - 200, names, f, part == "PK", None, PP_ALIGN.LEFT, f"{part} 이름")
+        _col_box(g, cx["type"] - 150, y0, 150, [c[2] for _, c in cols], f, False, C["muted"], PP_ALIGN.RIGHT, f"{part} 타입")
+        _col_box(g, cx["nn"] - 30, y0, 30, ["NN" if c[3] else "" for _, c in cols], f, True, C["muted"],
+                 PP_ALIGN.RIGHT, f"{part} NN")
+    g.name = f"엔터티 {e.name}"
+
+
+def relation(slide, r: Rel) -> None:
+    g = slide.shapes.add_group_shape()
+    fb = g.shapes.build_freeform(E(r.pts[0][0]), E(r.pts[0][1]), scale=1.0)
+    fb.add_line_segments([(E(x), E(y)) for x, y in r.pts[1:]], close=False)
+    s = fb.convert_to_shape()
+    _plain(s)
+    s.fill.background()
+    s.line.color.rgb = rgb(C["primary"])
+    s.line.width = Pt(2 * PT)
+    if not r.ident:
+        s.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+    s.name = "관계선"
+    _marks(g, ie_marks(r.pts[0], r.pts[1], r.parent_card))
+    _marks(g, ie_marks(r.pts[-1], r.pts[-2], r.child_card))
+    g.name = f"관계 {r.parent} → {r.child}"
+
+
+def build(ds, out_path, title: str) -> None:
     prs = Presentation()
     prs.slide_width, prs.slide_height = Emu(SLIDE_W), Emu(SLIDE_H)
+    for d in (ds if isinstance(ds, list) else [ds]):
+        _slide(prs, d)
+    prs.core_properties.title = title
+    prs.core_properties.author = "KDMS"
+    prs.save(out_path)
+
+
+def _slide(prs, d: Diagram) -> None:
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     slide.background.fill.solid()
     slide.background.fill.fore_color.rgb = rgb("#FFFFFF")
@@ -191,6 +285,12 @@ def build(d: Diagram, out_path, title: str) -> None:
     for l in d.lines:
         connector(slide, MSO_CONNECTOR.STRAIGHT, (l.x1, l.y1), (l.x2, l.y2), l.color, l.dashed, "선",
                   arrow=l.arrow, width=l.width)
+
+    # ERD 관계선 → 엔터티(기호가 엔터티 밖에 있어 순서는 상관없다)
+    for r in d.rels:
+        relation(slide, r)
+    for e in d.entities.values():
+        entity(slide, e)
 
     # 블록
     shapes = {}
@@ -287,6 +387,10 @@ def build(d: Diagram, out_path, title: str) -> None:
             if kind in ("sync", "async"):
                 connector(slide, MSO_CONNECTOR.STRAIGHT, (mx, my), (mx + 46, my),
                           C["primary"] if kind == "sync" else C["sky"], kind == "async", f"범례 {label}")
+            elif kind in LINE_KINDS:
+                _line(slide, (mx, my), (mx + 46, my), C["primary"], 2, f"범례 {label}", dashed=kind == "nonident")
+                if kind.startswith("ie_"):
+                    _marks(slide, ie_marks((mx + 46, my), (mx, my), kind[3:]))
             else:
                 rrect(slide, mx, my - 9, 24, 18, kind, C["block_line"], 1, 4, f"범례 {label}")
             textbox(slide, tx, y, text_width(label, T["legend"]) + 20, h,
@@ -297,6 +401,3 @@ def build(d: Diagram, out_path, title: str) -> None:
         textbox(slide, nx - wdt, ny - T["note"] - 2, wdt, T["note"] + 8,
                 [(n, T["note"], False, C["muted"], None)], PP_ALIGN.RIGHT, name="설명")
 
-    prs.core_properties.title = title
-    prs.core_properties.author = "KDMS"
-    prs.save(out_path)

@@ -23,17 +23,17 @@ DOCS = [
      "desc": "패키지·계층 구조, 모듈 간 의존 방향, 외부 라이브러리 위치"},
     {"no": "D03", "module": "d03_migration_flow", "title": "이관 흐름도", "status": "done",
      "desc": "워터마크 → 전체 적재 → 변경분 반영 → 쓰기 중지 → 검증 → 전환, 실제 다운타임 구간"},
-    {"no": "D04", "title": "데이터 흐름도", "status": "todo", "when": "4단계",
+    {"no": "D04", "module": "d04_data_flow", "title": "데이터 흐름도", "status": "done",
      "desc": "적재 경로와 CDC 경로의 값 변환, change_log·워터마크·오프셋 기록 시점"},
-    {"no": "D05", "title": "관리 테이블 ERD", "status": "todo", "when": "3단계",
-     "desc": "ERD(Entity Relationship Diagram, 개체 관계도). kdms 스키마 테이블·키·상태 값"},
+    {"no": "D05", "module": "d05_erd", "title": "관리 테이블 ERD", "status": "done",
+     "desc": "ERD(Entity Relationship Diagram, 개체 관계도). kdms 스키마 4장: 한눈에 보기, 논리 ERD, 물리 ERD 2장(IE 표기, 컬럼·타입·키·NOT NULL)"},
     {"no": "D06", "module": "d06_schedule", "title": "개발 일정", "status": "done",
      "desc": "단계별 일정(간트), 완료 기준, 현재 위치"},
     {"no": "D07", "module": "d07_type_mapping", "title": "변환 규칙 매핑표", "status": "done",
      "desc": "MS-SQL → PG 자료형·콜레이션·끝 공백·날짜 규칙과 근거"},
-    {"no": "D08", "title": "검증 계획서", "status": "todo", "when": "3단계",
+    {"no": "D08", "module": "d08_verify_plan", "title": "검증 계획서", "status": "done",
      "desc": "건수·합계·해시 정규화 규칙, 시험 항목(T-L·T-C·T-N), 합격 기준"},
-    {"no": "D09", "title": "전환·롤백 절차서", "status": "todo", "when": "5단계",
+    {"no": "D09", "module": "d09_cutover", "title": "전환·롤백 절차서", "status": "done",
      "desc": "컷오버 단계별 확인 항목, 중단 조건, 되돌리기 방법"},
     {"no": "D10", "title": "보안·권한 설계", "status": "todo", "when": "6단계",
      "desc": "원천·대상 최소 권한, 비밀번호 보관, 로그 개인정보 원칙, 폐쇄망 점검"},
@@ -66,19 +66,31 @@ def page(title: str, kicker: str, meta_html: str, body: str, css: str) -> str:
 """
 
 
+def diagrams(mod) -> list:
+    """모듈의 build() 가 한 장(Diagram) 또는 여러 장(list)을 돌려준다."""
+    d = mod.build()
+    return d if isinstance(d, list) else [d]
+
+
+def page_names(doc_id: str, n: int) -> list[str]:
+    return [doc_id if i == 1 else f"{doc_id}-{i}" for i in range(1, n + 1)]
+
+
 def build_doc(doc: dict) -> None:
     mod = importlib.import_module(doc["module"])
-    d = mod.build()
-    # 단독 SVG: 브라우저로 바로 열 때 글꼴을 상대 경로로 읽는다
+    pages = diagrams(mod)
+    # 단독 SVG: 브라우저로 바로 열 때 글꼴을 상대 경로로 읽는다. 2장부터 이름 뒤에 -2, -3
     (DESIGN_DIR / "diagrams").mkdir(exist_ok=True)
-    (DESIGN_DIR / "diagrams" / f"{mod.ID}.svg").write_text(
-        d.svg(font_url="../assets/fonts/PretendardVariable.woff2"), encoding="utf-8")
+    for name, d in zip(page_names(mod.ID, len(pages)), pages):
+        (DESIGN_DIR / "diagrams" / f"{name}.svg").write_text(
+            d.svg(font_url="../assets/fonts/PretendardVariable.woff2"), encoding="utf-8")
     # 문서 HTML: SVG 를 본문에 넣어 페이지 글꼴(doc.css)을 그대로 쓴다
     meta = (f"KDMS-{doc['no']} · {mod.VERSION} · {mod.DATE}<br>"
             f'<a class="no-print" href="index.html">문서 목록</a> · '
             f'<a class="no-print" href="dist/{mod.ID}.pdf">PDF</a> · '
             f'<a class="no-print" href="dist/{mod.ID}.pptx">PPTX</a>')
-    body = f'<figure class="diagram">{d.svg(standalone=False)}</figure>\n{mod.EXPLAIN}'
+    figs = "\n".join(f'<figure class="diagram">{d.svg(standalone=False)}</figure>' for d in pages)
+    body = f"{figs}\n{mod.EXPLAIN}"
     (DESIGN_DIR / f"{mod.ID}.html").write_text(
         page(f"KDMS {doc['title']}", f"KDMS 설계 문서 {doc['no']}", meta, body, "assets/doc.css"),
         encoding="utf-8")
@@ -102,7 +114,7 @@ def build_index() -> None:
             f'<span style="color:var(--muted)">{escape(doc["desc"])}</span></td>'
             f'<td><span class="status {doc["status"]}">{escape(doc.get("when", "") + "에 작성") if doc["status"] == "todo" else STATUS_LABEL[doc["status"]]}</span></td>'
             f'<td>{ver}</td><td>{links}</td></tr>')
-    body = ("<p>원본은 HTML+SVG, 배포본은 같은 원본에서 만든 PDF(문서)와 PPTX(발표용 한 장)입니다. "
+    body = ("<p>원본은 HTML+SVG, 배포본은 같은 원본에서 만든 PDF(문서)와 PPTX(발표용, 그림 한 장마다 슬라이드 하나)입니다. "
             "만드는 방법은 <code>docs/design/README.md</code>.</p>\n"
             "<table><thead><tr><th>번호</th><th>문서</th><th>상태</th><th>버전</th><th>파일</th></tr></thead>\n<tbody>\n"
             + "\n".join(rows) + "\n</tbody></table>")
