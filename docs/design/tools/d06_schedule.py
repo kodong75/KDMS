@@ -1,4 +1,4 @@
-"""D06 개발 일정. 근거: docs/plan.md §6(단계·완료 기준·상태), 저장소 PR 머지 시각. 6단계부터 날짜는 안(案)이다."""
+"""D06 개발 일정. 근거: docs/plan.md §6(단계·완료 기준·상태), 저장소 PR 머지 시각. 7단계부터 날짜는 안(案)이다."""
 
 from datetime import date, timedelta
 
@@ -6,10 +6,10 @@ from diagram import C, Diagram, text_width
 
 ID = "d06-schedule"
 TITLE = "개발 일정"
-VERSION = "v0.2"
-DATE = "2026-10-09"
+VERSION = "v0.3"
+DATE = "2026-10-10"
 
-TODAY = date(2026, 10, 9)
+TODAY = date(2026, 10, 10)
 START = date(2026, 9, 28)          # 첫 주 월요일
 WEEKS = 6
 X0, X1 = 470, 1550                 # 간트 영역
@@ -27,7 +27,7 @@ ROWS = [
     ("3. 전체 적재 + 검증", "COPY · 재시작 · 건수·합계·해시", date(2026, 10, 7), date(2026, 10, 8), DONE, "D05 D08"),
     ("4. CDC 수집·반영", "Debezium · change_log · 반영기", date(2026, 10, 8), date(2026, 10, 8), DONE, "D04"),
     ("5. 전환 + 화면·CLI", "상태 기계 · setval · 화면", date(2026, 10, 8), date(2026, 10, 8), DONE, "D09"),
-    ("6. MVP 리허설", "처음부터 2회 · 운영 절차서", date(2026, 10, 9), date(2026, 10, 16), DOING, "D10 D11"),
+    ("6. MVP 리허설", "처음부터 2회 · 운영 절차서", date(2026, 10, 9), date(2026, 10, 10), DONE, "D10 D11"),
     ("7. 설치본", "jlink 로 JRE 포함 압축본", date(2026, 10, 19), date(2026, 10, 23), TODO, ""),
     ("8. 확장", "22테이블 · 대용량 · 별도 계획", date(2026, 10, 26), date(2026, 10, 30), TODO, ""),
 ]
@@ -40,7 +40,7 @@ def x_of(d: date) -> float:
 
 def build() -> Diagram:
     d = Diagram(1600, 900, "KDMS 개발 일정",
-                "0 ~ 5단계는 실제(PR 머지일) · 6단계부터 안(案) · 오늘 2026-10-09",
+                "0 ~ 6단계는 실제(PR 머지일) · 7단계부터 안(案) · 오늘 2026-10-10",
                 f"KDMS-D06 · {VERSION} · {DATE}")
     d.legend = [(C["primary"], "완료"), (C["sky"], "진행 중"), (C["tint_fill"], "예정")]
 
@@ -71,7 +71,7 @@ def build() -> Diagram:
     # 오늘 선(막대 뒤에 깔리도록 먼저 그린다)
     tx = x_of(TODAY) + (X1 - X0) / (WEEKS * 7) / 2
     d.bar(tx - 1, top + 64, 2, bottom - top - 40, C["navy"], rx=0, name="오늘 선")
-    d.text(tx + 8, bottom + 24, "오늘 10/9", size=17, bold=True, color=C["navy"])
+    d.text(tx + 8, bottom + 24, "오늘 10/10", size=17, bold=True, color=C["navy"])
 
     # 막대
     for i, (name, desc, s, e, st, docs) in enumerate(ROWS):
@@ -98,7 +98,7 @@ def build() -> Diagram:
 
 
     d.notes = [
-        "막대 오른쪽 D 번호: 그 단계에 맞춰 만드는 설계 문서 · 6단계부터 날짜는 안(案)",
+        "막대 오른쪽 D 번호: 그 단계에 맞춰 만드는 설계 문서 · 7단계부터 날짜는 안(案)",
         "단계마다 브랜치 하나 + draft PR 하나 · 머지는 사용자가 한다(CLAUDE.md §4)",
     ]
     return d
@@ -112,10 +112,10 @@ EXPLAIN = """
 <tr><td>0. 환경 준비</td><td>10/1 ~ 10/6</td><td>완료</td><td>Mac 에서 1433·5432 접속, <code>KDMS_MOCK</code> CDC 켜짐, <code>kdms_app</code> 로그인</td><td>—</td></tr>
 <tr><td>1. 골격</td><td>10/1 ~ 10/6</td><td>완료</td><td>PR #2·#3·#5, Mac 확인 2026-10-06</td><td>D01 구성도, D02 아키텍처, D03 흐름도, D06 일정</td></tr>
 <tr><td>2. 스키마 변환</td><td>10/1 ~ 10/6</td><td>완료</td><td>PR #4 머지 2026-10-06</td><td>D07 변환 규칙 매핑표</td></tr>
-<tr><td>3. 전체 적재 + 검증</td><td>10/7 ~ 10/8</td><td>완료</td><td>PR #8 머지 2026-10-08</td><td>D05 관리 테이블 ERD, D08 검증 계획서 (아직 없음)</td></tr>
-<tr><td>4. CDC 수집·반영</td><td>10/8</td><td>완료</td><td>PR #9 머지 2026-10-08</td><td>D04 데이터 흐름도 (아직 없음)</td></tr>
-<tr><td>5. 전환 + 화면·CLI</td><td>10/8</td><td>완료</td><td>PR #10 머지 2026-10-08, 시나리오 S1~S4</td><td>D09 전환·롤백 절차서 (아직 없음)</td></tr>
-<tr><td>6. MVP 리허설</td><td>10/9 ~ 10/16 (안)</td><td>진행 중</td><td>처음부터 2회 모두 합격, 절차서만 보고 다시 할 수 있음. PR #11 draft</td><td>D10 보안·권한, D11 운영 매뉴얼</td></tr>
+<tr><td>3. 전체 적재 + 검증</td><td>10/7 ~ 10/8</td><td>완료</td><td>PR #8 머지 2026-10-08</td><td>D05 관리 테이블 ERD, D08 검증 계획서 (PR #13)</td></tr>
+<tr><td>4. CDC 수집·반영</td><td>10/8</td><td>완료</td><td>PR #9 머지 2026-10-08</td><td>D04 데이터 흐름도 (PR #13)</td></tr>
+<tr><td>5. 전환 + 화면·CLI</td><td>10/8</td><td>완료</td><td>PR #10 머지 2026-10-08, 시나리오 S1~S4</td><td>D09 전환·롤백 절차서 (PR #13)</td></tr>
+<tr><td>6. MVP 리허설</td><td>10/9 ~ 10/10</td><td>완료</td><td>PR #11 머지 2026-10-10. Mac→노트북 2회 모두 32/32, 예상 다운타임 15.0초·16.2초(WORKLOG 2026-10-10 11:25)</td><td>D10 보안·권한, D11 운영 매뉴얼 (작성 전)</td></tr>
 <tr><td>7. 설치본</td><td>10/19 ~ 10/23 (안)</td><td>예정</td><td>자바가 없는 PC 에서 실행</td><td>D11 보완</td></tr>
 <tr><td>8. 확장</td><td>10/26 ~ (안)</td><td>예정</td><td>별도 계획(22테이블, PK 없는 테이블, DDL 변경 감지, 대용량)</td><td>—</td></tr>
 </tbody>
@@ -123,8 +123,8 @@ EXPLAIN = """
 
 <h2>2. 일정을 정한 방법</h2>
 <ul>
-<li>0~5단계는 PR 머지일 기준 실제 기간이다(v0.1 의 안보다 크게 앞당겨졌다).</li>
-<li>6단계부터는 plan.md 에 날짜가 없어 이 문서에서 정한 안이다. 6·7단계 각 1주, 8단계는 별도 계획.</li>
+<li>0~6단계는 PR 머지일 기준 실제 기간이다(v0.1 의 안보다 크게 앞당겨졌다).</li>
+<li>7단계부터는 plan.md 에 날짜가 없어 이 문서에서 정한 안이다. 7단계 1주, 8단계는 별도 계획. 6단계가 일찍 끝났지만 7단계 안은 v0.2 그대로 두었다.</li>
 <li>단계가 끝날 때마다 실제 날짜로 고치고 버전을 올린다.</li>
 </ul>
 """

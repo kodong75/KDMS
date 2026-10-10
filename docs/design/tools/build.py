@@ -35,10 +35,10 @@ DOCS = [
      "desc": "건수·합계·해시 정규화 규칙, 시험 항목(T-L·T-C·T-N), 합격 기준"},
     {"no": "D09", "module": "d09_cutover", "title": "전환·롤백 절차서", "status": "done",
      "desc": "컷오버 단계별 확인 항목, 중단 조건, 되돌리기 방법"},
-    {"no": "D10", "title": "보안·권한 설계", "status": "todo", "when": "6단계",
-     "desc": "원천·대상 최소 권한, 비밀번호 보관, 로그 개인정보 원칙, 폐쇄망 점검"},
-    {"no": "D11", "title": "운영 매뉴얼", "status": "todo", "when": "6~7단계",
-     "desc": "설치·실행·모니터링·장애 대응(로그 사용률, CDC 보존 기간 초과 등)"},
+    {"no": "D10", "module": "d10_security", "title": "보안·권한 설계", "status": "draft",
+     "desc": "원천·대상 최소 권한, 비밀번호 보관(.env), 행 값(개인정보) 원칙, 웹 화면, 폐쇄망 점검"},
+    {"no": "D11", "module": "d11_operations", "title": "운영 매뉴얼", "status": "draft",
+     "desc": "runbook.md 를 역할별(DBA·이관 담당·앱 담당) 흐름 한 장으로: 준비·적재·전환 ①~⑦·되돌리기·정리"},
 ]
 
 STATUS_LABEL = {"done": "확정", "draft": "초안", "todo": "예정"}

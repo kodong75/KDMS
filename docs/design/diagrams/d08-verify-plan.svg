@@ -13,7 +13,7 @@
 <rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
 <text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS 검증 계획서</text>
 <text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">원천 = 대상을 숫자로 확인 · kdms verify 와 전환의 검증 단계가 같은 절차 · 합격 기준과 시험 항목</text>
-<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D08 · v0.1 · 2026-10-09</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D08 · v0.2 · 2026-10-10</text>
 <rect x="44" y="126" width="1512" height="360" rx="18" fill="#EEF8F3" stroke="#1E6B4F" stroke-width="2"/>
 <text x="66" y="160" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">검증 절차</text>
 <text x="66" y="186" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="start">테이블마다 · 원천과 대상에서 동시에 계산하고 숫자만 가져온다</text>
@@ -94,7 +94,7 @@
 <text x="1356.0" y="644.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC · 전환 12개 (4 · 5단계)</text>
 <rect x="830" y="684" width="340" height="90" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
 <text x="1000.0" y="724.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">T-N01 ~ T-N03</text>
-<text x="1000.0" y="748.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">폐쇄망 3개</text>
+<text x="1000.0" y="748.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">폐쇄망 3개 (6단계)</text>
 <rect x="1186" y="684" width="340" height="90" rx="12" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="2.2"/>
 <text x="1356.0" y="724.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">B01 ~ B14</text>
 <text x="1356.0" y="748.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">주의 보고 · 합격 기준 아님</text>

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KDMS 운영 매뉴얼</title>
+<link rel="stylesheet" href="assets/doc.css">
+</head>
+<body>
+<main class="page">
+<header class="doc-head">
+  <div><div class="kicker">KDMS 설계 문서 D11</div><h1>KDMS 운영 매뉴얼</h1></div>
+  <div class="meta">KDMS-D11 · v0.1 · 2026-10-10<br><a class="no-print" href="index.html">문서 목록</a> · <a class="no-print" href="dist/d11-operations.pdf">PDF</a> · <a class="no-print" href="dist/d11-operations.pptx">PPTX</a></div>
+</header>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" style="font-feature-settings:'calt' 0" role="img" aria-label="KDMS 운영 매뉴얼 (역할별 흐름)">
+<defs>
+<marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E6B4F"/></marker>
+<marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E9E6E"/></marker>
+</defs>
+<rect width="1600" height="900" fill="#FFFFFF"/>
+<rect x="50" y="36" width="7" height="72" rx="3.5" fill="#1E6B4F"/>
+<text x="70" y="70" font-size="36" font-weight="800" fill="#0B3D2E">KDMS 운영 매뉴얼 (역할별 흐름)</text>
+<text x="70" y="102" font-size="18" font-weight="500" fill="#3F4E61">runbook.md 요약 · D-n 준비 → 적재·동기화(며칠도 가능) → D-day 전환 ①~⑦ → D+n 정리</text>
+<text x="1550" y="70" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">KDMS-D11 · v0.1 · 2026-10-10</text>
+<rect x="44" y="164" width="1512" height="196" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="66" y="198" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">DBA</text>
+<rect x="44" y="372" width="1512" height="214" rx="18" fill="#EEF8F3" stroke="#1E6B4F" stroke-width="2"/>
+<text x="66" y="406" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">이관 담당</text>
+<rect x="44" y="598" width="1512" height="192" rx="18" fill="#EEF8F3" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="66" y="632" font-size="20" font-weight="800" fill="#0B3D2E" text-anchor="start">앱 담당 · 판단자</text>
+<line x1="470" y1="160" x2="470" y2="790" stroke="#2E9E6E" stroke-width="1.6" stroke-dasharray="8 6"/>
+<line x1="730" y1="160" x2="730" y2="790" stroke="#2E9E6E" stroke-width="1.6" stroke-dasharray="8 6"/>
+<line x1="1400" y1="160" x2="1400" y2="586" stroke="#2E9E6E" stroke-width="1.6" stroke-dasharray="8 6"/>
+<line x1="1130" y1="272" x2="1115" y2="272" stroke="#1E6B4F" stroke-width="2.2"/>
+<line x1="1115" y1="272" x2="1115" y2="616" stroke="#1E6B4F" stroke-width="2.2"/>
+<line x1="1115" y1="616" x2="995" y2="616" stroke="#1E6B4F" stroke-width="2.2"/>
+<line x1="995" y1="616" x2="995" y2="638" stroke="#1E6B4F" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<line x1="995" y1="758" x2="995" y2="776" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6"/>
+<line x1="995" y1="776" x2="1478" y2="776" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6"/>
+<line x1="1478" y1="776" x2="1478" y2="750" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
+<path d="M254.0,272.0 L270.0,272.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M363.0,330.0 L363.0,379.0 L159.0,379.0 L159.0,428.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M254.0,488.0 L270.0,488.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M456.0,488.0 L490.0,488.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M363.0,548.0 L363.0,646.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="369.0" y="584.5" width="89.3" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="413.7" y="604.5" font-size="17" font-weight="600" fill="#2E9E6E" text-anchor="middle">주의 항목</text>
+<path d="M600.0,428.0 L600.0,330.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="606.0" y="366.5" width="89.3" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="650.7" y="386.5" font-size="17" font-weight="600" fill="#2E9E6E" text-anchor="middle">멈춤 경고</text>
+<path d="M600.0,548.0 L600.0,597.0 L785.0,597.0 L785.0,646.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="619.3" y="568.0" width="72.3" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="655.5" y="588.0" font-size="17" font-weight="600" fill="#1E6B4F" text-anchor="middle">전환 날</text>
+<path d="M825.0,646.0 L825.0,548.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M900.0,488.0 L920.0,488.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1100.0,488.0 L1130.0,488.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1215.0,428.0 L1215.0,330.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<path d="M1085.0,698.0 L1130.0,698.0" fill="none" stroke="#1E6B4F" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow-sync)"/>
+<rect x="1093.0" y="669.0" width="29.0" height="25.0" rx="4" fill="#FFFFFF"/>
+<text x="1107.5" y="689.0" font-size="17" font-weight="600" fill="#1E6B4F" text-anchor="middle">예</text>
+<path d="M1478.0,330.0 L1478.0,428.0" fill="none" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" stroke-linejoin="round" marker-end="url(#arrow-async)"/>
+<rect x="64" y="214" width="190" height="116" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="159.0" y="256.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">원천 준비</text>
+<text x="159.0" y="280.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC · 스냅숏 격리</text>
+<text x="159.0" y="302.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">읽기 전용 로그인</text>
+<rect x="270" y="214" width="186" height="116" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="363.0" y="256.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">대상 준비</text>
+<text x="363.0" y="280.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">DB · kdms_app</text>
+<text x="363.0" y="302.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">앱 역할 · 시간대</text>
+<rect x="490" y="214" width="220" height="116" rx="12" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="2.2"/>
+<text x="600.0" y="267.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">캡처 Job 다시 시작</text>
+<text x="600.0" y="291.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">경고가 뜰 때만</text>
+<rect x="1130" y="214" width="170" height="116" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1215.0" y="267.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">객체·권한 배포</text>
+<text x="1215.0" y="291.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">트리거·뷰·SP</text>
+<circle cx="1151" cy="235" r="14" fill="#1E6B4F"/>
+<text x="1151" y="241" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">5</text>
+<rect x="1410" y="214" width="136" height="116" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1478.0" y="256.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">원천 정리</text>
+<text x="1478.0" y="280.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">CDC 끄기</text>
+<text x="1478.0" y="302.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">로그인 끄기</text>
+<rect x="64" y="428" width="190" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="159.0" y="472.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">설정 · 접속 확인</text>
+<text x="159.0" y="496.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">.env · kdms.yml</text>
+<text x="159.0" y="518.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">kdms status</text>
+<rect x="270" y="428" width="186" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="363.0" y="472.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">계획 검토</text>
+<text x="363.0" y="496.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">plan --scan</text>
+<text x="363.0" y="518.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">오류 0 까지</text>
+<rect x="490" y="428" width="220" height="120" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<text x="600.0" y="472.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">적재 · 동기화</text>
+<text x="600.0" y="496.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">schema → sync → load</text>
+<text x="600.0" y="518.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">status · 웹으로 감시</text>
+<rect x="750" y="428" width="150" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="825.0" y="483.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">sync 중지</text>
+<text x="825.0" y="507.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">Ctrl+C</text>
+<circle cx="771" cy="449" r="14" fill="#1E6B4F"/>
+<text x="771" y="455" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+<rect x="920" y="428" width="180" height="120" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<text x="1010.0" y="483.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">cutover --yes</text>
+<text x="1010.0" y="507.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">kdms 가 재는 시간</text>
+<circle cx="941" cy="449" r="14" fill="#FFFFFF"/>
+<text x="941" y="455" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="middle">3</text>
+<rect x="1130" y="428" width="170" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1215.0" y="483.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">check --probe</text>
+<text x="1215.0" y="507.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">실패 0</text>
+<circle cx="1151" cy="449" r="14" fill="#1E6B4F"/>
+<text x="1151" y="455" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+<rect x="1410" y="428" width="136" height="120" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="1478.0" y="472.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">기록 보관</text>
+<text x="1478.0" y="496.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">출력 원문</text>
+<text x="1478.0" y="518.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">.env 삭제</text>
+<rect x="270" y="646" width="186" height="104" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="363.0" y="693.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">앱 쿼리 결정</text>
+<text x="363.0" y="717.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">plan 의 주의 항목</text>
+<rect x="750" y="646" width="150" height="104" rx="12" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8"/>
+<text x="825.0" y="693.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">쓰기 중지</text>
+<text x="825.0" y="717.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">다운타임 시작</text>
+<circle cx="771" cy="667" r="14" fill="#1E6B4F"/>
+<text x="771" y="673" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+<path d="M995.0,638 L1085,698.0 L995.0,758 L905,698.0 Z" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.8" stroke-linejoin="round"/>
+<text x="995.0" y="693.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">6. 계속?</text>
+<text x="995.0" y="717.0" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="middle">판단자</text>
+<rect x="1130" y="646" width="170" height="104" rx="12" fill="#0B3D2E" stroke="#0B3D2E" stroke-width="2.4"/>
+<text x="1215.0" y="693.0" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">접속을 PG 로</text>
+<text x="1215.0" y="717.0" font-size="17" font-weight="500" fill="#FFFFFF" text-anchor="middle">다운타임 끝</text>
+<circle cx="1151" cy="667" r="14" fill="#FFFFFF"/>
+<text x="1151" y="673" font-size="17" font-weight="700" fill="#0B3D2E" text-anchor="middle">7</text>
+<rect x="1410" y="646" width="136" height="104" rx="12" fill="#D5EFE2" stroke="#1E6B4F" stroke-width="2.2"/>
+<text x="1478.0" y="693.0" font-size="20" font-weight="700" fill="#0B3D2E" text-anchor="middle">되돌리기</text>
+<text x="1478.0" y="717.0" font-size="17" font-weight="500" fill="#16202C" text-anchor="middle">§8 · 원천으로</text>
+<text x="257" y="150" font-size="18" font-weight="700" fill="#0B3D2E" text-anchor="middle">D-n 준비 (§2 ~ §4)</text>
+<text x="600" y="150" font-size="18" font-weight="700" fill="#0B3D2E" text-anchor="middle">D-n 적재 · 동기화 (§5)</text>
+<text x="1065" y="150" font-size="18" font-weight="700" fill="#0B3D2E" text-anchor="middle">D-day 전환 (§6 ~ §8)</text>
+<text x="1478" y="150" font-size="18" font-weight="700" fill="#0B3D2E" text-anchor="middle">D+n 정리 (§10)</text>
+<text x="1310" y="768" font-size="17" font-weight="700" fill="#2E9E6E" text-anchor="middle">아니오</text>
+<rect x="50" y="828" width="571.1500000000001" height="52" rx="10" fill="#FFFFFF" stroke="#9DD3B8" stroke-width="1.4"/>
+<text x="68" y="860.0" font-size="17" font-weight="800" fill="#0B3D2E">범례</text>
+<line x1="120" y1="854.0" x2="166" y2="854.0" stroke="#1E6B4F" stroke-width="2.2" marker-end="url(#arrow-sync)"/>
+<text x="176" y="860.0" font-size="17" font-weight="600" fill="#16202C">다음 순서</text>
+<line x1="283.35" y1="854.0" x2="329.35" y2="854.0" stroke="#2E9E6E" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow-async)"/>
+<text x="339.35" y="860.0" font-size="17" font-weight="600" fill="#16202C">넘겨 주는 것 · 경고 · 되돌리기</text>
+<text x="1550" y="852" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">다운타임 = ① ~ ⑦ · kdms 가 재는 것은 ③ 뿐이므로 사람 작업(①·②·④·⑤·⑦) 시간을 리허설로 재 둔다</text>
+<text x="1550" y="877" font-size="17" font-weight="500" fill="#3F4E61" text-anchor="end">③ 종료 코드 4 거부 · 5 검증 불일치 · 6 반영 시간 초과 → 할 일은 runbook §7 표 · 그 밖의 증상은 §9</text>
+</svg></figure>
+
+<p>이 그림은 <code>docs/runbook.md</code>(운영 절차서)를 역할별로 한 장에 줄인 것이다. 명령·확인 기준·종료 코드의 원문은 runbook.md 가 기준이고, 이 문서는 누가 언제 무엇을 넘겨 주는지를 본다.</p>
+
+<h2>1. 역할</h2>
+<table>
+<thead><tr><th>역할</th><th>하는 일</th><th>권한(D10)</th></tr></thead>
+<tbody>
+<tr><td>DBA(Database Administrator, DB 관리자)</td><td>원천 CDC(Change Data Capture, 변경 데이터 캡처) 켜기·끄기, 로그인·권한, 대상 DB·역할, 전환 뒤 트리거·뷰·SP(Stored Procedure, 저장 프로시저)·권한 배포</td><td>원천 sysadmin, 대상 superuser</td></tr>
+<tr><td>이관 담당</td><td><code>kdms</code> 명령 실행, 감시, 기록</td><td>원천 읽기 전용 로그인, 대상 <code>kdms_app</code></td></tr>
+<tr><td>앱 담당</td><td>원천 앱 쓰기 중지, 앱 접속을 대상으로 전환, 전환 뒤 앱 확인</td><td>앱 설정</td></tr>
+<tr><td>판단자</td><td>전환 ⑥ 에서 계속할지 되돌릴지 정한다</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h2>2. 단계별 할 일</h2>
+<table>
+<thead><tr><th>단계</th><th>누가</th><th>하는 일</th><th>다음으로 가는 기준</th><th>runbook</th></tr></thead>
+<tbody>
+<tr><td rowspan="4">D-n 준비</td><td>DBA</td><td>원천: SQL Agent, 스냅숏 격리, CDC(게이팅 역할), 보존 기간, 이관 로그인, 스키마 동결. 대상: DB 와 <code>kdms_app</code>, 시간대, 앱 역할</td><td><code>kdms status</code> 에 나오는 항목</td><td>§2</td></tr>
+<tr><td>이관 담당</td><td><code>.env</code>·<code>kdms.yml</code> 작성, <code>kdms status</code></td><td>원천·대상 접속 OK, CDC 켜짐, 스냅숏 격리 ON, Agent Running, 인코딩 UTF8</td><td>§3</td></tr>
+<tr><td>이관 담당 + DBA + 앱 담당</td><td><code>kdms plan --scan</code> 보고서 검토. 오류는 규칙 파일로 결정, 경고는 승인·조치 기록</td><td>오류 0. 규칙 파일·보고서 보관</td><td>§4</td></tr>
+<tr><td>앱 담당</td><td>보고서의 <code>== 주의 ==</code>(대소문자, 끝 공백, 바이트 길이 등)를 받아 앱 쿼리 수정 여부 결정</td><td>결정 기록</td><td>§4</td></tr>
+<tr><td rowspan="2">D-n 적재·동기화</td><td>이관 담당</td><td><code>schema</code> → <code>sync</code>(창 A, 전환 직전까지 계속) → 워터마크 뒤 <code>load</code>. 죽으면 같은 명령을 다시(이어서 한다)</td><td><code>load</code> 끝에 실패 0개, 지연 0 근처</td><td>§5·§5.1</td></tr>
+<tr><td>DBA</td><td><code>캡처 Job 이 N초째 로그를 읽지 않음</code> 경고가 뜨면 SQL Agent·캡처 Job 을 다시 시작</td><td>지연이 다시 줄어듦</td><td>§5.1</td></tr>
+<tr><td rowspan="7">D-day 전환</td><td>앱 담당</td><td>① 원천 앱 쓰기 중지(시각 기록 = 다운타임 시작)</td><td>앱 쓰기 0</td><td>§7</td></tr>
+<tr><td>이관 담당</td><td>② 창 A 에서 Ctrl+C</td><td>창 A 가 끝남</td><td>§7</td></tr>
+<tr><td>이관 담당</td><td>③ <code>kdms cutover --yes</code>: 마지막 반영 → 재적재·인덱스 → 검증 → setval → FK (D09)</td><td>종료 코드 0, 불일치 0</td><td>§7</td></tr>
+<tr><td>이관 담당</td><td>④ <code>kdms check --probe</code></td><td>종료 코드 0, 실패 0</td><td>§7</td></tr>
+<tr><td>DBA</td><td>⑤ 트리거·뷰·SP·함수 PG 판 배포, 앱 역할 권한</td><td>배포 오류 0</td><td>§7</td></tr>
+<tr><td>판단자</td><td>⑥ 계속 / 되돌리기. 되돌리면 원천 쓰기를 다시 열고 <code>kdms sync</code> 로 이어 간다</td><td>계속이면 ⑦</td><td>§7·§8</td></tr>
+<tr><td>앱 담당</td><td>⑦ 앱 접속을 대상 PG 로 바꾸고 기동, 핵심 화면 확인(시각 기록 = 다운타임 끝)</td><td>앱 정상</td><td>§7</td></tr>
+<tr><td rowspan="2">D+n 정리</td><td>이관 담당</td><td>출력 원문(<code>load</code>·<code>cutover</code>·<code>check</code>)과 시각표 보관, 실행 PC 의 <code>.env</code> 삭제</td><td>—</td><td>§10</td></tr>
+<tr><td>DBA</td><td>원천 CDC 끄기(<code>sp_cdc_disable_db</code>), 이관 로그인 비활성화, 안정화 뒤 대상 <code>kdms</code> 스키마를 지울지 결정</td><td>—</td><td>§10</td></tr>
+</tbody>
+</table>
+
+<h2>3. 되돌리기와 장애</h2>
+<ul>
+<li>역방향 동기화(대상 → 원천)가 없으므로 깨끗한 되돌리기는 ⑦ 전까지다. 그래서 ⑥ 에서 판단한 뒤 ⑦ 을 한다(runbook §8, D09 §2).</li>
+<li>③ 의 종료 코드: 4 시작 거부(이유 출력) → 고치고 다시 ③, 5 검증 불일치 → 그 테이블 <code>load --reset -t</code> 뒤 다시 ③ 또는 되돌리기, 6 마지막 반영 시간 초과 → ① 을 다시 확인하고 다시 ③.</li>
+<li>동기화를 멈춘 시간이 CDC 보존 기간을 넘으면 이어 받을 수 없다 → <code>kdms reset --yes</code> 뒤 §5 처음부터(runbook §9).</li>
+<li>모든 명령의 종료 코드: 0 정상, 1 설정 오류, 2 접속 실패, 3 계획에 오류, 4 시작 거부, 5 실패, 6 전환 마지막 반영 시간 초과.</li>
+</ul>
+
+<h2>4. 시험한 것</h2>
+<p>이 순서(§3 ~ §7)를 6단계 MVP 리허설에서 Mac → 노트북 DB 로 2회 처음부터 밟았고 두 번 모두 32/32 합격이었다(rehearsal.md, WORKLOG 2026-10-10, PR #11). ⑤ PG 판 객체 배포와 ⑦ 앱 전환은 리허설 구간(rehearsal.md §1)에 들어 있지 않아 시험하지 않았다.</p>
+
+</main>
+</body>
+</html>

@@ -1,11 +1,11 @@
-"""D08 검증 계획서. 근거: docs/load-verify.md §3·§5, docs/normalization.md, docs/plan.md §8, docs/cdc.md §8, docs/cutover.md §6."""
+"""D08 검증 계획서. 근거: docs/load-verify.md §3·§5, docs/normalization.md, docs/plan.md §8, docs/cdc.md §8, docs/cutover.md §2.3·§6, docs/rehearsal.md(6단계)."""
 
 from diagram import C, Diagram
 
 ID = "d08-verify-plan"
 TITLE = "검증 계획서"
-VERSION = "v0.1"
-DATE = "2026-10-09"
+VERSION = "v0.2"
+DATE = "2026-10-10"
 
 
 def build() -> Diagram:
@@ -45,7 +45,7 @@ def build() -> Diagram:
 
     for i, (t, sub, tint) in enumerate([("T-L01 ~ T-L17", ["변환 · 적재 17개 (3단계)"], False),
                                         ("T-C01 ~ T-C12", ["CDC · 전환 12개 (4 · 5단계)"], False),
-                                        ("T-N01 ~ T-N03", ["폐쇄망 3개"], False),
+                                        ("T-N01 ~ T-N03", ["폐쇄망 3개 (6단계)"], False),
                                         ("B01 ~ B14", ["주의 보고 · 합격 기준 아님"], True)]):
         col, row = i % 2, i // 2
         d.block(f"t{i}", 830 + col * 356, 580 + row * 104, 340, 90, t, sub, tint=tint)
@@ -90,9 +90,30 @@ EXPLAIN = """
 <tbody>
 <tr><td>T-L01 ~ T-L17</td><td>datetime 3.33ms, datetime2 반올림, money 합계, bit, IDENTITY·SEQUENCE, 끝 공백, NUL, CP949 한글, CI UNIQUE, 계산 컬럼, 센티널 날짜, 이스케이프, 적재 중 강제 종료, ISNULL 금지</td><td>3단계</td><td><code>docs/load-verify.md</code> §5</td></tr>
 <tr><td>T-C01 ~ T-C12</td><td>쓰기 중 적재 + 반영 후 검증, 유령 행, 트리거 이력, 적재·CDC 같은 값, LOB 미변경, PK 변경, 강제 종료 후 재시작, SQL Agent 중지, 보존 기간 초과, 전환, 긴 트랜잭션</td><td>4·5단계</td><td><code>docs/cdc.md</code> §8, <code>docs/cutover.md</code> §6</td></tr>
-<tr><td>T-N01 ~ T-N03</td><td>네트워크 차단 실행, jar 안 외부 URL 0, 실행 중 외부 연결 0</td><td>6단계</td><td>6단계 리허설</td></tr>
+<tr><td>T-N01 ~ T-N03</td><td>인터넷 차단 상태로 빌드·전환(Mac 방화벽 pf 로 같은 망만 열기, DEC-49), jar 안 화면 파일의 외부 URL 0, 실행 중 <code>kdms.jar</code> 연결 상대가 원천·대상뿐</td><td>6단계</td><td><code>docs/rehearsal.md</code> §4</td></tr>
 <tr><td>B01 ~ B14</td><td>값은 같지만 조회 결과가 달라지는 곳(대소문자·끝 공백·CP949 바이트 등). 합격·불합격이 아니라 규칙 결정을 보여 준다</td><td>보고서 "주의" 절</td><td><code>kdms plan</code>·<code>kdms verify</code> 출력</td></tr>
 </tbody>
 </table>
 <p>시험 하나하나의 기대 결과는 <code>docs/plan.md</code> §8. 노트북 DB 로 확인한 단계 완료 기록은 WORKLOG 와 <code>runs/</code> 파일이다.</p>
+
+<h2>5. 6단계 리허설 (32개 한 번에)</h2>
+<ul>
+<li><code>scripts/rehearsal.sh &lt;회차&gt;</code> 가 원천을 처음 상태로 되돌린 뒤 T-L·T-C·T-N 32개를 한 회차에 돌리고, 단계 출력·종료 코드로 기계적으로 채점한다. 회차 합격 = 불합격 0 · 미시행 0(<code>docs/rehearsal.md</code> §4).</li>
+<li>결과: Mac → 노트북 DB 로 2회 모두 32/32 합격, 전환 검증 30/30, 예상 다운타임 15.0초·16.2초(WORKLOG 2026-10-10 11:25, <code>runs/20261010_1144_p6_r1_*</code>·<code>runs/20261010_1258_p6_r2_*</code>, PR #11).</li>
+<li>남은 관찰: 인터넷 차단(pf)이 리허설 중 저절로 꺼진 적이 있다(issues.md E08, 원인 미확인). 합격한 두 회차는 시작·끝의 차단 확인이 모두 차단이지만, 회차 중간 내내 차단됐다는 증거는 아니다. 회차 중 Mac↔노트북 접속이 몇 초 끊기면 회차를 멈추고 다시 한다(E09).</li>
+</ul>
+
+<h2>6. 전환 뒤 점검 <code>kdms check</code> (6단계)</h2>
+<p>숫자 검증(위 1~3)이 데이터가 같은지를 본다면, <code>kdms check</code> 는 전환된 대상이 앱을 받을 준비가 됐는지 본다. 데이터·시퀀스를 바꾸지 않는다(DEC-47).</p>
+<table>
+<thead><tr><th>묶음</th><th>합격</th><th>시험</th></tr></thead>
+<tbody>
+<tr><td>작업 상태</td><td>작업 DONE, 마지막 전환 DONE, 그 검증 불일치 0</td><td>—</td></tr>
+<tr><td>IDENTITY·SEQUENCE 다음 값</td><td>대상 다음 값(<code>last_value</code> 를 직접 읽음) = 원천 값 다음, 대상 MAX 보다 큼</td><td>T-L05·T-L06</td></tr>
+<tr><td>제약·인덱스</td><td>PK·UNIQUE·인덱스가 있고 유효, FK 가 있고 검사 끝남</td><td>T-C11</td></tr>
+<tr><td>계산 컬럼</td><td><code>GENERATED … STORED</code></td><td>T-L13</td></tr>
+<tr><td>입력 시험 <code>--probe</code></td><td>대소문자만 다른 값은 lower() 유일 인덱스에, 없는 부모는 FK 에 막힘. 한 트랜잭션 안에서 넣고 ROLLBACK</td><td>T-L12·T-C11</td></tr>
+</tbody>
+</table>
+<p>종료 코드 0 실패 없음, 5 실패 있음. 정의는 <code>docs/cutover.md</code> §2.3.</p>
 """
